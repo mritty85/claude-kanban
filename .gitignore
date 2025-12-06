@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Task files (project-specific, not part of template)
+# Uncomment these if you want to exclude tasks from version control:
+# tasks/ideation/*.md
+# tasks/backlog/*.md
+# tasks/ready/*.md
+# tasks/in-progress/*.md
+# tasks/uat/*.md
+# tasks/done/*.md

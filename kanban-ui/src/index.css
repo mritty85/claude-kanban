@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Base Colors */
+  --color-bg-base: #0d0d12;
+  --color-bg-surface: #16161e;
+  --color-bg-elevated: #1e1e28;
+  --color-border-subtle: #2a2a3c;
+  --color-border-emphasis: #3d3d56;
+
+  /* Text Colors */
+  --color-text-primary: #e2e2e9;
+  --color-text-secondary: #9090a0;
+  --color-text-muted: #5c5c6e;
+
+  /* Accent Colors */
+  --color-accent-primary: #7c5cff;
+  --color-accent-primary-hover: #8d70ff;
+  --color-accent-teal: #2dd4bf;
+  --color-accent-blue: #38bdf8;
+
+  /* Tag Colors */
+  --color-tag-new-bg: #2e1f5e;
+  --color-tag-new-text: #a78bfa;
+  --color-tag-feature-bg: #1e3a5f;
+  --color-tag-feature-text: #7dd3fc;
+  --color-tag-bug-bg: #4a1d1d;
+  --color-tag-bug-text: #f87171;
+  --color-tag-refactor-bg: #1a3d3d;
+  --color-tag-refactor-text: #5eead4;
+
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+
+  /* Spacing (4px base) */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 24px;
+
+  /* Motion */
+  --transition-fast: 150ms ease-out;
+  --transition-normal: 200ms ease-in-out;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-mono);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus States */
+:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-subtle);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-emphasis);
+}
