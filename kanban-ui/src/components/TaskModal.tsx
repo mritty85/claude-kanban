@@ -17,6 +17,11 @@ const tagStyles: Record<TaskTag, { bg: string; text: string; selected: string }>
 };
 
 export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
+  const autoResize = (element: HTMLTextAreaElement) => {
+    element.style.height = 'auto';
+    element.style.height = element.scrollHeight + 'px';
+  };
+
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState<TaskStatus>('ideation');
   const [description, setDescription] = useState('');
@@ -123,7 +128,7 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[8px] w-full max-w-[480px] max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[8px] w-full max-w-[560px] max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-[var(--color-border-subtle)]">
           <div className="flex items-center gap-3">
             <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">
@@ -217,9 +222,9 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
               placeholder="Describe the task..."
-              rows={4}
-              className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none"
+              className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none overflow-hidden min-h-[100px]"
             />
           </div>
 
@@ -239,12 +244,12 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
                   />
                   {editingIndex === index ? (
                     <>
-                      <input
-                        type="text"
+                      <textarea
                         value={editingText}
                         onChange={(e) => setEditingText(e.target.value)}
+                        onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
                             saveEditCriterion();
                           } else if (e.key === 'Escape') {
@@ -252,7 +257,8 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
                           }
                         }}
                         autoFocus
-                        className="flex-1 px-2 py-1 bg-[var(--color-bg-elevated)] border border-[var(--color-border-emphasis)] rounded text-[12px] text-[var(--color-text-primary)] focus:outline-none"
+                        rows={1}
+                        className="flex-1 px-2 py-1 bg-[var(--color-bg-elevated)] border border-[var(--color-border-emphasis)] rounded text-[12px] text-[var(--color-text-primary)] focus:outline-none overflow-hidden min-h-[28px]"
                       />
                       <button
                         type="button"
@@ -294,13 +300,19 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
               ))}
             </div>
             <div className="flex gap-2">
-              <input
-                type="text"
+              <textarea
                 value={newCriterion}
                 onChange={(e) => setNewCriterion(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCriterion())}
+                onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    addCriterion();
+                  }
+                }}
                 placeholder="Add criterion..."
-                className="flex-1 px-3 py-2 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[12px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none"
+                rows={1}
+                className="flex-1 px-3 py-2 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[12px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none overflow-hidden min-h-[36px]"
               />
               <button
                 type="button"
@@ -319,9 +331,9 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
               placeholder="Additional notes..."
-              rows={3}
-              className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none"
+              className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none overflow-hidden min-h-[76px]"
             />
           </div>
 

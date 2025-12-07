@@ -1,7 +1,7 @@
 # Sample Task
 
 ## Status
-backlog
+ideation
 
 ## Tags
 - new-functionality
