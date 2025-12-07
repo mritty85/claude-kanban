@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import matter from 'gray-matter';
 
-const STATUSES = ['ideation', 'backlog', 'ready', 'in-progress', 'uat', 'done'];
+const STATUSES = ['ideation', 'backlog', 'planning', 'implementing', 'uat', 'done'];
 
 export function getTasksDir() {
   return process.env.TASKS_DIR || path.resolve(process.cwd(), '..', 'tasks');
@@ -189,4 +189,22 @@ export async function deleteTask(status, filename) {
   const tasksDir = getTasksDir();
   const filePath = path.join(tasksDir, status, filename);
   await fs.unlink(filePath);
+}
+
+export async function getProjectConfig() {
+  const configPath = path.join(getTasksDir(), 'project.json');
+  try {
+    const content = await fs.readFile(configPath, 'utf-8');
+    return JSON.parse(content);
+  } catch (err) {
+    return { boardName: 'Task Manager' };
+  }
+}
+
+export async function updateProjectConfig(updates) {
+  const configPath = path.join(getTasksDir(), 'project.json');
+  const current = await getProjectConfig();
+  const updated = { ...current, ...updates };
+  await fs.writeFile(configPath, JSON.stringify(updated, null, 2), 'utf-8');
+  return updated;
 }

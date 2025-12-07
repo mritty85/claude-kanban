@@ -16,8 +16,8 @@ The filesystem is the shared state—the UI and Claude Code never communicate di
   /tasks
     /ideation
     /backlog
-    /ready
-    /in-progress
+    /planning
+    /implementing
     /uat
     /done
   claude-instructions.md  ← Standard prompt for Claude Code
@@ -26,7 +26,7 @@ The filesystem is the shared state—the UI and Claude Code never communicate di
 **Two independent components:**
 
 1. **Kanban UI** — Local React/Vite app for viewing and managing tasks
-2. **Claude Code** — Picks up tasks from `/tasks/ready`, works through them, moves them through stages
+2. **Claude Code** — Picks up tasks from `/tasks/planning`, works through them, moves them through stages
 
 ---
 
@@ -35,9 +35,9 @@ The filesystem is the shared state—the UI and Claude Code never communicate di
 | Column | Purpose | Who Interacts |
 |--------|---------|---------------|
 | **Ideation** | Rough ideas, drafts, not yet fully defined | You only |
-| **Backlog** | Defined tasks, not yet prioritized for work | You only |
-| **Ready** | Prioritized and ready for Claude Code to pick up | You write, Claude reads |
-| **In Progress** | Currently being worked on | Claude moves here and works |
+| **Backlog** | Defined tasks, ready for planning | You only |
+| **Planning** | Needs design/discussion before implementation | You write, Claude reads |
+| **Implementing** | Currently being worked on | Claude moves here and works |
 | **UAT** | Complete, awaiting your review/acceptance | Claude moves here when done |
 | **Done** | Accepted and finished | You move here after review |
 
@@ -47,7 +47,7 @@ The filesystem is the shared state—the UI and Claude Code never communicate di
 
 - **Vertical stacking** within each column determines priority
 - **Top = highest priority**
-- Claude Code always picks the **top item in `/tasks/ready`**
+- Claude Code always picks the **top item in `/tasks/planning`**
 - Files use numeric prefixes to persist order: `01-user-auth.md`, `02-dashboard-layout.md`
 - When tasks are reordered via drag-and-drop, files are renamed to reflect new order
 
@@ -61,7 +61,7 @@ All task types use the same format:
 # {Title}
 
 ## Status
-ideation | backlog | ready | in-progress | uat | done
+ideation | backlog | planning | implementing | uat | done
 
 ## Tags
 - new-functionality
@@ -104,7 +104,7 @@ The numeric prefix determines sort order within the column. When you reference a
 
 ### Display
 
-- **6-column horizontal kanban layout**: Ideation → Backlog → Ready → In Progress → UAT → Done
+- **6-column horizontal kanban layout**: Ideation → Backlog → Planning → Implementing → UAT → Done
 - **Vertical card stacking**: Top = highest priority
 - **Card preview**: 
   - Title
@@ -130,15 +130,15 @@ The numeric prefix determines sort order within the column. When you reference a
 
 When prompted to work on tasks, Claude Code should:
 
-1. **Read** the top file in `/tasks/ready/` (lowest numeric prefix)
-2. **Move** the file to `/tasks/in-progress/`
-3. **Update** the `## Status` field to `in-progress`
+1. **Read** the top file in `/tasks/planning/` (lowest numeric prefix)
+2. **Move** the file to `/tasks/implementing/`
+3. **Update** the `## Status` field to `implementing`
 4. **Implement** the work described in the task
 5. **Check off** acceptance criteria as completed
 6. **Append to Notes** if any decisions are made or issues encountered
 7. **Move** the file to `/tasks/uat/` when complete
 8. **Update** the `## Status` field to `uat`
-9. **Check** for the next task in `/tasks/ready/`
+9. **Check** for the next task in `/tasks/planning/`
 
 ### Handling Blockers
 
@@ -209,4 +209,4 @@ When a card is dragged to a new position within a column:
 - [ ] Search by title works
 - [ ] Dark mode is default
 - [ ] Manually created `.md` files appear in UI
-- [ ] Claude Code can read top task from `/ready`, work on it, and move to `/uat`
+- [ ] Claude Code can read top task from `/planning`, work on it, and move to `/uat`

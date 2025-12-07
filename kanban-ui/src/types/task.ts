@@ -1,4 +1,4 @@
-export type TaskStatus = 'ideation' | 'backlog' | 'ready' | 'in-progress' | 'uat' | 'done';
+export type TaskStatus = 'ideation' | 'backlog' | 'planning' | 'implementing' | 'uat' | 'done';
 
 export type TaskTag = 'new-functionality' | 'feature-enhancement' | 'bug' | 'refactor';
 
@@ -28,13 +28,13 @@ export interface TaskFormData {
   notes: string;
 }
 
-export const STATUSES: TaskStatus[] = ['ideation', 'backlog', 'ready', 'in-progress', 'uat', 'done'];
+export const STATUSES: TaskStatus[] = ['ideation', 'backlog', 'planning', 'implementing', 'uat', 'done'];
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
   'ideation': 'Ideation',
   'backlog': 'Backlog',
-  'ready': 'Ready',
-  'in-progress': 'In Progress',
+  'planning': 'Planning',
+  'implementing': 'Implementing',
   'uat': 'UAT',
   'done': 'Done'
 };

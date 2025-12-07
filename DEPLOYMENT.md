@@ -6,7 +6,7 @@
 
 ```bash
 # From your project root
-cp -r ~/path/to/kanban-ui ./kanban
+cp -r "/Users/mritty/Documents/Kanban UI Claude/kanban-ui" ./kanban
 
 # Or if you keep a template
 cp -r ~/templates/kanban-ui ./kanban
@@ -22,7 +22,7 @@ npm install
 ### 3. Create task directories
 
 ```bash
-mkdir -p tasks/{ideation,backlog,ready,in-progress,uat,done}
+mkdir -p tasks/{ideation,backlog,planning,implementing,uat,done}
 ```
 
 Or let the server create them automatically on first run.
@@ -34,7 +34,24 @@ cd kanban
 npm start
 ```
 
-Opens at `http://localhost:5173`
+Usually opens at `http://localhost:5173`
+
+---
+
+## If you have issues copying and starting the server: 
+
+The .bin/ folder inside node_modules contains symlinks (shortcuts) that point to
+  executables. When you copy the folder, those symlinks can break because they may contain
+  absolute paths or get corrupted during the copy.
+
+  Best practice for next time: Either:
+
+  1. Don't copy node_modules - delete it before copying, then run npm install in the new
+  location
+  2. Or use rsync with symlink handling - but honestly just reinstalling is simpler
+
+  You could add a note to your deployment process: "After copying, run rm -rf node_modules &&
+  npm install" - or just always expect to do a fresh install after copying any Node project.
 
 ---
 
@@ -50,8 +67,8 @@ Opens at `http://localhost:5173`
   /tasks/                   ← Task files (created automatically or manually)
     /ideation/
     /backlog/
-    /ready/
-    /in-progress/
+    /planning/
+    /implementing/
     /uat/
     /done/
   /src/                     ← Your actual project code
@@ -75,23 +92,23 @@ This project uses a file-based Kanban system for task management.
 Tasks are stored as markdown files in `/tasks/{status}/` directories:
 - `/tasks/ideation/` - Rough ideas, not yet defined
 - `/tasks/backlog/` - Defined but not prioritized
-- `/tasks/ready/` - Ready for Claude to pick up (START HERE)
-- `/tasks/in-progress/` - Currently being worked on
+- `/tasks/planning/` - Needs design/discussion before implementation
+- `/tasks/implementing/` - Currently being worked on (START HERE)
 - `/tasks/uat/` - Complete, awaiting review
 - `/tasks/done/` - Accepted and finished
 
 ### Working on Tasks
 
 When asked to work on tasks:
-1. Read the top file in `/tasks/ready/` (lowest number prefix)
-2. Move the file to `/tasks/in-progress/`
-3. Update the `## Status` field to `in-progress`
+1. Read the top file in `/tasks/planning/` (lowest number prefix)
+2. Move the file to `/tasks/implementing/`
+3. Update the `## Status` field to `implementing`
 4. Implement the work described
 5. Check off acceptance criteria as completed
 6. Add notes to `## Notes` section for any decisions or blockers
 7. When complete, move file to `/tasks/uat/`
 8. Update the `## Status` field to `uat`
-9. Check `/tasks/ready/` for next task
+9. Check `/tasks/planning/` for next task
 
 ### Task File Format
 
@@ -99,7 +116,7 @@ When asked to work on tasks:
 # {Title}
 
 ## Status
-ready
+planning
 
 ## Tags
 - new-functionality | feature-enhancement | bug | refactor
@@ -134,9 +151,9 @@ Create `/tasks/CLAUDE-INSTRUCTIONS.md` in the tasks directory:
 This directory contains tasks in a Kanban workflow. Each subdirectory represents a status column.
 
 ## Workflow
-1. Check `/ready/` for tasks to work on
+1. Check `/planning/` for tasks to work on
 2. Pick the top task (lowest number prefix = highest priority)
-3. Move to `/in-progress/` and update status
+3. Move to `/implementing/` and update status
 4. Complete the work
 5. Move to `/uat/` when done
 
@@ -157,14 +174,14 @@ Update the Notes section and ask for help. Don't move the task.
 ### Starting a Work Session
 
 ```
-Please check /tasks/ready/ and begin working on the highest priority task.
+Please check /tasks/planning/ and begin working on the highest priority task.
 Follow the task management workflow in CLAUDE.md.
 ```
 
 ### Checking Task Status
 
 ```
-What tasks are currently in progress? What's in the ready queue?
+What tasks are currently implementing? What's in the planning queue?
 ```
 
 ### Creating Tasks via Claude
@@ -215,9 +232,9 @@ TASKS_DIR=/path/to/tasks npm start
 ## Recommended Workflow
 
 1. **You:** Add tasks to Ideation/Backlog via the UI
-2. **You:** Move prioritized tasks to Ready
-3. **Claude:** Works through Ready queue → In Progress → UAT
-4. **You:** Review UAT items, move to Done or back to Ready with feedback
+2. **You:** Move prioritized tasks to Planning
+3. **Claude:** Works through Planning queue → Implementing → UAT
+4. **You:** Review UAT items, move to Done or back to Planning with feedback
 5. **Repeat**
 
 The UI gives you visibility; Claude operates on the same files autonomously.
