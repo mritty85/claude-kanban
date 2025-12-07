@@ -2,6 +2,10 @@ import type { Task, TaskFormData, TaskStatus } from '../types/task';
 
 const API_BASE = '/api';
 
+export interface ProjectConfig {
+  boardName: string;
+}
+
 export async function fetchTasks(): Promise<Task[]> {
   const res = await fetch(`${API_BASE}/tasks`);
   if (!res.ok) throw new Error('Failed to fetch tasks');
@@ -72,4 +76,20 @@ export function subscribeToChanges(onEvent: (event: { event: string; path: strin
   };
 
   return () => eventSource.close();
+}
+
+export async function fetchConfig(): Promise<ProjectConfig> {
+  const res = await fetch(`${API_BASE}/tasks/config`);
+  if (!res.ok) throw new Error('Failed to fetch config');
+  return res.json();
+}
+
+export async function updateConfig(data: Partial<ProjectConfig>): Promise<ProjectConfig> {
+  const res = await fetch(`${API_BASE}/tasks/config`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to update config');
+  return res.json();
 }

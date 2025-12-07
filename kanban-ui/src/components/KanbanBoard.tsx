@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -21,8 +21,10 @@ import { Card } from './Card';
 import { TaskModal } from './TaskModal';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
+import { SettingsModal } from './SettingsModal';
 import { useTasks } from '../hooks/useTasks';
-import { Plus } from 'lucide-react';
+import { fetchConfig, updateConfig } from '../lib/api';
+import { Plus, Settings } from 'lucide-react';
 
 export function KanbanBoard() {
   const {
@@ -39,8 +41,14 @@ export function KanbanBoard() {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [modalTask, setModalTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [boardName, setBoardName] = useState('Task Manager');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
+
+  useEffect(() => {
+    fetchConfig().then(config => setBoardName(config.boardName)).catch(() => {});
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -149,6 +157,12 @@ export function KanbanBoard() {
     setIsModalOpen(false);
   }
 
+  async function handleSettingsSave(newBoardName: string) {
+    await updateConfig({ boardName: newBoardName });
+    setBoardName(newBoardName);
+    setIsSettingsOpen(false);
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -168,12 +182,15 @@ export function KanbanBoard() {
   return (
     <div className="h-full flex flex-col">
       <header className="flex items-center justify-between p-4 border-b border-[var(--color-border-subtle)]">
-        <div className="flex items-center gap-2">
-          <span className="text-[var(--color-text-muted)] text-[16px]">Kanban ·</span>
-          <span className="text-[var(--color-text-primary)] text-[16px] font-semibold">Task Manager</span>
-        </div>
+        <span className="text-[var(--color-text-primary)] text-[16px] font-semibold">{boardName}</span>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 rounded-[6px] hover:bg-[var(--color-bg-elevated)] transition-colors"
+          >
+            <Settings size={18} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]" />
+          </button>
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
           <FilterDropdown selected={selectedTags} onChange={setSelectedTags} />
           <button
@@ -222,6 +239,14 @@ export function KanbanBoard() {
           task={modalTask}
           onSave={handleModalSave}
           onClose={() => setIsModalOpen(false)}
+        />
+      )}
+
+      {isSettingsOpen && (
+        <SettingsModal
+          boardName={boardName}
+          onSave={handleSettingsSave}
+          onClose={() => setIsSettingsOpen(false)}
         />
       )}
     </div>

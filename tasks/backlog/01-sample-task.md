@@ -1,7 +1,7 @@
 # Sample Task
 
 ## Status
-in-progress
+backlog
 
 ## Tags
 - new-functionality
@@ -13,7 +13,7 @@ This is a sample task to test the Kanban UI. You can drag it between columns, ed
 ## Acceptance Criteria
 - [ ] UI renders correctly
 - [ ] Drag and drop works
-- [ ] Can edit tasks
+- [ ] Can edit tasks TEST 123
 
 ## Notes
 This task was created to test the initial setup.

@@ -5,7 +5,9 @@ import {
   updateTask,
   moveTask,
   reorderTasks,
-  deleteTask
+  deleteTask,
+  getProjectConfig,
+  updateProjectConfig
 } from '../services/fileService.js';
 import { addSSEClient } from '../services/watcher.js';
 
@@ -76,6 +78,26 @@ router.delete('/:status/:filename', async (req, res) => {
   } catch (err) {
     console.error('Error deleting task:', err);
     res.status(500).json({ error: 'Failed to delete task' });
+  }
+});
+
+router.get('/config', async (req, res) => {
+  try {
+    const config = await getProjectConfig();
+    res.json(config);
+  } catch (err) {
+    console.error('Error getting config:', err);
+    res.status(500).json({ error: 'Failed to get config' });
+  }
+});
+
+router.put('/config', async (req, res) => {
+  try {
+    const config = await updateProjectConfig(req.body);
+    res.json(config);
+  } catch (err) {
+    console.error('Error updating config:', err);
+    res.status(500).json({ error: 'Failed to update config' });
   }
 });
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Copy, Check } from 'lucide-react';
+import { X, Plus, Trash2, Copy, Check, Pencil } from 'lucide-react';
 import type { Task, TaskFormData, TaskStatus, TaskTag, AcceptanceCriterion } from '../types/task';
 import { STATUSES, STATUS_LABELS, TAGS, TAG_LABELS } from '../types/task';
 
@@ -24,6 +24,8 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
   const [acceptanceCriteria, setAcceptanceCriteria] = useState<AcceptanceCriterion[]>([]);
   const [notes, setNotes] = useState('');
   const [newCriterion, setNewCriterion] = useState('');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -61,6 +63,26 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
 
   function removeCriterion(index: number) {
     setAcceptanceCriteria(acceptanceCriteria.filter((_, i) => i !== index));
+  }
+
+  function startEditCriterion(index: number) {
+    setEditingIndex(index);
+    setEditingText(acceptanceCriteria[index].text);
+  }
+
+  function saveEditCriterion() {
+    if (editingIndex !== null && editingText.trim()) {
+      const updated = [...acceptanceCriteria];
+      updated[editingIndex].text = editingText.trim();
+      setAcceptanceCriteria(updated);
+    }
+    setEditingIndex(null);
+    setEditingText('');
+  }
+
+  function cancelEditCriterion() {
+    setEditingIndex(null);
+    setEditingText('');
   }
 
   async function copyTaskPath() {
@@ -213,17 +235,61 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
                     checked={criterion.checked}
                     onChange={() => toggleCriterion(index)}
                     className="rounded"
+                    disabled={editingIndex === index}
                   />
-                  <span className={`flex-1 text-[12px] ${criterion.checked ? 'line-through text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'}`}>
-                    {criterion.text}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeCriterion(index)}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-bg-elevated)] rounded transition-all"
-                  >
-                    <Trash2 size={14} className="text-[var(--color-text-muted)]" />
-                  </button>
+                  {editingIndex === index ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            saveEditCriterion();
+                          } else if (e.key === 'Escape') {
+                            cancelEditCriterion();
+                          }
+                        }}
+                        autoFocus
+                        className="flex-1 px-2 py-1 bg-[var(--color-bg-elevated)] border border-[var(--color-border-emphasis)] rounded text-[12px] text-[var(--color-text-primary)] focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={saveEditCriterion}
+                        className="p-1 hover:bg-[var(--color-bg-elevated)] rounded transition-all"
+                      >
+                        <Check size={14} className="text-[var(--color-accent-teal)]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditCriterion}
+                        className="p-1 hover:bg-[var(--color-bg-elevated)] rounded transition-all"
+                      >
+                        <X size={14} className="text-[var(--color-text-muted)]" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`flex-1 text-[12px] ${criterion.checked ? 'line-through text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'}`}>
+                        {criterion.text}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => startEditCriterion(index)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-bg-elevated)] rounded transition-all"
+                      >
+                        <Pencil size={14} className="text-[var(--color-text-muted)]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeCriterion(index)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-bg-elevated)] rounded transition-all"
+                      >
+                        <Trash2 size={14} className="text-[var(--color-text-muted)]" />
+                      </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
