@@ -1,6 +1,6 @@
 export type TaskStatus = 'ideation' | 'backlog' | 'planning' | 'implementing' | 'uat' | 'done';
 
-export type TaskTag = 'new-functionality' | 'feature-enhancement' | 'bug' | 'refactor';
+export type TaskTag = 'new-functionality' | 'feature-enhancement' | 'bug' | 'refactor' | 'devops';
 
 export interface AcceptanceCriterion {
   text: string;
@@ -39,11 +39,12 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
   'done': 'Done'
 };
 
-export const TAGS: TaskTag[] = ['new-functionality', 'feature-enhancement', 'bug', 'refactor'];
+export const TAGS: TaskTag[] = ['new-functionality', 'feature-enhancement', 'bug', 'refactor', 'devops'];
 
 export const TAG_LABELS: Record<TaskTag, string> = {
-  'new-functionality': 'New',
+  'new-functionality': 'New Feature',
   'feature-enhancement': 'Enhancement',
   'bug': 'Bug',
-  'refactor': 'Refactor'
+  'refactor': 'Refactor',
+  'devops': 'DevOps'
 };

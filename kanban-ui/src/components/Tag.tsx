@@ -9,7 +9,8 @@ const tagStyles: Record<TaskTag, string> = {
   'new-functionality': 'bg-[#2e1f5e] text-[#a78bfa]',
   'feature-enhancement': 'bg-[#1e3a5f] text-[#7dd3fc]',
   'bug': 'bg-[#4a1d1d] text-[#f87171]',
-  'refactor': 'bg-[#1a3d3d] text-[#5eead4]'
+  'refactor': 'bg-[#1a3d3d] text-[#5eead4]',
+  'devops': 'bg-[#4a3d1d] text-[#fbbf24]'
 };
 
 export function Tag({ tag }: TagProps) {
