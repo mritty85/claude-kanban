@@ -1,7 +1,7 @@
 # Make Text Areas Expandable
 
 ## Status
-planning
+done
 
 ## Tags
 - feature-enhancement

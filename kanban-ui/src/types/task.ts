@@ -28,7 +28,7 @@ export interface TaskFormData {
   notes: string;
 }
 
-export const STATUSES: TaskStatus[] = ['ideation', 'backlog', 'planning', 'implementing', 'uat', 'done'];
+export const STATUSES: TaskStatus[] = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
   'ideation': 'Ideation',

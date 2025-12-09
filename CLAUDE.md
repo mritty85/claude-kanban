@@ -12,8 +12,8 @@ A local, file-based Kanban task manager built with React + Vite + TypeScript. Th
 /kanban-ui/                 ← This directory (React app + Express server)
 /tasks/                     ← Task storage (sibling directory)
   /ideation/
-  /backlog/
   /planning/
+  /backlog/
   /implementing/
   /uat/
   /done/

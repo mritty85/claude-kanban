@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import matter from 'gray-matter';
 
-const STATUSES = ['ideation', 'backlog', 'planning', 'implementing', 'uat', 'done'];
+const STATUSES = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
 
 export function getTasksDir() {
   return process.env.TASKS_DIR || path.resolve(process.cwd(), '..', 'tasks');

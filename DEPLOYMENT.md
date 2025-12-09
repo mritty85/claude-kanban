@@ -22,7 +22,7 @@ npm install
 ### 3. Create task directories
 
 ```bash
-mkdir -p tasks/{ideation,backlog,planning,implementing,uat,done}
+mkdir -p tasks/{ideation,planning,backlog,implementing,uat,done}
 ```
 
 Or let the server create them automatically on first run.
@@ -66,8 +66,8 @@ The .bin/ folder inside node_modules contains symlinks (shortcuts) that point to
     CLAUDE.md               ← For improving the tool itself
   /tasks/                   ← Task files (created automatically or manually)
     /ideation/
-    /backlog/
     /planning/
+    /backlog/
     /implementing/
     /uat/
     /done/
@@ -91,8 +91,8 @@ This project uses a file-based Kanban system for task management.
 ### Task Location
 Tasks are stored as markdown files in `/tasks/{status}/` directories:
 - `/tasks/ideation/` - Rough ideas, not yet defined
-- `/tasks/backlog/` - Defined but not prioritized
-- `/tasks/planning/` - Needs design/discussion before implementation
+- `/tasks/planning/` - Needs design/discussion before ready
+- `/tasks/backlog/` - Fully planned and ready to be picked up
 - `/tasks/implementing/` - Currently being worked on (START HERE)
 - `/tasks/uat/` - Complete, awaiting review
 - `/tasks/done/` - Accepted and finished
@@ -100,7 +100,7 @@ Tasks are stored as markdown files in `/tasks/{status}/` directories:
 ### Working on Tasks
 
 When asked to work on tasks:
-1. Read the top file in `/tasks/planning/` (lowest number prefix)
+1. Read the top file in `/tasks/backlog/` (lowest number prefix)
 2. Move the file to `/tasks/implementing/`
 3. Update the `## Status` field to `implementing`
 4. Implement the work described
@@ -108,7 +108,7 @@ When asked to work on tasks:
 6. Add notes to `## Notes` section for any decisions or blockers
 7. When complete, move file to `/tasks/uat/`
 8. Update the `## Status` field to `uat`
-9. Check `/tasks/planning/` for next task
+9. Check `/tasks/backlog/` for next task
 
 ### Task File Format
 
@@ -151,7 +151,7 @@ Create `/tasks/CLAUDE-INSTRUCTIONS.md` in the tasks directory:
 This directory contains tasks in a Kanban workflow. Each subdirectory represents a status column.
 
 ## Workflow
-1. Check `/planning/` for tasks to work on
+1. Check `/backlog/` for tasks to work on
 2. Pick the top task (lowest number prefix = highest priority)
 3. Move to `/implementing/` and update status
 4. Complete the work
@@ -174,14 +174,14 @@ Update the Notes section and ask for help. Don't move the task.
 ### Starting a Work Session
 
 ```
-Please check /tasks/planning/ and begin working on the highest priority task.
+Please check /tasks/backlog/ and begin working on the highest priority task.
 Follow the task management workflow in CLAUDE.md.
 ```
 
 ### Checking Task Status
 
 ```
-What tasks are currently implementing? What's in the planning queue?
+What tasks are currently implementing? What's in the backlog?
 ```
 
 ### Creating Tasks via Claude
@@ -201,7 +201,7 @@ Check /tasks/uat/ and summarize what's ready for review.
 
 ```
 I've reviewed 01-feature-name.md in /tasks/uat/ - it looks good.
-Please move it to /tasks/done/.
+Move it to /tasks/done/.
 ```
 
 ---
@@ -231,9 +231,9 @@ TASKS_DIR=/path/to/tasks npm start
 
 ## Recommended Workflow
 
-1. **You:** Add tasks to Ideation/Backlog via the UI
-2. **You:** Move prioritized tasks to Planning
-3. **Claude:** Works through Planning queue → Implementing → UAT
+1. **You:** Add tasks to Ideation via the UI
+2. **You:** Move tasks needing design to Planning, ready tasks to Backlog
+3. **Claude:** Works through Backlog → Implementing → UAT
 4. **You:** Review UAT items, move to Done or back to Planning with feedback
 5. **Repeat**
 
