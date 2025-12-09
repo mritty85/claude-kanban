@@ -1,22 +1,24 @@
 import fs from 'fs/promises';
 import path from 'path';
 import matter from 'gray-matter';
+import { getCurrentProjectPath } from './configService.js';
 
 const STATUSES = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
 
-export function getTasksDir() {
-  return process.env.TASKS_DIR || path.resolve(process.cwd(), '..', 'tasks');
+export async function getTasksDir() {
+  const projectPath = await getCurrentProjectPath();
+  return path.join(projectPath, 'tasks');
 }
 
 export async function ensureDirectories() {
-  const tasksDir = getTasksDir();
+  const tasksDir = await getTasksDir();
   for (const status of STATUSES) {
     await fs.mkdir(path.join(tasksDir, status), { recursive: true });
   }
 }
 
 export async function getAllTasks() {
-  const tasksDir = getTasksDir();
+  const tasksDir = await getTasksDir();
   const tasks = [];
 
   for (const status of STATUSES) {
@@ -100,7 +102,7 @@ export function serializeTask(task) {
 }
 
 export async function createTask(task) {
-  const tasksDir = getTasksDir();
+  const tasksDir = await getTasksDir();
   const statusDir = path.join(tasksDir, task.status);
 
   const files = await fs.readdir(statusDir).catch(() => []);
@@ -117,7 +119,7 @@ export async function createTask(task) {
 }
 
 export async function updateTask(status, filename, updates) {
-  const tasksDir = getTasksDir();
+  const tasksDir = await getTasksDir();
   const filePath = path.join(tasksDir, status, filename);
 
   const content = await fs.readFile(filePath, 'utf-8');
@@ -131,7 +133,7 @@ export async function updateTask(status, filename, updates) {
 }
 
 export async function moveTask(fromStatus, filename, toStatus, newPriority) {
-  const tasksDir = getTasksDir();
+  const tasksDir = await getTasksDir();
   const fromPath = path.join(tasksDir, fromStatus, filename);
 
   const content = await fs.readFile(fromPath, 'utf-8');
@@ -155,7 +157,7 @@ export async function moveTask(fromStatus, filename, toStatus, newPriority) {
 }
 
 export async function reorderTasks(status, orderedFilenames) {
-  const tasksDir = getTasksDir();
+  const tasksDir = await getTasksDir();
   const statusDir = path.join(tasksDir, status);
 
   const renames = [];
@@ -186,13 +188,14 @@ export async function reorderTasks(status, orderedFilenames) {
 }
 
 export async function deleteTask(status, filename) {
-  const tasksDir = getTasksDir();
+  const tasksDir = await getTasksDir();
   const filePath = path.join(tasksDir, status, filename);
   await fs.unlink(filePath);
 }
 
 export async function getProjectConfig() {
-  const configPath = path.join(getTasksDir(), 'project.json');
+  const tasksDir = await getTasksDir();
+  const configPath = path.join(tasksDir, 'project.json');
   try {
     const content = await fs.readFile(configPath, 'utf-8');
     return JSON.parse(content);
@@ -202,7 +205,8 @@ export async function getProjectConfig() {
 }
 
 export async function updateProjectConfig(updates) {
-  const configPath = path.join(getTasksDir(), 'project.json');
+  const tasksDir = await getTasksDir();
+  const configPath = path.join(tasksDir, 'project.json');
   const current = await getProjectConfig();
   const updated = { ...current, ...updates };
   await fs.writeFile(configPath, JSON.stringify(updated, null, 2), 'utf-8');

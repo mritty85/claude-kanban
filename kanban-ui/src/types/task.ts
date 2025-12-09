@@ -48,3 +48,26 @@ export const TAG_LABELS: Record<TaskTag, string> = {
   'refactor': 'Refactor',
   'devops': 'DevOps'
 };
+
+// Project types for multi-project support
+export interface Project {
+  id: string;
+  name: string;
+  path: string;
+  lastAccessed: string;
+  boardName?: string;
+}
+
+export interface ProjectFormData {
+  name: string;
+  path: string;
+  createTasksDir?: boolean;
+}
+
+export interface PathValidation {
+  valid: boolean;
+  error?: string;
+  canCreate?: boolean;
+  tasksDir?: string;
+  created?: boolean;
+}

@@ -6,64 +6,179 @@ A local, file-based Kanban task manager built with React + Vite + TypeScript. Th
 
 **Key Concept:** The filesystem (`/tasks` directory) is the shared state—the UI and Claude Code never communicate directly.
 
-## Architecture
+**Current State:** Fully functional multi-project Kanban with drag-and-drop, task CRUD, project switching, and real-time updates via SSE.
+
+## Multi-Project Architecture
+
+This Kanban tool is designed as a **centralized installation** that manages multiple projects:
 
 ```
-/kanban-ui/                 ← This directory (React app + Express server)
-/tasks/                     ← Task storage (sibling directory)
-  /ideation/
-  /planning/
-  /backlog/
-  /implementing/
-  /uat/
-  /done/
+~/.kanban-ui/
+  config.json                 ← Global config (machine-specific)
+                                 Stores: registered projects, current project ID
+
+~/tools/kanban-ui/            ← Single installation (this codebase)
+  /src/                       ← React frontend
+  /server/                    ← Express backend
+
+/project-a/                   ← Any registered project
+  /tasks/
+    /ideation/
+    /planning/
+    /backlog/
+    /implementing/
+    /uat/
+    /done/
+    project.json              ← Per-project config (board name)
+
+/project-b/                   ← Another registered project
+  /tasks/
+    ...
 ```
 
-### Frontend (React + Vite + TypeScript)
-- **Entry:** `src/main.tsx` → `src/App.tsx` → `src/components/KanbanBoard.tsx`
-- **Styling:** Tailwind CSS v4 with custom theme in `src/index.css` (uses `@theme` directive)
-- **Drag-and-drop:** `@dnd-kit/core` + `@dnd-kit/sortable`
-- **State:** `src/hooks/useTasks.ts` manages task state and SSE subscription
+### How It Works
 
-### Backend (Express.js)
-- **Entry:** `server/index.js`
-- **API Routes:** `server/routes/tasks.js`
-- **File Operations:** `server/services/fileService.js`
-- **File Watcher:** `server/services/watcher.js` (chokidar + SSE)
+1. **Global Config (`~/.kanban-ui/config.json`):**
+   - Stores list of registered projects with `{id, name, path, lastAccessed}`
+   - Tracks `currentProject` (the active project path)
+   - Machine-specific—not shared via git
 
-### API Endpoints
+2. **Per-Project Config (`{project}/tasks/project.json`):**
+   - Stores `boardName` displayed in header
+   - Can be git-tracked with the project
+
+3. **Project Switching:**
+   - User clicks dropdown → selects project
+   - Backend updates `currentProject` in global config
+   - File watcher reinitializes to watch new project's `/tasks`
+   - SSE broadcasts `project-switched` event
+   - Frontend reloads tasks
+
+### Key Files for Multi-Project
+
+| File | Purpose |
+|------|---------|
+| `server/services/configService.js` | CRUD for `~/.kanban-ui/config.json` |
+| `server/routes/projects.js` | REST API for project management |
+| `src/hooks/useProjects.ts` | Frontend state for projects |
+| `src/components/ProjectSwitcher.tsx` | Dropdown in header |
+| `src/components/ProjectsModal.tsx` | Full project management UI |
+
+## Frontend Architecture
+
+### Component Hierarchy
+```
+App.tsx
+└── KanbanBoard.tsx           ← Main container, drag-and-drop context
+    ├── ProjectSwitcher.tsx   ← Header dropdown for switching projects
+    ├── SearchBar.tsx         ← Task title search
+    ├── FilterDropdown.tsx    ← Filter by tags
+    ├── Column.tsx            ← Droppable column (one per status)
+    │   └── Card.tsx          ← Draggable task card (sortable)
+    ├── TaskModal.tsx         ← Create/edit task form
+    └── ProjectsModal.tsx     ← Manage projects (add/remove/rename)
+```
+
+### State Management
+- **`useTasks` hook:** Task CRUD, SSE subscription, optimistic updates
+- **`useProjects` hook:** Project list, current project, switching
+- **No global state library**—React hooks + prop drilling
+
+### Styling
+- Tailwind CSS v4 with `@theme` directive in `src/index.css`
+- Dark mode only
+- CSS variables for colors (`--color-bg-base`, `--color-text-primary`, etc.)
+- JetBrains Mono font
+
+## Backend Architecture
+
+### Service Layer
+```
+server/
+├── index.js                  ← Express app setup, startup
+├── routes/
+│   ├── tasks.js              ← Task CRUD endpoints
+│   └── projects.js           ← Project management endpoints
+└── services/
+    ├── configService.js      ← Global config (~/.kanban-ui/)
+    ├── fileService.js        ← Task file operations
+    └── watcher.js            ← Chokidar + SSE broadcasting
+```
+
+### Data Flow
+1. **Task operations:** API → `fileService.js` → filesystem
+2. **File changes:** `chokidar` detects → `watcher.js` broadcasts SSE
+3. **Frontend:** SSE listener → triggers `loadTasks()` refresh
+4. **Project switch:** Update config → reinit watcher → broadcast SSE
+
+### Key Functions
+
+**`configService.js`:**
+- `ensureGlobalConfig()` - Creates default config on first run
+- `getCurrentProjectPath()` - Returns active project's path
+- `setCurrentProject(id)` - Switches active project
+- `addProject(name, path)` - Registers new project
+- `validateProjectPath(path, createIfMissing)` - Checks/creates tasks folder
+
+**`fileService.js`:**
+- `getTasksDir()` - Async, reads from current project config
+- `getAllTasks()` - Reads all .md files from all status dirs
+- `parseTaskFile(content)` - Markdown → task object
+- `serializeTask(task)` - Task object → markdown
+- `moveTask()`, `reorderTasks()` - File operations with renaming
+
+**`watcher.js`:**
+- `initWatcher()` - Sets up chokidar on current project
+- `switchProject(id)` - Closes old watcher, inits new, broadcasts event
+- `broadcastToClients(msg)` - Sends SSE to all connected clients
+
+## API Reference
+
+### Tasks
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| GET | `/api/tasks` | List all tasks |
+| GET | `/api/tasks` | List all tasks for current project |
 | POST | `/api/tasks` | Create task |
 | PUT | `/api/tasks/:status/:filename` | Update task |
 | POST | `/api/tasks/move` | Move task between columns |
 | POST | `/api/tasks/reorder` | Reorder within column |
 | DELETE | `/api/tasks/:status/:filename` | Delete task |
-| GET | `/api/tasks/events` | SSE stream for file changes |
+| GET | `/api/tasks/events` | SSE stream |
+| GET | `/api/tasks/config` | Get project.json |
+| PUT | `/api/tasks/config` | Update project.json |
+
+### Projects
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/projects` | List all registered projects |
+| GET | `/api/projects/current` | Get current project with boardName |
+| POST | `/api/projects` | Add new project |
+| PUT | `/api/projects/:id` | Update project (name syncs to boardName) |
+| DELETE | `/api/projects/:id` | Remove project from registry |
+| POST | `/api/projects/:id/switch` | Switch to project |
+| POST | `/api/projects/validate-path` | Check if path is valid |
 
 ## Task File Format
-
-Tasks are markdown files in `/tasks/{status}/` directories:
 
 ```markdown
 # {Title}
 
 ## Status
-ideation | backlog | planning | implementing | uat | done
+ideation | planning | backlog | implementing | uat | done
 
 ## Tags
 - new-functionality
 - feature-enhancement
 - bug
 - refactor
+- devops
 
 ## Description
 {Freeform description}
 
 ## Acceptance Criteria
 - [ ] Criterion one
-- [ ] Criterion two
+- [x] Completed criterion
 
 ## Notes
 {Implementation notes, blockers, decisions}
@@ -71,53 +186,18 @@ ideation | backlog | planning | implementing | uat | done
 
 **File Naming:** `{priority}-{slug}.md` (e.g., `01-user-auth.md`)
 
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `src/components/KanbanBoard.tsx` | Main board component, drag-and-drop logic |
-| `src/components/TaskModal.tsx` | Create/edit form |
-| `src/components/Card.tsx` | Task card (sortable) |
-| `src/components/Column.tsx` | Column container (droppable) |
-| `src/hooks/useTasks.ts` | Task state, API calls, SSE subscription |
-| `src/lib/api.ts` | API client functions |
-| `src/types/task.ts` | TypeScript types and constants |
-| `src/index.css` | Tailwind theme (colors, fonts, spacing) |
-| `server/services/fileService.js` | File read/write/move/reorder |
-| `server/services/watcher.js` | Chokidar watcher + SSE broadcast |
-
-## Design System
-
-Defined in `src/index.css` using Tailwind's `@theme` directive:
-
-- **Colors:** Dark mode only (`--color-bg-base: #0d0d12`, etc.)
-- **Font:** JetBrains Mono (monospace)
-- **Spacing:** 4px base unit
-- **Tags:** Color-coded by type (new=purple, enhancement=blue, bug=red, refactor=teal)
-
-Reference `/kanban-style-guide.md` in parent directory for full design specs.
-
-## Commands
-
-```bash
-# Development (runs both Vite + Express)
-npm start
-
-# Run separately
-npm run dev      # Vite on :5173
-npm run server   # Express on :3001
-
-# Build for production
-npm run build
-```
-
 ## Configuration
 
-- **Tasks directory:** Set `TASKS_DIR` env var or defaults to `../tasks`
-- **API port:** Set `PORT` env var or defaults to `3001`
-- **Vite proxy:** Configured in `vite.config.ts` to proxy `/api` to Express
+### Ports
+- **Vite:** `5190` (configured in `vite.config.ts`)
+- **Express:** `3050` (configured in `server/index.js`)
+- Chosen to avoid conflicts with typical dev servers (3000, 5173)
 
-## Common Tasks
+### Environment Variables
+- `PORT` - Override Express port (default: 3050)
+- `TASKS_DIR` - Only used for initial migration on first run
+
+## Common Development Tasks
 
 ### Adding a new tag type
 1. Add to `TaskTag` type in `src/types/task.ts`
@@ -130,18 +210,20 @@ npm run build
 1. Add to `TaskStatus` type in `src/types/task.ts`
 2. Add label to `STATUS_LABELS` in same file
 3. Add to `STATUSES` array in same file
-4. Create directory in `/tasks/{new-status}/`
-5. Update `STATUSES` array in `server/services/fileService.js`
+4. Update `STATUSES` array in `server/services/fileService.js`
+5. Update `STATUSES` array in `server/services/configService.js`
 
-### Modifying card appearance
-- Card styles: `src/components/Card.tsx`
-- Drag states defined in same file (isDragging opacity/scale)
-- Drop zone highlight: `src/components/Column.tsx` (isOver border)
+### Modifying task form fields
+1. Update `TaskFormData` type in `src/types/task.ts`
+2. Add form fields in `src/components/TaskModal.tsx`
+3. Update `parseTaskFile()` in `server/services/fileService.js`
+4. Update `serializeTask()` in `server/services/fileService.js`
 
-### Modifying the task form
-- Form fields: `src/components/TaskModal.tsx`
-- Task serialization: `server/services/fileService.js` (`serializeTask` function)
-- Task parsing: `server/services/fileService.js` (`parseTaskFile` function)
+### Adding a new project API endpoint
+1. Add route in `server/routes/projects.js`
+2. Add service function in `server/services/configService.js` if needed
+3. Add API function in `src/lib/api.ts`
+4. Use in `src/hooks/useProjects.ts`
 
 ## Dependencies
 
@@ -150,18 +232,29 @@ npm run build
 - `tailwindcss`, `@tailwindcss/vite` - Styling
 - `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` - Drag-and-drop
 - `lucide-react` - Icons
-- `gray-matter` - Markdown frontmatter parsing (unused in frontend, used in server)
 
-**Backend (dev dependencies):**
+**Backend:**
 - `express` - API server
 - `cors` - Cross-origin requests
 - `chokidar` - File system watcher
-- `concurrently` - Run multiple npm scripts
+- `gray-matter` - Markdown parsing (available but not currently used)
+- `concurrently` - Run Vite + Express together
 
 ## Known Limitations
 
-- Single user only (no auth)
-- No undo/redo
-- No task dependencies
-- No time tracking
-- File watcher may have slight delay on some systems
+- **Single user only** - No authentication
+- **No undo/redo** - File operations are immediate
+- **No task dependencies** - Tasks are independent
+- **No time tracking** - No estimates or logged time
+- **Machine-specific project paths** - Must re-register projects on each machine
+- **File watcher delay** - May have slight lag on some systems
+
+## Future Enhancement Ideas
+
+- Keyboard shortcuts for common actions
+- Task templates
+- Bulk operations (multi-select)
+- Task search across all projects
+- Project grouping/workspaces
+- Export/import functionality
+- Optional light mode theme

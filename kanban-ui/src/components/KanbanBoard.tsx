@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -21,16 +21,17 @@ import { Card } from './Card';
 import { TaskModal } from './TaskModal';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
-import { SettingsModal } from './SettingsModal';
+import { ProjectSwitcher } from './ProjectSwitcher';
+import { ProjectsModal } from './ProjectsModal';
 import { useTasks } from '../hooks/useTasks';
-import { fetchConfig, updateConfig } from '../lib/api';
-import { Plus, Settings } from 'lucide-react';
+import { useProjects } from '../hooks/useProjects';
+import { Plus } from 'lucide-react';
 
 export function KanbanBoard() {
   const {
     tasks,
-    loading,
-    error,
+    loading: tasksLoading,
+    error: tasksError,
     createTask,
     updateTask,
     moveTask,
@@ -38,17 +39,29 @@ export function KanbanBoard() {
     getTasksByStatus
   } = useTasks();
 
+  const {
+    projects,
+    currentProject,
+    loading: projectsLoading,
+    addProject,
+    removeProject,
+    updateProjectName,
+    switchToProject,
+    validatePath
+  } = useProjects();
+
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [modalTask, setModalTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [boardName, setBoardName] = useState('Task Manager');
+  const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
 
-  useEffect(() => {
-    fetchConfig().then(config => setBoardName(config.boardName)).catch(() => {});
-  }, []);
+  // Handle project switch - refresh tasks
+  const handleProjectSwitch = useCallback(async (id: string) => {
+    await switchToProject(id);
+    // Tasks will auto-refresh via SSE 'project-switched' event
+  }, [switchToProject]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -157,24 +170,20 @@ export function KanbanBoard() {
     setIsModalOpen(false);
   }
 
-  async function handleSettingsSave(newBoardName: string) {
-    await updateConfig({ boardName: newBoardName });
-    setBoardName(newBoardName);
-    setIsSettingsOpen(false);
-  }
+  const loading = tasksLoading || projectsLoading;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-[var(--color-text-muted)]">Loading tasks...</p>
+        <p className="text-[var(--color-text-muted)]">Loading...</p>
       </div>
     );
   }
 
-  if (error) {
+  if (tasksError) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-[var(--color-tag-bug-text)]">{error}</p>
+        <p className="text-[var(--color-tag-bug-text)]">{tasksError}</p>
       </div>
     );
   }
@@ -182,15 +191,14 @@ export function KanbanBoard() {
   return (
     <div className="h-full flex flex-col">
       <header className="flex items-center justify-between p-4 border-b border-[var(--color-border-subtle)]">
-        <span className="text-[var(--color-text-primary)] text-[16px] font-semibold">{boardName}</span>
+        <ProjectSwitcher
+          currentProject={currentProject}
+          projects={projects}
+          onSwitch={handleProjectSwitch}
+          onManage={() => setIsProjectsModalOpen(true)}
+        />
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-2 rounded-[6px] hover:bg-[var(--color-bg-elevated)] transition-colors"
-          >
-            <Settings size={18} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]" />
-          </button>
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
           <FilterDropdown selected={selectedTags} onChange={setSelectedTags} />
           <button
@@ -242,11 +250,16 @@ export function KanbanBoard() {
         />
       )}
 
-      {isSettingsOpen && (
-        <SettingsModal
-          boardName={boardName}
-          onSave={handleSettingsSave}
-          onClose={() => setIsSettingsOpen(false)}
+      {isProjectsModalOpen && (
+        <ProjectsModal
+          projects={projects}
+          currentProject={currentProject}
+          onAdd={addProject}
+          onRemove={removeProject}
+          onUpdateName={updateProjectName}
+          onSwitch={handleProjectSwitch}
+          onValidatePath={validatePath}
+          onClose={() => setIsProjectsModalOpen(false)}
         />
       )}
     </div>

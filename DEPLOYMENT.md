@@ -1,87 +1,185 @@
 # Kanban UI Deployment Guide
 
-## Quick Start (New Project)
+## Overview
 
-### 1. Copy the Kanban UI to your project
+The Kanban UI is a **centralized tool** that can manage tasks across multiple projects. You install it once, then register any project that has (or needs) a `/tasks` folder.
+
+**Key concepts:**
+- **One installation** of kanban-ui serves all your projects
+- **Global config** at `~/.kanban-ui/config.json` tracks registered projects
+- **Each project** has its own `/tasks` folder (can be git-tracked per project)
+- **Ports:** Vite runs on `5190`, Express API on `3050` (to avoid conflicts with project dev servers)
+
+---
+
+## Quick Start (New Machine Setup)
+
+### 1. Clone or copy the Kanban UI once
 
 ```bash
-# From your project root
-cp -r "/Users/mritty/Documents/Kanban UI Claude/kanban-ui" ./kanban
+# Clone to a permanent location (pick one)
+git clone <your-kanban-repo> ~/tools/kanban-ui
 
-# Or if you keep a template
-cp -r ~/templates/kanban-ui ./kanban
+# Or copy from another machine
+scp -r user@other-machine:~/tools/kanban-ui ~/tools/kanban-ui
 ```
 
 ### 2. Install dependencies
 
 ```bash
-cd kanban
+cd ~/tools/kanban-ui
 npm install
 ```
 
-### 3. Create task directories
+### 3. Start the server
 
 ```bash
-mkdir -p tasks/{ideation,planning,backlog,implementing,uat,done}
-```
-
-Or let the server create them automatically on first run.
-
-### 4. Start the Kanban UI
-
-```bash
-cd kanban
 npm start
 ```
 
-Usually opens at `http://localhost:5173`
+This will:
+- Create `~/.kanban-ui/config.json` automatically (first run only)
+- Register the parent directory as "Default Project"
+- Start Vite on `http://localhost:5190`
+- Start Express API on `http://localhost:3050`
+
+### 4. Open the UI and add your projects
+
+1. Open `http://localhost:5190` in your browser
+2. Click the project dropdown (top-left) → **"Manage Projects..."**
+3. Add each project:
+   - **Name:** Human-readable name (e.g., "Budget App")
+   - **Path:** Absolute path to project root (e.g., `/Users/you/projects/budget-app`)
+4. If the project doesn't have a `tasks/` folder, you'll be prompted to create it
+
+### 5. Switch between projects
+
+Use the dropdown in the header to switch. Tasks reload automatically.
 
 ---
 
-## If you have issues copying and starting the server: 
+## Adding a New Project
 
-The .bin/ folder inside node_modules contains symlinks (shortcuts) that point to
-  executables. When you copy the folder, those symlinks can break because they may contain
-  absolute paths or get corrupted during the copy.
+### From the UI (recommended)
+1. Click project dropdown → "Manage Projects..."
+2. Enter name and absolute path
+3. Click "Add Project"
+4. If no `tasks/` folder exists, click "Create tasks folder"
 
-  Best practice for next time: Either:
-
-  1. Don't copy node_modules - delete it before copying, then run npm install in the new
-  location
-  2. Or use rsync with symlink handling - but honestly just reinstalling is simpler
-
-  You could add a note to your deployment process: "After copying, run rm -rf node_modules &&
-  npm install" - or just always expect to do a fresh install after copying any Node project.
-
----
-
-## Project Structure After Setup
-
+### What gets created
 ```
 /your-project/
-  /kanban/                  ← Kanban UI app
-    /src/
-    /server/
-    package.json
-    CLAUDE.md               ← For improving the tool itself
-  /tasks/                   ← Task files (created automatically or manually)
+  /tasks/
     /ideation/
     /planning/
     /backlog/
     /implementing/
     /uat/
     /done/
-  /src/                     ← Your actual project code
-  CLAUDE.md                 ← Your project's Claude instructions
+    project.json          ← Stores board name (auto-created)
+```
+
+---
+
+## Configuration Files
+
+### Global Config: `~/.kanban-ui/config.json`
+```json
+{
+  "currentProject": "/Users/you/projects/budget-app",
+  "projects": [
+    {
+      "id": "budget-app",
+      "name": "Budget App",
+      "path": "/Users/you/projects/budget-app",
+      "lastAccessed": "2025-12-09T12:00:00Z"
+    },
+    {
+      "id": "website",
+      "name": "Company Website",
+      "path": "/Users/you/projects/website",
+      "lastAccessed": "2025-12-08T10:00:00Z"
+    }
+  ]
+}
+```
+
+- **Machine-specific:** This file is NOT shared between machines
+- **Auto-created:** First run creates it with a default project
+- **Editable:** You can manually edit this file if needed
+
+### Per-Project Config: `{project}/tasks/project.json`
+```json
+{
+  "boardName": "Budget App"
+}
+```
+
+- **Shared:** This file IS in your project and can be git-tracked
+- **Board name:** Displayed in the header when this project is active
+
+---
+
+## Work Machine Setup (Second Computer)
+
+Since `~/.kanban-ui/config.json` is machine-specific, you'll need to re-register your projects on each machine.
+
+### Steps:
+1. Clone/copy `kanban-ui` to a permanent location
+2. `cd kanban-ui && npm install`
+3. `npm start`
+4. Open `http://localhost:5190`
+5. Add each project via "Manage Projects..."
+   - Use the paths on THIS machine (they may differ from your personal computer)
+
+### Example
+Personal machine:
+```
+/Users/mritty/projects/budget-app
+```
+
+Work machine:
+```
+/Users/msmith/dev/budget-app
+```
+
+Both point to the same git repo, just different local paths.
+
+---
+
+## Project Structure
+
+```
+~/.kanban-ui/
+  config.json                 ← Global config (machine-specific)
+
+~/tools/kanban-ui/            ← Kanban UI installation (one per machine)
+  /src/
+  /server/
+  package.json
+
+~/projects/budget-app/        ← Your project
+  /tasks/                     ← Task storage (git-tracked)
+    /ideation/
+    /planning/
+    /backlog/
+    /implementing/
+    /uat/
+    /done/
+    project.json
+  /src/                       ← Your project code
+  CLAUDE.md
+
+~/projects/website/           ← Another project
+  /tasks/
+    ...
 ```
 
 ---
 
 ## Configuring Claude Code for Your Project
 
-### Option A: Add to Project's CLAUDE.md
-
-Add this section to your project's `CLAUDE.md` file:
+Add this to your project's `CLAUDE.md`:
 
 ```markdown
 ## Task Management
@@ -93,22 +191,21 @@ Tasks are stored as markdown files in `/tasks/{status}/` directories:
 - `/tasks/ideation/` - Rough ideas, not yet defined
 - `/tasks/planning/` - Needs design/discussion before ready
 - `/tasks/backlog/` - Fully planned and ready to be picked up
-- `/tasks/implementing/` - Currently being worked on (START HERE)
+- `/tasks/implementing/` - Currently being worked on
 - `/tasks/uat/` - Complete, awaiting review
 - `/tasks/done/` - Accepted and finished
 
 ### Working on Tasks
 
 When asked to work on tasks:
-1. Read the top file in `/tasks/backlog/` (lowest number prefix)
+1. Read the top file in `/tasks/backlog/` (lowest number prefix = highest priority)
 2. Move the file to `/tasks/implementing/`
 3. Update the `## Status` field to `implementing`
 4. Implement the work described
 5. Check off acceptance criteria as completed
-6. Add notes to `## Notes` section for any decisions or blockers
+6. Add notes to `## Notes` section for any decisions
 7. When complete, move file to `/tasks/uat/`
 8. Update the `## Status` field to `uat`
-9. Check `/tasks/backlog/` for next task
 
 ### Task File Format
 
@@ -129,112 +226,69 @@ planning
 - [ ] Criterion two
 
 ## Notes
-{Add implementation notes here}
+{Implementation notes}
 ```
-
-### If Blocked
-
-If you encounter a blocker or need clarification:
-1. Update the `## Notes` section with your question/blocker
-2. Leave the task in its current state
-3. Stop and ask for guidance
-```
-
-### Option B: Standalone Instructions File
-
-Create `/tasks/CLAUDE-INSTRUCTIONS.md` in the tasks directory:
-
-```markdown
-# Task Management Instructions for Claude
-
-## Overview
-This directory contains tasks in a Kanban workflow. Each subdirectory represents a status column.
-
-## Workflow
-1. Check `/backlog/` for tasks to work on
-2. Pick the top task (lowest number prefix = highest priority)
-3. Move to `/implementing/` and update status
-4. Complete the work
-5. Move to `/uat/` when done
-
-## File Format
-Tasks are markdown with sections: Status, Tags, Description, Acceptance Criteria, Notes
-
-## Priority
-Files are numbered: `01-task.md` is higher priority than `02-task.md`
-
-## When Stuck
-Update the Notes section and ask for help. Don't move the task.
 ```
 
 ---
 
-## Prompts for Claude Code
+## Running the Kanban UI
 
-### Starting a Work Session
-
+### Development (default)
+```bash
+cd ~/tools/kanban-ui
+npm start
 ```
-Please check /tasks/backlog/ and begin working on the highest priority task.
-Follow the task management workflow in CLAUDE.md.
-```
+- Vite: `http://localhost:5190`
+- API: `http://localhost:3050`
 
-### Checking Task Status
-
-```
-What tasks are currently implementing? What's in the backlog?
-```
-
-### Creating Tasks via Claude
-
-```
-Create a new task in /tasks/backlog/ for: [description]
-Use the standard task file format with appropriate tags.
+### Custom ports (if needed)
+```bash
+PORT=4000 npm run server  # API on port 4000
 ```
 
-### Reviewing Completed Work
-
-```
-Check /tasks/uat/ and summarize what's ready for review.
-```
-
-### Moving Tasks After Review
-
-```
-I've reviewed 01-feature-name.md in /tasks/uat/ - it looks good.
-Move it to /tasks/done/.
-```
+Edit `vite.config.ts` to change Vite port and proxy target.
 
 ---
 
 ## Tips
 
 ### Keep the UI Running
-Run `npm start` in the `/kanban` directory while working. The UI auto-updates when files change.
+Run `npm start` in a terminal while working. The UI auto-updates when task files change (via SSE).
 
 ### Manual Task Creation
-You can create `.md` files directly in the task directories. The UI will pick them up automatically.
+Create `.md` files directly in task directories. The UI picks them up automatically via file watching.
+
+### Editing Project Names
+Click the project dropdown → "Manage Projects..." → click the pencil icon next to a project name.
 
 ### Priority Management
-- Drag cards in the UI to reorder (renames files with new numbers)
-- Or manually rename files: `01-` is highest priority
+- Drag cards in the UI to reorder (renames files with new priority numbers)
+- Or manually rename: `01-` is highest priority, `02-` is next, etc.
 
-### Multiple Projects
-Each project gets its own `/tasks` directory. The Kanban UI reads from `../tasks` relative to where it runs.
-
-### Custom Tasks Directory
-Set the `TASKS_DIR` environment variable:
+### If Node Modules Break After Copying
 ```bash
-TASKS_DIR=/path/to/tasks npm start
+rm -rf node_modules && npm install
 ```
+Symlinks in `node_modules/.bin/` can break when copying. Fresh install fixes it.
 
 ---
 
-## Recommended Workflow
+## Troubleshooting
 
-1. **You:** Add tasks to Ideation via the UI
-2. **You:** Move tasks needing design to Planning, ready tasks to Backlog
-3. **Claude:** Works through Backlog → Implementing → UAT
-4. **You:** Review UAT items, move to Done or back to Planning with feedback
-5. **Repeat**
+### "Port already in use"
+Another process is using 5190 or 3050. Either:
+- Kill the other process
+- Or change ports in `server/index.js` and `vite.config.ts`
 
-The UI gives you visibility; Claude operates on the same files autonomously.
+### Projects not showing up
+Check `~/.kanban-ui/config.json` exists and has valid paths for this machine.
+
+### Tasks not loading
+- Verify the project path exists
+- Check that `{path}/tasks/` directory exists
+- Look at terminal for server errors
+
+### UI not updating
+- Check SSE connection (browser dev tools → Network → EventStream)
+- Restart the server: `npm start`

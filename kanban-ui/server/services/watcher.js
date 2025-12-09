@@ -4,8 +4,14 @@ import { getTasksDir } from './fileService.js';
 let watcher = null;
 const clients = new Set();
 
-export function initWatcher() {
-  const tasksDir = getTasksDir();
+export async function initWatcher() {
+  const tasksDir = await getTasksDir();
+
+  // Close existing watcher if any
+  if (watcher) {
+    await watcher.close();
+    watcher = null;
+  }
 
   watcher = chokidar.watch(tasksDir, {
     persistent: true,
@@ -53,4 +59,25 @@ export function closeWatcher() {
     watcher.close();
     watcher = null;
   }
+}
+
+// Broadcast a message to all SSE clients
+export function broadcastToClients(message) {
+  const data = JSON.stringify(message);
+  for (const client of clients) {
+    client.write(`data: ${data}\n\n`);
+  }
+}
+
+// Switch to a different project - reinitializes the watcher and notifies clients
+export async function switchProject(projectId) {
+  // Reinitialize watcher with new project path (getTasksDir will read from updated config)
+  await initWatcher();
+
+  // Notify all SSE clients to refresh their data
+  broadcastToClients({
+    event: 'project-switched',
+    projectId,
+    timestamp: Date.now()
+  });
 }

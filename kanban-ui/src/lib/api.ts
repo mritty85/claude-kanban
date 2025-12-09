@@ -1,4 +1,4 @@
-import type { Task, TaskFormData, TaskStatus } from '../types/task';
+import type { Task, TaskFormData, TaskStatus, Project, ProjectFormData, PathValidation } from '../types/task';
 
 const API_BASE = '/api';
 
@@ -91,5 +91,67 @@ export async function updateConfig(data: Partial<ProjectConfig>): Promise<Projec
     body: JSON.stringify(data)
   });
   if (!res.ok) throw new Error('Failed to update config');
+  return res.json();
+}
+
+// Project management API functions
+
+export async function fetchProjects(): Promise<Project[]> {
+  const res = await fetch(`${API_BASE}/projects`);
+  if (!res.ok) throw new Error('Failed to fetch projects');
+  return res.json();
+}
+
+export async function fetchCurrentProject(): Promise<Project> {
+  const res = await fetch(`${API_BASE}/projects/current`);
+  if (!res.ok) throw new Error('Failed to fetch current project');
+  return res.json();
+}
+
+export async function addProject(data: ProjectFormData): Promise<Project & { tasksCreated?: boolean }> {
+  const res = await fetch(`${API_BASE}/projects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to add project');
+  }
+  return res.json();
+}
+
+export async function removeProject(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/projects/${id}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error('Failed to remove project');
+}
+
+export async function updateProject(id: string, data: Partial<ProjectFormData>): Promise<Project> {
+  const res = await fetch(`${API_BASE}/projects/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to update project');
+  return res.json();
+}
+
+export async function switchProject(id: string): Promise<Project> {
+  const res = await fetch(`${API_BASE}/projects/${id}/switch`, {
+    method: 'POST'
+  });
+  if (!res.ok) throw new Error('Failed to switch project');
+  return res.json();
+}
+
+export async function validateProjectPath(path: string): Promise<PathValidation> {
+  const res = await fetch(`${API_BASE}/projects/validate-path`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path })
+  });
+  if (!res.ok) throw new Error('Failed to validate path');
   return res.json();
 }
