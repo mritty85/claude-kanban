@@ -147,6 +147,50 @@ Both point to the same git repo, just different local paths.
 
 ---
 
+## Upgrading an Existing Installation
+
+When a new version is available (new features, bug fixes), updating is simple because the tool and your data are separate.
+
+### Quick Upgrade (2 commands)
+
+```bash
+cd ~/tools/kanban-ui    # or wherever you installed it
+git pull && cd kanban-ui && npm install
+```
+
+That's it. Your `~/.kanban-ui/config.json` and all registered projects remain untouched.
+
+### What Gets Updated vs. What Stays
+
+| Updated (from git) | Preserved (local) |
+|--------------------|-------------------|
+| `kanban-ui/src/*` | `~/.kanban-ui/config.json` |
+| `kanban-ui/server/*` | Each project's `/tasks/*` folders |
+| `package.json` | Each project's `tasks/project.json` |
+
+### After Upgrading
+
+1. Restart the server if it was running:
+   ```bash
+   # Kill the running server (Ctrl+C) then:
+   npm start
+   ```
+2. Hard refresh the browser (`Cmd+Shift+R` / `Ctrl+Shift+R`) to clear cached JS
+
+### If Something Breaks
+
+```bash
+# Nuclear option: clean reinstall of dependencies
+cd ~/tools/kanban-ui/kanban-ui
+rm -rf node_modules
+npm install
+npm start
+```
+
+Your projects and tasks are never affected since they live outside the installation folder.
+
+---
+
 ## Project Structure
 
 ```
