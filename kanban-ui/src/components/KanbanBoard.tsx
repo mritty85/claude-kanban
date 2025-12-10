@@ -56,12 +56,25 @@ export function KanbanBoard() {
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<TaskStatus>>(new Set());
 
   // Handle project switch - refresh tasks
   const handleProjectSwitch = useCallback(async (id: string) => {
     await switchToProject(id);
     // Tasks will auto-refresh via SSE 'project-switched' event
   }, [switchToProject]);
+
+  const toggleColumnCollapse = useCallback((status: TaskStatus) => {
+    setCollapsedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -226,6 +239,8 @@ export function KanbanBoard() {
                   status={status}
                   tasks={getFilteredTasksByStatus(status)}
                   onTaskClick={handleTaskClick}
+                  isCollapsed={collapsedColumns.has(status)}
+                  onToggleCollapse={() => toggleColumnCollapse(status)}
                 />
                 {index < STATUSES.length - 1 && (
                   <div className="w-px bg-[var(--color-border-subtle)] mx-2 self-stretch" />

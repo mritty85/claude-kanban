@@ -29,6 +29,8 @@
   --color-tag-bug-text: #f87171;
   --color-tag-refactor-bg: #1a3d3d;
   --color-tag-refactor-text: #5eead4;
+  --color-tag-devops-bg: #4a3d1d;
+  --color-tag-devops-text: #fbbf24;
 
   /* Typography */
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
@@ -88,4 +90,62 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-emphasis);
+}
+
+/* Light Theme */
+html.light {
+  /* Base Colors */
+  --color-bg-base: #f5f5f7;
+  --color-bg-surface: #ffffff;
+  --color-bg-elevated: #f0f0f2;
+  --color-border-subtle: #e0e0e5;
+  --color-border-emphasis: #c8c8d0;
+
+  /* Text Colors */
+  --color-text-primary: #1a1a1e;
+  --color-text-secondary: #5c5c6e;
+  --color-text-muted: #9090a0;
+
+  /* Accent Colors - darker for light backgrounds */
+  --color-accent-primary: #6b4ee6;
+  --color-accent-primary-hover: #5a3dd5;
+  --color-accent-teal: #0d9488;
+  --color-accent-blue: #0284c7;
+
+  /* Tag Colors - pastel backgrounds, darker text */
+  --color-tag-new-bg: #ede9fe;
+  --color-tag-new-text: #6d28d9;
+  --color-tag-feature-bg: #e0f2fe;
+  --color-tag-feature-text: #0369a1;
+  --color-tag-bug-bg: #fee2e2;
+  --color-tag-bug-text: #b91c1c;
+  --color-tag-refactor-bg: #ccfbf1;
+  --color-tag-refactor-text: #0f766e;
+  --color-tag-devops-bg: #fef3c7;
+  --color-tag-devops-text: #b45309;
+}
+
+/* Theme Transition */
+html,
+html *,
+html *::before,
+html *::after {
+  transition: background-color 200ms ease-in-out,
+              border-color 200ms ease-in-out,
+              color 200ms ease-in-out,
+              box-shadow 200ms ease-in-out;
+}
+
+/* Disable transitions during drag operations */
+[data-dragging="true"],
+[data-dragging="true"] * {
+  transition: none !important;
+}
+
+/* Column collapse/expand transition */
+.column-transition {
+  transition: width 200ms ease-in-out,
+              min-width 200ms ease-in-out,
+              max-width 200ms ease-in-out,
+              opacity 150ms ease-in-out;
 }

@@ -6,11 +6,11 @@ interface TagProps {
 }
 
 const tagStyles: Record<TaskTag, string> = {
-  'new-functionality': 'bg-[#2e1f5e] text-[#a78bfa]',
-  'feature-enhancement': 'bg-[#1e3a5f] text-[#7dd3fc]',
-  'bug': 'bg-[#4a1d1d] text-[#f87171]',
-  'refactor': 'bg-[#1a3d3d] text-[#5eead4]',
-  'devops': 'bg-[#4a3d1d] text-[#fbbf24]'
+  'new-functionality': 'bg-[var(--color-tag-new-bg)] text-[var(--color-tag-new-text)]',
+  'feature-enhancement': 'bg-[var(--color-tag-feature-bg)] text-[var(--color-tag-feature-text)]',
+  'bug': 'bg-[var(--color-tag-bug-bg)] text-[var(--color-tag-bug-text)]',
+  'refactor': 'bg-[var(--color-tag-refactor-bg)] text-[var(--color-tag-refactor-text)]',
+  'devops': 'bg-[var(--color-tag-devops-bg)] text-[var(--color-tag-devops-text)]'
 };
 
 export function Tag({ tag }: TagProps) {

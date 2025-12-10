@@ -14,11 +14,11 @@ interface TaskModalProps {
 }
 
 const tagStyles: Record<TaskTag, { bg: string; text: string; selected: string }> = {
-  'new-functionality': { bg: 'bg-[#2e1f5e]/50', text: 'text-[#a78bfa]', selected: 'bg-[#2e1f5e] ring-2 ring-[#a78bfa]' },
-  'feature-enhancement': { bg: 'bg-[#1e3a5f]/50', text: 'text-[#7dd3fc]', selected: 'bg-[#1e3a5f] ring-2 ring-[#7dd3fc]' },
-  'bug': { bg: 'bg-[#4a1d1d]/50', text: 'text-[#f87171]', selected: 'bg-[#4a1d1d] ring-2 ring-[#f87171]' },
-  'refactor': { bg: 'bg-[#1a3d3d]/50', text: 'text-[#5eead4]', selected: 'bg-[#1a3d3d] ring-2 ring-[#5eead4]' },
-  'devops': { bg: 'bg-[#4a3d1d]/50', text: 'text-[#fbbf24]', selected: 'bg-[#4a3d1d] ring-2 ring-[#fbbf24]' }
+  'new-functionality': { bg: 'bg-[var(--color-tag-new-bg)]/50', text: 'text-[var(--color-tag-new-text)]', selected: 'bg-[var(--color-tag-new-bg)] ring-2 ring-[var(--color-tag-new-text)]' },
+  'feature-enhancement': { bg: 'bg-[var(--color-tag-feature-bg)]/50', text: 'text-[var(--color-tag-feature-text)]', selected: 'bg-[var(--color-tag-feature-bg)] ring-2 ring-[var(--color-tag-feature-text)]' },
+  'bug': { bg: 'bg-[var(--color-tag-bug-bg)]/50', text: 'text-[var(--color-tag-bug-text)]', selected: 'bg-[var(--color-tag-bug-bg)] ring-2 ring-[var(--color-tag-bug-text)]' },
+  'refactor': { bg: 'bg-[var(--color-tag-refactor-bg)]/50', text: 'text-[var(--color-tag-refactor-text)]', selected: 'bg-[var(--color-tag-refactor-bg)] ring-2 ring-[var(--color-tag-refactor-text)]' },
+  'devops': { bg: 'bg-[var(--color-tag-devops-bg)]/50', text: 'text-[var(--color-tag-devops-text)]', selected: 'bg-[var(--color-tag-devops-bg)] ring-2 ring-[var(--color-tag-devops-text)]' }
 };
 
 interface SortableCriterionProps {
