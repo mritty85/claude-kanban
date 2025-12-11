@@ -32,6 +32,24 @@
   --color-tag-devops-bg: #4a3d1d;
   --color-tag-devops-text: #fbbf24;
 
+  /* Epic Colors (8-color palette for hash-based assignment) */
+  --color-epic-rose-bg: #4a1d2e;
+  --color-epic-rose-text: #f472b6;
+  --color-epic-orange-bg: #4a2e1d;
+  --color-epic-orange-text: #fb923c;
+  --color-epic-amber-bg: #4a3d1d;
+  --color-epic-amber-text: #fbbf24;
+  --color-epic-lime-bg: #2e4a1d;
+  --color-epic-lime-text: #a3e635;
+  --color-epic-cyan-bg: #1d3d4a;
+  --color-epic-cyan-text: #22d3ee;
+  --color-epic-blue-bg: #1d2e4a;
+  --color-epic-blue-text: #60a5fa;
+  --color-epic-violet-bg: #2e1d4a;
+  --color-epic-violet-text: #a78bfa;
+  --color-epic-fuchsia-bg: #4a1d4a;
+  --color-epic-fuchsia-text: #e879f9;
+
   /* Typography */
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
 
@@ -123,6 +141,24 @@ html.light {
   --color-tag-refactor-text: #0f766e;
   --color-tag-devops-bg: #fef3c7;
   --color-tag-devops-text: #b45309;
+
+  /* Epic Colors - light mode */
+  --color-epic-rose-bg: #fce7f3;
+  --color-epic-rose-text: #be185d;
+  --color-epic-orange-bg: #ffedd5;
+  --color-epic-orange-text: #c2410c;
+  --color-epic-amber-bg: #fef3c7;
+  --color-epic-amber-text: #b45309;
+  --color-epic-lime-bg: #ecfccb;
+  --color-epic-lime-text: #4d7c0f;
+  --color-epic-cyan-bg: #cffafe;
+  --color-epic-cyan-text: #0e7490;
+  --color-epic-blue-bg: #dbeafe;
+  --color-epic-blue-text: #1d4ed8;
+  --color-epic-violet-bg: #ede9fe;
+  --color-epic-violet-text: #6d28d9;
+  --color-epic-fuchsia-bg: #fae8ff;
+  --color-epic-fuchsia-text: #a21caf;
 }
 
 /* Theme Transition */

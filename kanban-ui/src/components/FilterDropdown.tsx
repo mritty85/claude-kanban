@@ -2,10 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { Filter, Calendar, ArrowUpDown } from 'lucide-react';
 import type { TaskTag, DateFilter, DoneSortOption } from '../types/task';
 import { TAGS, TAG_LABELS } from '../types/task';
+import { getEpicColor } from '../utils/epicColors';
 
 interface FilterDropdownProps {
   selectedTags: TaskTag[];
   onTagsChange: (tags: TaskTag[]) => void;
+  selectedEpics: string[];
+  onEpicsChange: (epics: string[]) => void;
+  availableEpics: string[];
   dateFilter: DateFilter;
   onDateFilterChange: (filter: DateFilter) => void;
   doneSort: DoneSortOption;
@@ -37,6 +41,9 @@ const SORT_OPTIONS = [
 export function FilterDropdown({
   selectedTags,
   onTagsChange,
+  selectedEpics,
+  onEpicsChange,
+  availableEpics,
   dateFilter,
   onDateFilterChange,
   doneSort,
@@ -63,6 +70,14 @@ export function FilterDropdown({
     }
   }
 
+  function toggleEpic(epic: string) {
+    if (selectedEpics.includes(epic)) {
+      onEpicsChange(selectedEpics.filter(e => e !== epic));
+    } else {
+      onEpicsChange([...selectedEpics, epic]);
+    }
+  }
+
   function handlePresetChange(preset: typeof DATE_PRESETS[number]['value'] | null) {
     if (preset === 'custom') {
       onDateFilterChange({ preset: 'custom', startDate: '', endDate: '' });
@@ -71,11 +86,12 @@ export function FilterDropdown({
     }
   }
 
-  const hasActiveFilters = selectedTags.length > 0 || dateFilter.preset !== null;
-  const filterCount = selectedTags.length + (dateFilter.preset ? 1 : 0);
+  const hasActiveFilters = selectedTags.length > 0 || selectedEpics.length > 0 || dateFilter.preset !== null;
+  const filterCount = selectedTags.length + selectedEpics.length + (dateFilter.preset ? 1 : 0);
 
   function clearAllFilters() {
     onTagsChange([]);
+    onEpicsChange([]);
     onDateFilterChange({ preset: null });
     onDoneSortChange('priority');
   }
@@ -134,6 +150,46 @@ export function FilterDropdown({
               </span>
             </button>
           ))}
+
+          {/* Epics Section - only show if there are epics */}
+          {availableEpics.length > 0 && (
+            <>
+              <div className="border-t border-[var(--color-border-subtle)] my-2" />
+              <div className="px-3 py-1">
+                <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
+                  Epics
+                </span>
+              </div>
+              {availableEpics.map(epic => {
+                const colors = getEpicColor(epic);
+                return (
+                  <button
+                    key={epic}
+                    onClick={() => toggleEpic(epic)}
+                    className={`
+                      w-full px-3 py-2 text-left text-[12px]
+                      flex items-center gap-2
+                      hover:bg-[var(--color-bg-elevated)]
+                      transition-colors
+                    `}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedEpics.includes(epic)}
+                      onChange={() => {}}
+                      className="rounded"
+                    />
+                    <span
+                      className="px-2 py-0.5 rounded"
+                      style={{ backgroundColor: colors.bg, color: colors.text }}
+                    >
+                      {epic}
+                    </span>
+                  </button>
+                );
+              })}
+            </>
+          )}
 
           <div className="border-t border-[var(--color-border-subtle)] my-2" />
 

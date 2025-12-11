@@ -50,6 +50,7 @@ export function parseTaskFile(content, filename, status) {
   let acceptanceCriteria = [];
   let notes = '';
   let completed = '';
+  let epic = '';
   let currentSection = '';
 
   for (const line of lines) {
@@ -69,6 +70,8 @@ export function parseTaskFile(content, filename, status) {
       notes += (notes ? '\n' : '') + line;
     } else if (currentSection === 'completed' && line.trim()) {
       completed = line.trim();
+    } else if (currentSection === 'epic' && line.trim()) {
+      epic = line.trim();
     }
   }
 
@@ -90,12 +93,19 @@ export function parseTaskFile(content, filename, status) {
     task.completed = completed;
   }
 
+  if (epic) {
+    task.epic = epic;
+  }
+
   return task;
 }
 
 export function serializeTask(task) {
   let content = `# ${task.title}\n\n`;
   content += `## Status\n${task.status}\n\n`;
+  if (task.epic) {
+    content += `## Epic\n${task.epic}\n\n`;
+  }
   content += `## Tags\n`;
   for (const tag of task.tags || []) {
     content += `- ${tag}\n`;

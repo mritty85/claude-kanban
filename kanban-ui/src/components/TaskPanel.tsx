@@ -6,10 +6,12 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from '@dnd-kit/utilities';
 import type { Task, TaskFormData, TaskStatus, TaskTag, AcceptanceCriterion } from '../types/task';
 import { STATUSES, STATUS_LABELS, TAGS, TAG_LABELS } from '../types/task';
+import { EpicCombobox } from './EpicCombobox';
 
 interface TaskPanelProps {
   isOpen: boolean;
   task: Task | null;
+  availableEpics: string[];
   onSave: (data: TaskFormData) => Promise<void>;
   onClose: () => void;
   onDelete?: (task: Task) => Promise<void>;
@@ -150,7 +152,7 @@ function SortableCriterion({
   );
 }
 
-export function TaskPanel({ isOpen, task, onSave, onClose, onDelete }: TaskPanelProps) {
+export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDelete }: TaskPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -173,6 +175,7 @@ export function TaskPanel({ isOpen, task, onSave, onClose, onDelete }: TaskPanel
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [completed, setCompleted] = useState<string>('');
+  const [epic, setEpic] = useState<string>('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -191,6 +194,7 @@ export function TaskPanel({ isOpen, task, onSave, onClose, onDelete }: TaskPanel
         setAcceptanceCriteria(task.acceptanceCriteria);
         setNotes(task.notes);
         setCompleted(task.completed || '');
+        setEpic(task.epic || '');
       } else {
         // Reset to defaults for new task
         setTitle('');
@@ -200,6 +204,7 @@ export function TaskPanel({ isOpen, task, onSave, onClose, onDelete }: TaskPanel
         setAcceptanceCriteria([]);
         setNotes('');
         setCompleted('');
+        setEpic('');
       }
       setNewCriterion('');
       setEditingIndex(null);
@@ -313,7 +318,8 @@ export function TaskPanel({ isOpen, task, onSave, onClose, onDelete }: TaskPanel
         tags,
         acceptanceCriteria,
         notes: notes.trim(),
-        completed: completed || undefined
+        completed: completed || undefined,
+        epic: epic.trim() || undefined
       });
     } finally {
       setSaving(false);
@@ -441,6 +447,19 @@ export function TaskPanel({ isOpen, task, onSave, onClose, onDelete }: TaskPanel
                   />
                 </div>
               )}
+            </div>
+
+            {/* Epic */}
+            <div className="mb-5">
+              <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+                Epic
+              </label>
+              <EpicCombobox
+                value={epic}
+                onChange={setEpic}
+                availableEpics={availableEpics}
+                placeholder="Select or type epic..."
+              />
             </div>
 
             {/* Tags */}

@@ -60,6 +60,18 @@ export function KanbanBoard() {
   const [dateFilter, setDateFilter] = useState<DateFilter>({ preset: null });
   const [doneSort, setDoneSort] = useState<DoneSortOption>('priority');
   const [collapsedColumns, setCollapsedColumns] = useState<Set<TaskStatus>>(new Set());
+  const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
+
+  // Collect all unique epics from tasks for filtering and autocomplete
+  const availableEpics = useMemo(() => {
+    const epicSet = new Set<string>();
+    tasks.forEach(task => {
+      if (task.epic) {
+        epicSet.add(task.epic);
+      }
+    });
+    return Array.from(epicSet).sort();
+  }, [tasks]);
 
   // Handle project switch - refresh tasks
   const handleProjectSwitch = useCallback(async (id: string) => {
@@ -143,9 +155,11 @@ export function KanbanBoard() {
         task.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTags = selectedTags.length === 0 ||
         selectedTags.some(tag => task.tags.includes(tag));
-      return matchesSearch && matchesTags;
+      const matchesEpics = selectedEpics.length === 0 ||
+        (task.epic && selectedEpics.includes(task.epic));
+      return matchesSearch && matchesTags && matchesEpics;
     });
-  }, [tasks, searchQuery, selectedTags]);
+  }, [tasks, searchQuery, selectedTags, selectedEpics]);
 
   const getFilteredTasksByStatus = useCallback((status: TaskStatus) => {
     let statusTasks = filteredTasks.filter(t => t.status === status);
@@ -293,6 +307,9 @@ export function KanbanBoard() {
           <FilterDropdown
             selectedTags={selectedTags}
             onTagsChange={setSelectedTags}
+            selectedEpics={selectedEpics}
+            onEpicsChange={setSelectedEpics}
+            availableEpics={availableEpics}
             dateFilter={dateFilter}
             onDateFilterChange={setDateFilter}
             doneSort={doneSort}
@@ -344,6 +361,7 @@ export function KanbanBoard() {
       <TaskPanel
         isOpen={isModalOpen}
         task={modalTask}
+        availableEpics={availableEpics}
         onSave={handleModalSave}
         onClose={() => setIsModalOpen(false)}
         onDelete={handleDelete}

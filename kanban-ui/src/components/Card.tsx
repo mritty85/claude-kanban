@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '../types/task';
 import { Tag } from './Tag';
+import { getEpicColor } from '../utils/epicColors';
 
 interface CardProps {
   task: Task;
@@ -47,6 +48,17 @@ export function Card({ task, onClick }: CardProps) {
         ${isDragging ? 'shadow-lg shadow-black/30' : ''}
       `}
     >
+      {task.epic && (
+        <span
+          className="inline-block px-2 py-0.5 rounded text-[10px] font-medium mb-1.5"
+          style={{
+            backgroundColor: getEpicColor(task.epic).bg,
+            color: getEpicColor(task.epic).text,
+          }}
+        >
+          {task.epic}
+        </span>
+      )}
       <h3 className="text-[14px] font-medium text-[var(--color-text-primary)] mb-2 leading-tight">
         {task.title}
       </h3>

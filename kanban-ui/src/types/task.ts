@@ -18,6 +18,7 @@ export interface Task {
   acceptanceCriteria: AcceptanceCriterion[];
   notes: string;
   completed?: string; // ISO 8601 datetime when task moved to Done
+  epic?: string; // Optional epic name for grouping related tasks
 }
 
 export interface TaskFormData {
@@ -28,6 +29,7 @@ export interface TaskFormData {
   acceptanceCriteria: AcceptanceCriterion[];
   notes: string;
   completed?: string; // ISO 8601 datetime when task moved to Done
+  epic?: string; // Optional epic name for grouping related tasks
 }
 
 export const STATUSES: TaskStatus[] = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
