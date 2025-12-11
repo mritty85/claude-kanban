@@ -75,7 +75,7 @@ App.tsx
     ├── FilterDropdown.tsx    ← Filter by tags
     ├── Column.tsx            ← Droppable column (one per status)
     │   └── Card.tsx          ← Draggable task card (sortable)
-    ├── TaskModal.tsx         ← Create/edit task form
+    ├── TaskPanel.tsx         ← Slide-out panel for create/edit task
     └── ProjectsModal.tsx     ← Manage projects (add/remove/rename)
 ```
 
@@ -204,7 +204,7 @@ ideation | planning | backlog | implementing | uat | done
 2. Add label to `TAG_LABELS` in same file
 3. Add color styles to `src/components/Tag.tsx` (`tagStyles` object)
 4. Add color styles to `src/components/FilterDropdown.tsx` (`tagStyles` object)
-5. Add color styles to `src/components/TaskModal.tsx` (`tagStyles` object)
+5. Add color styles to `src/components/TaskPanel.tsx` (`tagStyles` object)
 
 ### Adding a new status column
 1. Add to `TaskStatus` type in `src/types/task.ts`
@@ -215,7 +215,7 @@ ideation | planning | backlog | implementing | uat | done
 
 ### Modifying task form fields
 1. Update `TaskFormData` type in `src/types/task.ts`
-2. Add form fields in `src/components/TaskModal.tsx`
+2. Add form fields in `src/components/TaskPanel.tsx`
 3. Update `parseTaskFile()` in `server/services/fileService.js`
 4. Update `serializeTask()` in `server/services/fileService.js`
 

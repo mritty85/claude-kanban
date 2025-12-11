@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Plus, Trash2, Copy, Check, Pencil, GripVertical } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -7,10 +7,12 @@ import { CSS } from '@dnd-kit/utilities';
 import type { Task, TaskFormData, TaskStatus, TaskTag, AcceptanceCriterion } from '../types/task';
 import { STATUSES, STATUS_LABELS, TAGS, TAG_LABELS } from '../types/task';
 
-interface TaskModalProps {
+interface TaskPanelProps {
+  isOpen: boolean;
   task: Task | null;
   onSave: (data: TaskFormData) => Promise<void>;
   onClose: () => void;
+  onDelete?: (task: Task) => Promise<void>;
 }
 
 const tagStyles: Record<TaskTag, { bg: string; text: string; selected: string }> = {
@@ -148,7 +150,10 @@ function SortableCriterion({
   );
 }
 
-export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
+export function TaskPanel({ isOpen, task, onSave, onClose, onDelete }: TaskPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
   const autoResize = (element: HTMLTextAreaElement) => {
     element.style.height = 'auto';
     element.style.height = element.scrollHeight + 'px';
@@ -166,6 +171,8 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [completed, setCompleted] = useState<string>('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -173,16 +180,54 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
     })
   );
 
+  // Reset form when task changes or panel opens
   useEffect(() => {
-    if (task) {
-      setTitle(task.title);
-      setStatus(task.status);
-      setDescription(task.description);
-      setTags(task.tags);
-      setAcceptanceCriteria(task.acceptanceCriteria);
-      setNotes(task.notes);
+    if (isOpen) {
+      if (task) {
+        setTitle(task.title);
+        setStatus(task.status);
+        setDescription(task.description);
+        setTags(task.tags);
+        setAcceptanceCriteria(task.acceptanceCriteria);
+        setNotes(task.notes);
+        setCompleted(task.completed || '');
+      } else {
+        // Reset to defaults for new task
+        setTitle('');
+        setStatus('ideation');
+        setDescription('');
+        setTags([]);
+        setAcceptanceCriteria([]);
+        setNotes('');
+        setCompleted('');
+      }
+      setNewCriterion('');
+      setEditingIndex(null);
+      setEditingText('');
+      setCopied(false);
     }
-  }, [task]);
+  }, [task, isOpen]);
+
+  // Auto-focus title only for new tasks
+  useEffect(() => {
+    if (isOpen && !task) {
+      const timer = setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, task]);
+
+  // Escape key to close
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   function toggleTag(tag: TaskTag) {
     if (tags.includes(tag)) {
@@ -267,72 +312,96 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
         description: description.trim(),
         tags,
         acceptanceCriteria,
-        notes: notes.trim()
+        notes: notes.trim(),
+        completed: completed || undefined
       });
     } finally {
       setSaving(false);
     }
   }
 
+  async function handleDelete() {
+    if (!task || !onDelete) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${task.title}"?\n\nThis action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await onDelete(task);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      />
 
-      <div className="relative bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[8px] w-[80vw] max-w-[1000px] max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-5 border-b border-[var(--color-border-subtle)]">
-          <div className="flex items-center gap-3">
-            <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">
-              {task ? 'Edit Task' : 'New Task'}
-            </h2>
-            {task && (
-              <button
-                type="button"
-                onClick={copyTaskPath}
-                className="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--color-bg-elevated)] text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
-                title="Copy task path for @mention"
-              >
-                {copied ? (
-                  <>
-                    <Check size={12} className="text-[var(--color-accent-teal)]" />
-                    <span className="text-[var(--color-accent-teal)]">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy size={12} />
-                    <span>Copy Path</span>
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-[var(--color-bg-elevated)] transition-colors"
-          >
-            <X size={20} className="text-[var(--color-text-muted)]" />
-          </button>
-        </div>
+      {/* Panel */}
+      <div
+        ref={panelRef}
+        style={{
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 300ms ease-out'
+        }}
+        className="fixed top-0 right-0 h-full w-full md:w-[70vw] max-w-[900px] bg-[var(--color-bg-surface)] border-l border-[var(--color-border-subtle)] z-50 flex flex-col"
+      >
+        {/* Close button - absolute top right */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 p-1.5 rounded hover:bg-[var(--color-bg-elevated)] transition-colors z-10"
+        >
+          <X size={20} className="text-[var(--color-text-muted)]" />
+        </button>
 
-        <form onSubmit={handleSubmit} className="p-5 grid grid-cols-2 gap-5">
-          {/* Left Column */}
-          <div className="space-y-5">
-            <div>
-              <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
-                Title
-              </label>
+        {/* Scrollable Body */}
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            {/* Title row with Copy Path button */}
+            <div className="flex items-center gap-3 mb-5 pr-8">
               <input
+                ref={titleInputRef}
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Task title..."
                 required
-                className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none"
+                className="w-3/4 px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none"
               />
+              {task && (
+                <button
+                  type="button"
+                  onClick={copyTaskPath}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--color-bg-elevated)] text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-accent-primary)] transition-colors"
+                  title="Copy task path for @mention"
+                >
+                  {copied ? (
+                    <>
+                      <Check size={12} className="text-[var(--color-accent-teal)]" />
+                      <span className="text-[var(--color-accent-teal)]">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={12} />
+                      <span>Copy Path</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
-            {/* Status and Tags side-by-side */}
-            <div className="flex gap-3">
-              <div className="flex-1">
+            {/* Compact row: Status + Completed */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-5">
+              <div className="sm:w-48 shrink-0">
                 <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
                   Status
                 </label>
@@ -347,46 +416,71 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
                 </select>
               </div>
 
-              <div className="flex-1">
-                <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
-                  Tags
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {TAGS.map(tag => {
-                    const isSelected = tags.includes(tag);
-                    const styles = tagStyles[tag];
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => toggleTag(tag)}
-                        className={`px-3 py-1.5 rounded-[4px] text-[11px] font-medium transition-all ${styles.text} ${isSelected ? styles.selected : styles.bg}`}
-                      >
-                        {TAG_LABELS[tag]}
-                      </button>
-                    );
-                  })}
+              {/* Completed Date - only show for done status or if already set */}
+              {(status === 'done' || completed) && (
+                <div className="sm:w-48 shrink-0">
+                  <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+                    Completed
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={completed ? (() => {
+                      const date = new Date(completed);
+                      const offset = date.getTimezoneOffset();
+                      const local = new Date(date.getTime() - offset * 60000);
+                      return local.toISOString().slice(0, 16);
+                    })() : ''}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setCompleted(new Date(e.target.value).toISOString());
+                      } else {
+                        setCompleted('');
+                      }
+                    }}
+                    className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] focus:border-[var(--color-border-emphasis)] focus:outline-none"
+                  />
                 </div>
+              )}
+            </div>
+
+            {/* Tags */}
+            <div className="mb-5">
+              <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+                Tags
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {TAGS.map(tag => {
+                  const isSelected = tags.includes(tag);
+                  const styles = tagStyles[tag];
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 rounded-[4px] text-[11px] font-medium transition-all ${styles.text} ${isSelected ? styles.selected : styles.bg}`}
+                    >
+                      {TAG_LABELS[tag]}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div>
+            {/* Description - largest textarea */}
+            <div className="mb-5">
               <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
                 Description
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
                 placeholder="Describe the task..."
-                className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none overflow-hidden min-h-[100px]"
+                className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none min-h-[200px]"
               />
             </div>
-          </div>
 
-          {/* Right Column */}
-          <div className="space-y-5">
-            <div>
+            {/* Acceptance Criteria */}
+            <div className="mb-5">
               <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
                 Acceptance Criteria
               </label>
@@ -447,6 +541,7 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
               </div>
             </div>
 
+            {/* Notes */}
             <div>
               <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
                 Notes
@@ -454,32 +549,46 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
                 placeholder="Additional notes..."
-                className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none overflow-hidden min-h-[76px]"
+                className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none min-h-[120px]"
               />
             </div>
           </div>
 
-          {/* Footer - spans both columns */}
-          <div className="col-span-2 flex justify-end gap-3 pt-2 border-t border-[var(--color-border-subtle)]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving || !title.trim()}
-              className="px-4 py-2 bg-[var(--color-accent-primary)] rounded-[6px] text-[13px] font-medium text-white hover:bg-[var(--color-accent-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {saving ? 'Saving...' : task ? 'Save Changes' : 'Create Task'}
-            </button>
+          {/* Sticky Footer */}
+          <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] shrink-0">
+            <div>
+              {task && onDelete && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex items-center gap-2 px-4 py-2 bg-transparent border border-[var(--color-tag-bug-text)]/30 rounded-[6px] text-[13px] font-medium text-[var(--color-tag-bug-text)] hover:bg-[var(--color-tag-bug-bg)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Trash2 size={14} />
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !title.trim()}
+                className="px-4 py-2 bg-[var(--color-accent-primary)] rounded-[6px] text-[13px] font-medium text-white hover:bg-[var(--color-accent-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {saving ? 'Saving...' : task ? 'Save Changes' : 'Create Task'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
-    </div>
+    </>
   );
 }

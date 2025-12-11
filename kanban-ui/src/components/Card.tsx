@@ -8,6 +8,11 @@ interface CardProps {
   onClick: () => void;
 }
 
+function formatCompletedDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export function Card({ task, onClick }: CardProps) {
   const {
     attributes,
@@ -57,6 +62,12 @@ export function Card({ task, onClick }: CardProps) {
       {task.description && (
         <p className="text-[12px] text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
           {task.description}
+        </p>
+      )}
+
+      {task.status === 'done' && task.completed && (
+        <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
+          {formatCompletedDate(task.completed)}
         </p>
       )}
     </div>

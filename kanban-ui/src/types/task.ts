@@ -17,6 +17,7 @@ export interface Task {
   tags: TaskTag[];
   acceptanceCriteria: AcceptanceCriterion[];
   notes: string;
+  completed?: string; // ISO 8601 datetime when task moved to Done
 }
 
 export interface TaskFormData {
@@ -26,6 +27,7 @@ export interface TaskFormData {
   tags: TaskTag[];
   acceptanceCriteria: AcceptanceCriterion[];
   notes: string;
+  completed?: string; // ISO 8601 datetime when task moved to Done
 }
 
 export const STATUSES: TaskStatus[] = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
@@ -48,6 +50,17 @@ export const TAG_LABELS: Record<TaskTag, string> = {
   'refactor': 'Refactor',
   'devops': 'DevOps'
 };
+
+// Date filter types for Done column
+export type DateFilterPreset = 'last7days' | 'last30days' | 'thisMonth' | 'thisYear' | 'custom';
+
+export interface DateFilter {
+  preset: DateFilterPreset | null;
+  startDate?: string; // ISO date string
+  endDate?: string;   // ISO date string
+}
+
+export type DoneSortOption = 'priority' | 'completedNewest' | 'completedOldest';
 
 // Project types for multi-project support
 export interface Project {

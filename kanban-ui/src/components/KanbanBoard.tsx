@@ -14,11 +14,11 @@ import {
   type CollisionDetection
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import type { Task, TaskStatus, TaskTag, TaskFormData } from '../types/task';
+import type { Task, TaskStatus, TaskTag, TaskFormData, DateFilter, DoneSortOption } from '../types/task';
 import { STATUSES } from '../types/task';
 import { Column } from './Column';
 import { Card } from './Card';
-import { TaskModal } from './TaskModal';
+import { TaskPanel } from './TaskPanel';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 import { ProjectSwitcher } from './ProjectSwitcher';
@@ -36,6 +36,7 @@ export function KanbanBoard() {
     updateTask,
     moveTask,
     reorderTasks,
+    deleteTask,
     getTasksByStatus
   } = useTasks();
 
@@ -56,6 +57,8 @@ export function KanbanBoard() {
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
+  const [dateFilter, setDateFilter] = useState<DateFilter>({ preset: null });
+  const [doneSort, setDoneSort] = useState<DoneSortOption>('priority');
   const [collapsedColumns, setCollapsedColumns] = useState<Set<TaskStatus>>(new Set());
 
   // Handle project switch - refresh tasks
@@ -96,6 +99,44 @@ export function KanbanBoard() {
     return rectIntersection(args);
   };
 
+  // Compute date range from filter preset
+  const getDateRange = useCallback((filter: DateFilter): { start: Date | null; end: Date | null } => {
+    if (!filter.preset) return { start: null, end: null };
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (filter.preset) {
+      case 'last7days':
+        return {
+          start: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) // End of today
+        };
+      case 'last30days':
+        return {
+          start: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
+        };
+      case 'thisMonth':
+        return {
+          start: new Date(now.getFullYear(), now.getMonth(), 1),
+          end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+        };
+      case 'thisYear':
+        return {
+          start: new Date(now.getFullYear(), 0, 1),
+          end: new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+        };
+      case 'custom':
+        return {
+          start: filter.startDate ? new Date(filter.startDate) : null,
+          end: filter.endDate ? new Date(filter.endDate + 'T23:59:59.999') : null
+        };
+      default:
+        return { start: null, end: null };
+    }
+  }, []);
+
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
       const matchesSearch = searchQuery === '' ||
@@ -106,11 +147,42 @@ export function KanbanBoard() {
     });
   }, [tasks, searchQuery, selectedTags]);
 
-  const getFilteredTasksByStatus = (status: TaskStatus) => {
-    return filteredTasks
-      .filter(t => t.status === status)
-      .sort((a, b) => a.priority - b.priority);
-  };
+  const getFilteredTasksByStatus = useCallback((status: TaskStatus) => {
+    let statusTasks = filteredTasks.filter(t => t.status === status);
+
+    // Apply date filter only to Done column
+    if (status === 'done' && dateFilter.preset) {
+      const { start, end } = getDateRange(dateFilter);
+      statusTasks = statusTasks.filter(task => {
+        if (!task.completed) return false; // Exclude tasks without completion date
+        const completedDate = new Date(task.completed);
+        if (start && completedDate < start) return false;
+        if (end && completedDate > end) return false;
+        return true;
+      });
+    }
+
+    // Apply sorting
+    if (status === 'done' && doneSort !== 'priority') {
+      return statusTasks.sort((a, b) => {
+        // Tasks without completion date go to the end
+        if (!a.completed && !b.completed) return a.priority - b.priority;
+        if (!a.completed) return 1;
+        if (!b.completed) return -1;
+
+        const dateA = new Date(a.completed).getTime();
+        const dateB = new Date(b.completed).getTime();
+
+        if (doneSort === 'completedNewest') {
+          return dateB - dateA;
+        } else {
+          return dateA - dateB;
+        }
+      });
+    }
+
+    return statusTasks.sort((a, b) => a.priority - b.priority);
+  }, [filteredTasks, dateFilter, doneSort, getDateRange]);
 
   function handleDragStart(event: DragStartEvent) {
     const task = tasks.find(t => t.id === event.active.id);
@@ -183,6 +255,11 @@ export function KanbanBoard() {
     setIsModalOpen(false);
   }
 
+  async function handleDelete(task: Task) {
+    await deleteTask(task.status, task.filename);
+    setIsModalOpen(false);
+  }
+
   const loading = tasksLoading || projectsLoading;
 
   if (loading) {
@@ -213,7 +290,14 @@ export function KanbanBoard() {
 
         <div className="flex items-center gap-3">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
-          <FilterDropdown selected={selectedTags} onChange={setSelectedTags} />
+          <FilterDropdown
+            selectedTags={selectedTags}
+            onTagsChange={setSelectedTags}
+            dateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            doneSort={doneSort}
+            onDoneSortChange={setDoneSort}
+          />
           <button
             onClick={handleCreateClick}
             className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[var(--color-accent-primary)] text-white text-[13px] font-medium hover:bg-[var(--color-accent-primary-hover)] transition-colors"
@@ -257,13 +341,13 @@ export function KanbanBoard() {
         </DndContext>
       </main>
 
-      {isModalOpen && (
-        <TaskModal
-          task={modalTask}
-          onSave={handleModalSave}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
+      <TaskPanel
+        isOpen={isModalOpen}
+        task={modalTask}
+        onSave={handleModalSave}
+        onClose={() => setIsModalOpen(false)}
+        onDelete={handleDelete}
+      />
 
       {isProjectsModalOpen && (
         <ProjectsModal

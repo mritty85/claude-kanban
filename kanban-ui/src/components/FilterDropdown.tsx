@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
-import { Filter } from 'lucide-react';
-import type { TaskTag } from '../types/task';
+import { Filter, Calendar, ArrowUpDown } from 'lucide-react';
+import type { TaskTag, DateFilter, DoneSortOption } from '../types/task';
 import { TAGS, TAG_LABELS } from '../types/task';
 
 interface FilterDropdownProps {
-  selected: TaskTag[];
-  onChange: (tags: TaskTag[]) => void;
+  selectedTags: TaskTag[];
+  onTagsChange: (tags: TaskTag[]) => void;
+  dateFilter: DateFilter;
+  onDateFilterChange: (filter: DateFilter) => void;
+  doneSort: DoneSortOption;
+  onDoneSortChange: (sort: DoneSortOption) => void;
 }
 
 const tagStyles: Record<TaskTag, string> = {
@@ -16,7 +20,28 @@ const tagStyles: Record<TaskTag, string> = {
   'devops': 'bg-[var(--color-tag-devops-bg)] text-[var(--color-tag-devops-text)]'
 };
 
-export function FilterDropdown({ selected, onChange }: FilterDropdownProps) {
+const DATE_PRESETS = [
+  { value: 'last7days', label: 'Last 7 days' },
+  { value: 'last30days', label: 'Last 30 days' },
+  { value: 'thisMonth', label: 'This month' },
+  { value: 'thisYear', label: 'This year' },
+  { value: 'custom', label: 'Custom range' }
+] as const;
+
+const SORT_OPTIONS = [
+  { value: 'priority', label: 'Priority' },
+  { value: 'completedNewest', label: 'Newest first' },
+  { value: 'completedOldest', label: 'Oldest first' }
+] as const;
+
+export function FilterDropdown({
+  selectedTags,
+  onTagsChange,
+  dateFilter,
+  onDateFilterChange,
+  doneSort,
+  onDoneSortChange
+}: FilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,11 +56,28 @@ export function FilterDropdown({ selected, onChange }: FilterDropdownProps) {
   }, []);
 
   function toggleTag(tag: TaskTag) {
-    if (selected.includes(tag)) {
-      onChange(selected.filter(t => t !== tag));
+    if (selectedTags.includes(tag)) {
+      onTagsChange(selectedTags.filter(t => t !== tag));
     } else {
-      onChange([...selected, tag]);
+      onTagsChange([...selectedTags, tag]);
     }
+  }
+
+  function handlePresetChange(preset: typeof DATE_PRESETS[number]['value'] | null) {
+    if (preset === 'custom') {
+      onDateFilterChange({ preset: 'custom', startDate: '', endDate: '' });
+    } else {
+      onDateFilterChange({ preset });
+    }
+  }
+
+  const hasActiveFilters = selectedTags.length > 0 || dateFilter.preset !== null;
+  const filterCount = selectedTags.length + (dateFilter.preset ? 1 : 0);
+
+  function clearAllFilters() {
+    onTagsChange([]);
+    onDateFilterChange({ preset: null });
+    onDoneSortChange('priority');
   }
 
   return (
@@ -50,20 +92,26 @@ export function FilterDropdown({ selected, onChange }: FilterDropdownProps) {
           hover:bg-[var(--color-bg-elevated)]
           hover:text-[var(--color-text-primary)]
           transition-colors
-          ${selected.length > 0 ? 'border-[var(--color-accent-primary)]' : ''}
+          ${hasActiveFilters ? 'border-[var(--color-accent-primary)]' : ''}
         `}
       >
         <Filter size={16} />
         Filter
-        {selected.length > 0 && (
+        {filterCount > 0 && (
           <span className="bg-[var(--color-accent-primary)] text-white text-[11px] px-1.5 py-0.5 rounded">
-            {selected.length}
+            {filterCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[8px] shadow-lg z-10 py-2">
+        <div className="absolute right-0 mt-2 w-72 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[8px] shadow-lg z-10 py-2">
+          {/* Tags Section */}
+          <div className="px-3 py-1">
+            <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
+              Tags
+            </span>
+          </div>
           {TAGS.map(tag => (
             <button
               key={tag}
@@ -77,7 +125,7 @@ export function FilterDropdown({ selected, onChange }: FilterDropdownProps) {
             >
               <input
                 type="checkbox"
-                checked={selected.includes(tag)}
+                checked={selectedTags.includes(tag)}
                 onChange={() => {}}
                 className="rounded"
               />
@@ -87,14 +135,89 @@ export function FilterDropdown({ selected, onChange }: FilterDropdownProps) {
             </button>
           ))}
 
-          {selected.length > 0 && (
+          <div className="border-t border-[var(--color-border-subtle)] my-2" />
+
+          {/* Done Column Sort */}
+          <div className="px-3 py-1">
+            <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide flex items-center gap-1">
+              <ArrowUpDown size={12} />
+              Done Sort
+            </span>
+          </div>
+          <div className="px-3 py-1">
+            <select
+              value={doneSort}
+              onChange={(e) => onDoneSortChange(e.target.value as DoneSortOption)}
+              className="w-full px-2 py-1.5 bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)] rounded text-[12px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-border-emphasis)]"
+            >
+              {SORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="border-t border-[var(--color-border-subtle)] my-2" />
+
+          {/* Date Filter Section */}
+          <div className="px-3 py-1">
+            <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide flex items-center gap-1">
+              <Calendar size={12} />
+              Done Date Filter
+            </span>
+          </div>
+          {DATE_PRESETS.map(preset => (
+            <button
+              key={preset.value}
+              onClick={() => handlePresetChange(dateFilter.preset === preset.value ? null : preset.value)}
+              className={`
+                w-full px-3 py-2 text-left text-[12px]
+                flex items-center gap-2
+                hover:bg-[var(--color-bg-elevated)]
+                transition-colors
+              `}
+            >
+              <input
+                type="radio"
+                checked={dateFilter.preset === preset.value}
+                onChange={() => {}}
+                className="rounded-full"
+              />
+              <span className="text-[var(--color-text-primary)]">{preset.label}</span>
+            </button>
+          ))}
+
+          {/* Custom Date Range */}
+          {dateFilter.preset === 'custom' && (
+            <div className="px-3 py-2 space-y-2">
+              <div>
+                <label className="block text-[11px] text-[var(--color-text-muted)] mb-1">From</label>
+                <input
+                  type="date"
+                  value={dateFilter.startDate || ''}
+                  onChange={(e) => onDateFilterChange({ ...dateFilter, startDate: e.target.value })}
+                  className="w-full px-2 py-1.5 bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)] rounded text-[12px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-border-emphasis)]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-[var(--color-text-muted)] mb-1">To</label>
+                <input
+                  type="date"
+                  value={dateFilter.endDate || ''}
+                  onChange={(e) => onDateFilterChange({ ...dateFilter, endDate: e.target.value })}
+                  className="w-full px-2 py-1.5 bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)] rounded text-[12px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-border-emphasis)]"
+                />
+              </div>
+            </div>
+          )}
+
+          {hasActiveFilters && (
             <>
               <div className="border-t border-[var(--color-border-subtle)] my-2" />
               <button
-                onClick={() => onChange([])}
+                onClick={clearAllFilters}
                 className="w-full px-3 py-2 text-left text-[12px] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-elevated)] transition-colors"
               >
-                Clear filters
+                Clear all filters
               </button>
             </>
           )}

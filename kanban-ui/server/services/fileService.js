@@ -49,6 +49,7 @@ export function parseTaskFile(content, filename, status) {
   let tags = [];
   let acceptanceCriteria = [];
   let notes = '';
+  let completed = '';
   let currentSection = '';
 
   for (const line of lines) {
@@ -66,12 +67,14 @@ export function parseTaskFile(content, filename, status) {
       acceptanceCriteria.push({ text, checked });
     } else if (currentSection === 'notes' && line.trim()) {
       notes += (notes ? '\n' : '') + line;
+    } else if (currentSection === 'completed' && line.trim()) {
+      completed = line.trim();
     }
   }
 
   const priority = parseInt(filename.split('-')[0], 10) || 99;
 
-  return {
+  const task = {
     id: `${status}/${filename}`,
     filename,
     status,
@@ -82,6 +85,12 @@ export function parseTaskFile(content, filename, status) {
     acceptanceCriteria,
     notes: notes.trim()
   };
+
+  if (completed) {
+    task.completed = completed;
+  }
+
+  return task;
 }
 
 export function serializeTask(task) {
@@ -98,6 +107,9 @@ export function serializeTask(task) {
     content += `- ${checkbox} ${criterion.text}\n`;
   }
   content += `\n## Notes\n${task.notes || ''}\n`;
+  if (task.completed) {
+    content += `\n## Completed\n${task.completed}\n`;
+  }
   return content;
 }
 
@@ -126,6 +138,11 @@ export async function updateTask(status, filename, updates) {
   const existingTask = parseTaskFile(content, filename, status);
   const updatedTask = { ...existingTask, ...updates };
 
+  // Auto-set completion date when status changed to Done (via form edit)
+  if (updates.status === 'done' && existingTask.status !== 'done') {
+    updatedTask.completed = new Date().toISOString();
+  }
+
   const newContent = serializeTask(updatedTask);
   await fs.writeFile(filePath, newContent, 'utf-8');
 
@@ -139,6 +156,11 @@ export async function moveTask(fromStatus, filename, toStatus, newPriority) {
   const content = await fs.readFile(fromPath, 'utf-8');
   let task = parseTaskFile(content, filename, fromStatus);
   task.status = toStatus;
+
+  // Auto-set completion date when moving to Done
+  if (toStatus === 'done') {
+    task.completed = new Date().toISOString();
+  }
 
   const toDir = path.join(tasksDir, toStatus);
   const files = await fs.readdir(toDir).catch(() => []);
