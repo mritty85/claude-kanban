@@ -7,7 +7,9 @@ import {
   reorderTasks,
   deleteTask,
   getProjectConfig,
-  updateProjectConfig
+  updateProjectConfig,
+  getProjectNotes,
+  updateProjectNotes
 } from '../services/fileService.js';
 import { addSSEClient } from '../services/watcher.js';
 
@@ -98,6 +100,27 @@ router.put('/config', async (req, res) => {
   } catch (err) {
     console.error('Error updating config:', err);
     res.status(500).json({ error: 'Failed to update config' });
+  }
+});
+
+router.get('/notes', async (req, res) => {
+  try {
+    const content = await getProjectNotes();
+    res.json({ content });
+  } catch (err) {
+    console.error('Error getting notes:', err);
+    res.status(500).json({ error: 'Failed to get notes' });
+  }
+});
+
+router.put('/notes', async (req, res) => {
+  try {
+    const { content } = req.body;
+    await updateProjectNotes(content);
+    res.json({ content });
+  } catch (err) {
+    console.error('Error updating notes:', err);
+    res.status(500).json({ error: 'Failed to update notes' });
   }
 });
 

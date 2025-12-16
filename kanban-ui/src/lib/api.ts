@@ -155,3 +155,23 @@ export async function validateProjectPath(path: string): Promise<PathValidation>
   if (!res.ok) throw new Error('Failed to validate path');
   return res.json();
 }
+
+// Project Notes API functions
+
+export async function fetchNotes(): Promise<string> {
+  const res = await fetch(`${API_BASE}/tasks/notes`);
+  if (!res.ok) throw new Error('Failed to fetch notes');
+  const data = await res.json();
+  return data.content;
+}
+
+export async function updateNotes(content: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/tasks/notes`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+  if (!res.ok) throw new Error('Failed to update notes');
+  const data = await res.json();
+  return data.content;
+}

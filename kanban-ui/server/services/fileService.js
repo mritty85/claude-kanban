@@ -244,3 +244,24 @@ export async function updateProjectConfig(updates) {
   await fs.writeFile(configPath, JSON.stringify(updated, null, 2), 'utf-8');
   return updated;
 }
+
+export async function getProjectNotes() {
+  const tasksDir = await getTasksDir();
+  const notesPath = path.join(tasksDir, 'NOTES.md');
+  try {
+    const content = await fs.readFile(notesPath, 'utf-8');
+    return content;
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return ''; // Return empty string if file doesn't exist
+    }
+    throw err;
+  }
+}
+
+export async function updateProjectNotes(content) {
+  const tasksDir = await getTasksDir();
+  const notesPath = path.join(tasksDir, 'NOTES.md');
+  await fs.writeFile(notesPath, content, 'utf-8');
+  return content;
+}

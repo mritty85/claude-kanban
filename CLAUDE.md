@@ -8,6 +8,53 @@ A local, file-based Kanban task manager built with React + Vite + TypeScript. Th
 
 **Current State:** Fully functional multi-project Kanban with drag-and-drop, task CRUD, project switching, and real-time updates via SSE.
 
+## Task Management
+
+This project uses its own file-based Kanban system for task management and enhancing the app.
+
+### Task Location
+Tasks are stored as markdown files in `/tasks/{status}/` directories:
+- `/tasks/ideation/` - Rough ideas, not yet defined
+- `/tasks/planning/` - Needs design/discussion before ready
+- `/tasks/backlog/` - Fully planned and ready to be picked up
+- `/tasks/implementing/` - Currently being worked on
+- `/tasks/uat/` - Complete, awaiting review
+- `/tasks/done/` - Accepted and finished
+
+### Working on Tasks
+
+When asked to work on tasks:
+1. Read the top file in `/tasks/backlog/` (lowest number prefix = highest priority)
+2. Move the file to `/tasks/implementing/`
+3. Update the `## Status` field to `implementing`
+4. Implement the work described
+5. Check off acceptance criteria as completed
+6. Add notes to `## Notes` section for any decisions
+7. When complete, move file to `/tasks/uat/`
+8. Update the `## Status` field to `uat`
+
+### Task File Format
+
+```markdown
+# {Title}
+
+## Status
+planning
+
+## Tags
+- new-functionality | feature-enhancement | bug | refactor
+
+## Description
+{What needs to be done}
+
+## Acceptance Criteria
+- [ ] Criterion one
+- [ ] Criterion two
+
+## Notes
+{Implementation notes}
+------
+
 ## Multi-Project Architecture
 
 This Kanban tool is designed as a **centralized installation** that manages multiple projects:

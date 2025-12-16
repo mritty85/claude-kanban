@@ -19,13 +19,14 @@ import { STATUSES } from '../types/task';
 import { Column } from './Column';
 import { Card } from './Card';
 import { TaskPanel } from './TaskPanel';
+import { NotesPanel } from './NotesPanel';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { ProjectsModal } from './ProjectsModal';
 import { useTasks } from '../hooks/useTasks';
 import { useProjects } from '../hooks/useProjects';
-import { Plus } from 'lucide-react';
+import { Plus, FileText } from 'lucide-react';
 
 export function KanbanBoard() {
   const {
@@ -55,6 +56,7 @@ export function KanbanBoard() {
   const [modalTask, setModalTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
+  const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>({ preset: null });
@@ -266,7 +268,7 @@ export function KanbanBoard() {
     } else {
       await createTask(data);
     }
-    setIsModalOpen(false);
+    // Note: Panel closing handled by TaskPanel to support auto-save without closing
   }
 
   async function handleDelete(task: Task) {
@@ -295,12 +297,21 @@ export function KanbanBoard() {
   return (
     <div className="h-full flex flex-col">
       <header className="flex items-center justify-between p-4 border-b border-[var(--color-border-subtle)]">
-        <ProjectSwitcher
-          currentProject={currentProject}
-          projects={projects}
-          onSwitch={handleProjectSwitch}
-          onManage={() => setIsProjectsModalOpen(true)}
-        />
+        <div className="flex items-center gap-3">
+          <ProjectSwitcher
+            currentProject={currentProject}
+            projects={projects}
+            onSwitch={handleProjectSwitch}
+            onManage={() => setIsProjectsModalOpen(true)}
+          />
+          <button
+            onClick={() => setIsNotesPanelOpen(true)}
+            className="p-2 rounded-[6px] hover:bg-[var(--color-bg-elevated)] transition-colors"
+            title="Project Notes"
+          >
+            <FileText size={20} className="text-[var(--color-text-secondary)]" />
+          </button>
+        </div>
 
         <div className="flex items-center gap-3">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -365,6 +376,11 @@ export function KanbanBoard() {
         onSave={handleModalSave}
         onClose={() => setIsModalOpen(false)}
         onDelete={handleDelete}
+      />
+
+      <NotesPanel
+        isOpen={isNotesPanelOpen}
+        onClose={() => setIsNotesPanelOpen(false)}
       />
 
       {isProjectsModalOpen && (

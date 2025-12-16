@@ -3,13 +3,15 @@
 ## Status
 backlog
 
+## Epic
+UI Enhancements
+
 ## Tags
 - refactor
 
 ## Description
 Currently it's a challenge navigating massive Acceptance Criteria lists. I'd like to add some type of expander/see more functionality that caps the visible list to 8 list items — and then either make the area scrollable or some type of pagination/expansion. 
-
-But we can't lose the capability to reorder the list.
+But we can't lose the capability to reorder the list
 
 ## Acceptance Criteria
 - [ ] Show only first 8 acceptance criteria items by default
@@ -24,4 +26,3 @@ But we can't lose the capability to reorder the list.
 - Approach: Expand/collapse with state toggle rather than scrollable container
 - Avoids nested scroll UX issues within the panel
 - User accepts tradeoff: must expand to reorder items beyond position 8
-

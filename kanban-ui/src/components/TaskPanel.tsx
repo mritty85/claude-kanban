@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useReducer, useCallback } from 'react';
 import { X, Plus, Trash2, Copy, Check, Pencil, GripVertical } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -7,6 +7,22 @@ import { CSS } from '@dnd-kit/utilities';
 import type { Task, TaskFormData, TaskStatus, TaskTag, AcceptanceCriterion } from '../types/task';
 import { STATUSES, STATUS_LABELS, TAGS, TAG_LABELS } from '../types/task';
 import { EpicCombobox } from './EpicCombobox';
+
+function formatRelativeTime(date: Date | null): string {
+  if (!date) return '';
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+
+  if (diffSeconds < 10) return 'Saved just now';
+  if (diffSeconds < 60) return `Saved ${diffSeconds}s ago`;
+  if (diffMinutes < 60) return `Saved ${diffMinutes}m ago`;
+  if (diffHours < 24) return `Saved ${diffHours}h ago`;
+  return `Saved on ${date.toLocaleDateString()}`;
+}
 
 interface TaskPanelProps {
   isOpen: boolean;
@@ -177,6 +193,16 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
   const [completed, setCompleted] = useState<string>('');
   const [epic, setEpic] = useState<string>('');
 
+  // Auto-save state
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Refs for debounce
+  const saveTimeoutRef = useRef<number | null>(null);
+
+  // Force re-render for relative time display
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 }
@@ -210,8 +236,29 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
       setEditingIndex(null);
       setEditingText('');
       setCopied(false);
+      // Reset auto-save state
+      setLastSaved(null);
+      setAutoSaving(false);
     }
   }, [task, isOpen]);
+
+  // Update relative time display every 10 seconds
+  useEffect(() => {
+    if (!lastSaved || !task) return;
+    const interval = setInterval(() => {
+      forceUpdate();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [lastSaved, task]);
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Auto-focus title only for new tasks
   useEffect(() => {
@@ -233,6 +280,48 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Build current form data for auto-save
+  const getCurrentFormData = useCallback((): TaskFormData => ({
+    title: title.trim(),
+    status,
+    description: description.trim(),
+    tags,
+    acceptanceCriteria,
+    notes: notes.trim(),
+    completed: completed || undefined,
+    epic: epic.trim() || undefined
+  }), [title, status, description, tags, acceptanceCriteria, notes, completed, epic]);
+
+  // Perform the save operation (for existing tasks only)
+  const performAutoSave = useCallback(async (data: TaskFormData) => {
+    if (!task) return; // Only auto-save existing tasks
+    if (!data.title) return; // Don't save with empty title
+
+    setAutoSaving(true);
+    try {
+      await onSave(data);
+      setLastSaved(new Date());
+    } catch (err) {
+      console.error('Auto-save failed:', err);
+    } finally {
+      setAutoSaving(false);
+    }
+  }, [task, onSave]);
+
+  // Debounced auto-save (1.5s delay)
+  const triggerDebouncedSave = useCallback(() => {
+    if (!task) return; // Only for existing tasks
+    if (!title.trim()) return; // Validate title
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = window.setTimeout(() => {
+      performAutoSave(getCurrentFormData());
+    }, 1500);
+  }, [task, title, getCurrentFormData, performAutoSave]);
 
   function toggleTag(tag: TaskTag) {
     if (tags.includes(tag)) {
@@ -302,13 +391,6 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
     e.preventDefault();
     if (!title.trim()) return;
 
-    if (newCriterion.trim()) {
-      const confirmSave = window.confirm(
-        `You have unsaved text in the Acceptance Criteria field:\n\n"${newCriterion.trim()}"\n\nDo you want to save without adding it?`
-      );
-      if (!confirmSave) return;
-    }
-
     setSaving(true);
     try {
       await onSave({
@@ -321,6 +403,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
         completed: completed || undefined,
         epic: epic.trim() || undefined
       });
+      onClose(); // Close panel after explicit save
     } finally {
       setSaving(false);
     }
@@ -372,7 +455,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
         {/* Scrollable Body */}
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto px-6 py-5">
-            {/* Title row with Copy Path button */}
+            {/* Title row with save indicator and Copy Path button */}
             <div className="flex items-center gap-3 mb-5 pr-8">
               <input
                 ref={titleInputRef}
@@ -381,8 +464,14 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Task title..."
                 required
-                className="w-3/4 px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none"
+                className="flex-1 px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none"
               />
+              {/* Save indicator for existing tasks */}
+              {task && (
+                <span className="text-[12px] text-[var(--color-text-muted)] whitespace-nowrap">
+                  {autoSaving ? 'Saving...' : formatRelativeTime(lastSaved)}
+                </span>
+              )}
               {task && (
                 <button
                   type="button"
@@ -492,7 +581,10 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
               </label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  triggerDebouncedSave();
+                }}
                 placeholder="Describe the task..."
                 className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none min-h-[200px]"
               />
@@ -567,7 +659,10 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
               </label>
               <textarea
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                  triggerDebouncedSave();
+                }}
                 placeholder="Additional notes..."
                 className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none min-h-[120px]"
               />
