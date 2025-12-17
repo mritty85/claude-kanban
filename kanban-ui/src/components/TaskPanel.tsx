@@ -197,8 +197,9 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Refs for debounce
+  // Refs for debounce and SSE grace period
   const saveTimeoutRef = useRef<number | null>(null);
+  const lastAutoSaveTimeRef = useRef<number>(0);
 
   // Force re-render for relative time display
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
@@ -212,15 +213,24 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
   // Reset form when task changes or panel opens
   useEffect(() => {
     if (isOpen) {
+      // Check if we're within the grace period after an auto-save (2 seconds)
+      // If so, skip resetting description/notes to prevent cursor jumping
+      const withinGracePeriod = Date.now() - lastAutoSaveTimeRef.current < 2000;
+
       if (task) {
         setTitle(task.title);
         setStatus(task.status);
-        setDescription(task.description);
         setTags(task.tags);
         setAcceptanceCriteria(task.acceptanceCriteria);
-        setNotes(task.notes);
         setCompleted(task.completed || '');
         setEpic(task.epic || '');
+
+        // Only reset description/notes if NOT within grace period
+        // This prevents SSE-triggered updates from resetting cursor position
+        if (!withinGracePeriod) {
+          setDescription(task.description);
+          setNotes(task.notes);
+        }
       } else {
         // Reset to defaults for new task
         setTitle('');
@@ -236,9 +246,11 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
       setEditingIndex(null);
       setEditingText('');
       setCopied(false);
-      // Reset auto-save state
-      setLastSaved(null);
-      setAutoSaving(false);
+      // Reset auto-save state only when panel first opens (not on SSE updates)
+      if (!withinGracePeriod) {
+        setLastSaved(null);
+        setAutoSaving(false);
+      }
     }
   }, [task, isOpen]);
 
@@ -302,6 +314,8 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
     try {
       await onSave(data);
       setLastSaved(new Date());
+      // Set grace period timestamp to prevent SSE from resetting our state
+      lastAutoSaveTimeRef.current = Date.now();
     } catch (err) {
       console.error('Auto-save failed:', err);
     } finally {
@@ -320,7 +334,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
 
     saveTimeoutRef.current = window.setTimeout(() => {
       performAutoSave(getCurrentFormData());
-    }, 1500);
+    }, 5000);
   }, [task, title, getCurrentFormData, performAutoSave]);
 
   function toggleTag(tag: TaskTag) {

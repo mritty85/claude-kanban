@@ -10,6 +10,7 @@ export function useProjectNotes() {
 
   const saveTimeoutRef = useRef<number | null>(null);
   const serverContentRef = useRef<string>('');
+  const lastSaveTimeRef = useRef<number>(0);
 
   const loadNotes = useCallback(async () => {
     setLoading(true);
@@ -30,6 +31,8 @@ export function useProjectNotes() {
       await api.updateNotes(newContent);
       serverContentRef.current = newContent;
       setLastSaved(new Date());
+      // Set grace period timestamp to prevent SSE from resetting our state
+      lastSaveTimeRef.current = Date.now();
     } catch (err) {
       console.error('Failed to save notes:', err);
     } finally {
@@ -46,14 +49,14 @@ export function useProjectNotes() {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Set new debounced save (1.5s)
+    // Set new debounced save (5s)
     saveTimeoutRef.current = window.setTimeout(() => {
       saveNotes(newContent);
       setIsEditing(false);
-    }, 1500);
+    }, 5000);
   }, [saveNotes]);
 
-  // Handle SSE updates - only apply if not actively editing
+  // Handle SSE updates - only apply if not actively editing or within grace period
   useEffect(() => {
     const unsubscribe = api.subscribeToChanges((event) => {
       // Handle project switch - reload notes
@@ -65,8 +68,11 @@ export function useProjectNotes() {
 
       // Handle NOTES.md changes from external source
       if ((event.event === 'add' || event.event === 'change') && event.path?.includes('NOTES.md')) {
-        // Only reload if not actively editing
-        if (!isEditing) {
+        // Check if we're within the grace period after saving (2 seconds)
+        const withinGracePeriod = Date.now() - lastSaveTimeRef.current < 2000;
+
+        // Only reload if not actively editing and not within grace period
+        if (!isEditing && !withinGracePeriod) {
           loadNotes();
         }
       }
