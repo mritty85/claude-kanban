@@ -1,6 +1,8 @@
-Test text edit test ugfygfyigguguf hfudhlfhshfihi iuguiguighugh
+Currently it's a challenge navigating massive Acceptance Criteria lists. I'd like to add some type of expander/see more functionality that caps the visible list to 8 list items — and then either make the area scrollable or some type of pagination/expansion. 
+But we can't lose the capability to reorder the list
 
 
-vlkhvisfhbih hkvhyvkhvh
+Currently it's a challenge navigating massive Acceptance Criteria lists. I'd like to add some type of expander/see more functionality that caps the visible list to 8 list items — and then either make the area scrollable or some type of pagination/expansion. 
+But we can't lose the capability to reorder the list
 
-lsehfihowof
+fklhsflhefihslifhj fjksehfh

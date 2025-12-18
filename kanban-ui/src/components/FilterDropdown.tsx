@@ -33,7 +33,7 @@ const DATE_PRESETS = [
 ] as const;
 
 const SORT_OPTIONS = [
-  { value: 'priority', label: 'Priority' },
+  { value: 'default', label: 'Default Order' },
   { value: 'completedNewest', label: 'Newest first' },
   { value: 'completedOldest', label: 'Oldest first' }
 ] as const;
@@ -93,7 +93,7 @@ export function FilterDropdown({
     onTagsChange([]);
     onEpicsChange([]);
     onDateFilterChange({ preset: null });
-    onDoneSortChange('priority');
+    onDoneSortChange('default');
   }
 
   return (

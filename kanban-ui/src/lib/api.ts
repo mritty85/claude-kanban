@@ -42,11 +42,11 @@ export async function moveTask(fromStatus: TaskStatus, filename: string, toStatu
   return res.json();
 }
 
-export async function reorderTasks(status: TaskStatus, orderedFilenames: string[]): Promise<Task[]> {
+export async function reorderTasks(status: TaskStatus, orderedIds: string[]): Promise<Task[]> {
   const res = await fetch(`${API_BASE}/tasks/reorder`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status, orderedFilenames })
+    body: JSON.stringify({ status, orderedIds })
   });
   if (!res.ok) throw new Error('Failed to reorder tasks');
   return res.json();

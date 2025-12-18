@@ -71,11 +71,17 @@ Use the dropdown in the header to switch. Tasks reload automatically.
 /your-project/
   /tasks/
     /ideation/
+      _order.json         ← Task ordering (auto-managed)
     /planning/
+      _order.json
     /backlog/
+      _order.json
     /implementing/
+      _order.json
     /uat/
+      _order.json
     /done/
+      _order.json
     project.json          ← Stores board name (auto-created)
 ```
 
@@ -177,6 +183,8 @@ That's it. Your `~/.kanban-ui/config.json` and all registered projects remain un
    ```
 2. Hard refresh the browser (`Cmd+Shift+R` / `Ctrl+Shift+R`) to clear cached JS
 
+**Note:** Task file migrations (like adding `## Id` sections or `_order.json` files) happen automatically when a project is first accessed after upgrading. No manual intervention needed.
+
 ### If Something Breaks
 
 ```bash
@@ -239,22 +247,31 @@ Tasks are stored as markdown files in `/tasks/{status}/` directories:
 - `/tasks/uat/` - Complete, awaiting review
 - `/tasks/done/` - Accepted and finished
 
+Each folder has an `_order.json` file that determines task priority order.
+
 ### Working on Tasks
 
 When asked to work on tasks:
-1. Read the top file in `/tasks/backlog/` (lowest number prefix = highest priority)
-2. Move the file to `/tasks/implementing/`
-3. Update the `## Status` field to `implementing`
-4. Implement the work described
-5. Check off acceptance criteria as completed
-6. Add notes to `## Notes` section for any decisions
-7. When complete, move file to `/tasks/uat/`
-8. Update the `## Status` field to `uat`
+1. Check `_order.json` in `/tasks/backlog/` for priority order (first ID = highest priority)
+2. Read the corresponding task file
+3. Move the file to `/tasks/implementing/` (keep the same filename)
+4. Update the `## Status` field to `implementing`
+5. Implement the work described
+6. Check off acceptance criteria as completed
+7. Add notes to `## Notes` section for any decisions
+8. When complete, move file to `/tasks/uat/`
+9. Update the `## Status` field to `uat`
+
+Note: The UI auto-manages `_order.json` files. If editing tasks manually,
+you can ignore order files - new tasks without entries appear at the end.
 
 ### Task File Format
 
 ```markdown
 # {Title}
+
+## Id
+task_1734523687000
 
 ## Status
 planning
@@ -272,6 +289,9 @@ planning
 ## Notes
 {Implementation notes}
 ```
+
+- **`## Id`**: Unique timestamp-based identifier (preserve when editing)
+- **Filename**: Slug-only, e.g., `user-auth.md` (no numeric prefix)
 ```
 
 ---
@@ -307,8 +327,9 @@ Create `.md` files directly in task directories. The UI picks them up automatica
 Click the project dropdown → "Manage Projects..." → click the pencil icon next to a project name.
 
 ### Priority Management
-- Drag cards in the UI to reorder (renames files with new priority numbers)
-- Or manually rename: `01-` is highest priority, `02-` is next, etc.
+- Drag cards in the UI to reorder (updates `_order.json`, files stay unchanged)
+- Filenames are stable slugs (e.g., `user-auth.md`) - no numeric prefixes
+- Each task has a unique `## Id` section for identification
 
 ### If Node Modules Break After Copying
 ```bash

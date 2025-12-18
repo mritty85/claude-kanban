@@ -63,8 +63,8 @@ router.post('/move', async (req, res) => {
 
 router.post('/reorder', async (req, res) => {
   try {
-    const { status, orderedFilenames } = req.body;
-    const tasks = await reorderTasks(status, orderedFilenames);
+    const { status, orderedIds } = req.body;
+    const tasks = await reorderTasks(status, orderedIds);
     res.json(tasks);
   } catch (err) {
     console.error('Error reordering tasks:', err);

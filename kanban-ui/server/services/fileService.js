@@ -4,6 +4,57 @@ import matter from 'gray-matter';
 import { getCurrentProjectPath } from './configService.js';
 
 const STATUSES = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
+const ORDER_FILE = '_order.json';
+
+// Generate a unique task ID (timestamp-based)
+export function generateTaskId() {
+  return `task_${Date.now()}`;
+}
+
+// Generate a slug from title with deduplication
+export function generateSlug(title, existingFiles) {
+  const baseSlug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 50);
+
+  if (!existingFiles || existingFiles.length === 0) {
+    return `${baseSlug}.md`;
+  }
+
+  // Check if base filename exists
+  if (!existingFiles.includes(`${baseSlug}.md`)) {
+    return `${baseSlug}.md`;
+  }
+
+  // Find next available suffix
+  let counter = 2;
+  while (existingFiles.includes(`${baseSlug}-${counter}.md`)) {
+    counter++;
+  }
+  return `${baseSlug}-${counter}.md`;
+}
+
+// Read order file for a status directory
+export async function readOrderFile(statusDir) {
+  const orderPath = path.join(statusDir, ORDER_FILE);
+  try {
+    const content = await fs.readFile(orderPath, 'utf-8');
+    return JSON.parse(content);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return { order: [] };
+    }
+    throw err;
+  }
+}
+
+// Write order file for a status directory
+export async function writeOrderFile(statusDir, orderData) {
+  const orderPath = path.join(statusDir, ORDER_FILE);
+  await fs.writeFile(orderPath, JSON.stringify(orderData, null, 2), 'utf-8');
+}
 
 export async function getTasksDir() {
   const projectPath = await getCurrentProjectPath();
@@ -17,22 +68,143 @@ export async function ensureDirectories() {
   }
 }
 
+// Check if project needs migration (no _order.json files exist)
+async function needsMigration(tasksDir) {
+  for (const status of STATUSES) {
+    const orderPath = path.join(tasksDir, status, ORDER_FILE);
+    try {
+      await fs.access(orderPath);
+      return false; // At least one order file exists, no migration needed
+    } catch {
+      // File doesn't exist, continue checking
+    }
+  }
+  return true; // No order files found
+}
+
+// Migrate a project: add IDs to tasks, rename files, create order files
+async function migrateProject(tasksDir) {
+  console.log('Migrating project to stable IDs...');
+
+  for (const status of STATUSES) {
+    const statusDir = path.join(tasksDir, status);
+    const orderIds = [];
+
+    try {
+      const files = await fs.readdir(statusDir);
+      // Sort by numeric prefix to preserve current order
+      const mdFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_')).sort();
+
+      for (const oldFilename of mdFiles) {
+        const filePath = path.join(statusDir, oldFilename);
+        const content = await fs.readFile(filePath, 'utf-8');
+
+        // Check if already has ## Id section
+        if (content.includes('## Id\n')) {
+          // Extract existing ID
+          const idMatch = content.match(/## Id\n([^\n]+)/);
+          if (idMatch) {
+            orderIds.push(idMatch[1].trim());
+          }
+          continue;
+        }
+
+        // Generate ID from file mtime (approximate creation time)
+        const stat = await fs.stat(filePath);
+        const id = `task_${Math.floor(stat.mtimeMs)}`;
+
+        // Add Id section to content (after title)
+        const titleMatch = content.match(/^# [^\n]+\n/);
+        let newContent;
+        if (titleMatch) {
+          const titleEnd = titleMatch[0].length;
+          newContent = content.slice(0, titleEnd) + `\n## Id\n${id}\n` + content.slice(titleEnd);
+        } else {
+          newContent = `## Id\n${id}\n\n` + content;
+        }
+
+        // Generate new slug-only filename
+        const slug = oldFilename.replace(/^\d+-/, '').replace('.md', '');
+        const existingFiles = (await fs.readdir(statusDir)).filter(f => f !== oldFilename);
+        let newFilename = `${slug}.md`;
+
+        // Handle duplicates
+        if (existingFiles.includes(newFilename)) {
+          let counter = 2;
+          while (existingFiles.includes(`${slug}-${counter}.md`)) {
+            counter++;
+          }
+          newFilename = `${slug}-${counter}.md`;
+        }
+
+        // Write updated content
+        await fs.writeFile(path.join(statusDir, newFilename), newContent, 'utf-8');
+
+        // Remove old file if renamed
+        if (oldFilename !== newFilename) {
+          await fs.unlink(filePath);
+        }
+
+        orderIds.push(id);
+      }
+
+      // Write order file for this status
+      await writeOrderFile(statusDir, { order: orderIds });
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+      // Directory doesn't exist yet, create empty order file
+      await fs.mkdir(statusDir, { recursive: true });
+      await writeOrderFile(statusDir, { order: [] });
+    }
+  }
+
+  console.log('Migration complete.');
+}
+
 export async function getAllTasks() {
   const tasksDir = await getTasksDir();
+
+  // Check if migration is needed and run it
+  if (await needsMigration(tasksDir)) {
+    await migrateProject(tasksDir);
+  }
+
   const tasks = [];
 
   for (const status of STATUSES) {
     const statusDir = path.join(tasksDir, status);
     try {
       const files = await fs.readdir(statusDir);
-      const mdFiles = files.filter(f => f.endsWith('.md')).sort();
+      const mdFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_'));
 
+      // Build a map of id -> task for this status
+      const taskMap = new Map();
       for (const filename of mdFiles) {
         const filePath = path.join(statusDir, filename);
         const content = await fs.readFile(filePath, 'utf-8');
         const task = parseTaskFile(content, filename, status);
-        tasks.push(task);
+        taskMap.set(task.id, task);
       }
+
+      // Read order file and sort tasks
+      const orderData = await readOrderFile(statusDir);
+      const orderedTasks = [];
+
+      // Add tasks in order file sequence
+      for (const id of orderData.order) {
+        const task = taskMap.get(id);
+        if (task) {
+          orderedTasks.push(task);
+          taskMap.delete(id);
+        }
+      }
+
+      // Append any tasks not in order file (e.g., added externally by Claude Code)
+      for (const task of taskMap.values()) {
+        orderedTasks.push(task);
+      }
+
+      tasks.push(...orderedTasks);
     } catch (err) {
       if (err.code !== 'ENOENT') throw err;
     }
@@ -45,6 +217,7 @@ export function parseTaskFile(content, filename, status) {
   const lines = content.split('\n');
 
   let title = '';
+  let taskId = '';
   let description = '';
   let tags = [];
   let acceptanceCriteria = [];
@@ -58,6 +231,8 @@ export function parseTaskFile(content, filename, status) {
       title = line.slice(2).trim();
     } else if (line.startsWith('## ')) {
       currentSection = line.slice(3).trim().toLowerCase();
+    } else if (currentSection === 'id' && line.trim()) {
+      taskId = line.trim();
     } else if (currentSection === 'tags' && line.startsWith('- ')) {
       tags.push(line.slice(2).trim());
     } else if (currentSection === 'description' && line.trim()) {
@@ -75,13 +250,13 @@ export function parseTaskFile(content, filename, status) {
     }
   }
 
-  const priority = parseInt(filename.split('-')[0], 10) || 99;
+  // Use parsed ID if present, otherwise fallback to composite ID (for unmigrated tasks)
+  const id = taskId || `${status}/${filename}`;
 
   const task = {
-    id: `${status}/${filename}`,
+    id,
     filename,
     status,
-    priority,
     title,
     description: description.trim(),
     tags,
@@ -102,6 +277,10 @@ export function parseTaskFile(content, filename, status) {
 
 export function serializeTask(task) {
   let content = `# ${task.title}\n\n`;
+  // Include Id section if task has a stable ID (not composite format)
+  if (task.id && !task.id.includes('/')) {
+    content += `## Id\n${task.id}\n\n`;
+  }
   content += `## Status\n${task.status}\n\n`;
   if (task.epic) {
     content += `## Epic\n${task.epic}\n\n`;
@@ -127,17 +306,25 @@ export async function createTask(task) {
   const tasksDir = await getTasksDir();
   const statusDir = path.join(tasksDir, task.status);
 
-  const files = await fs.readdir(statusDir).catch(() => []);
-  const mdFiles = files.filter(f => f.endsWith('.md'));
-  const nextPriority = mdFiles.length + 1;
-  const paddedPriority = String(nextPriority).padStart(2, '0');
-  const slug = task.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  const filename = `${paddedPriority}-${slug}.md`;
+  // Generate stable ID
+  const id = generateTaskId();
 
-  const content = serializeTask({ ...task, status: task.status });
+  // Generate slug-only filename with deduplication
+  const files = await fs.readdir(statusDir).catch(() => []);
+  const existingFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_'));
+  const filename = generateSlug(task.title, existingFiles);
+
+  // Create task with stable ID
+  const taskWithId = { ...task, id, status: task.status };
+  const content = serializeTask(taskWithId);
   await fs.writeFile(path.join(statusDir, filename), content, 'utf-8');
 
-  return { ...task, filename, id: `${task.status}/${filename}` };
+  // Append new task ID to order file
+  const orderData = await readOrderFile(statusDir);
+  orderData.order.push(id);
+  await writeOrderFile(statusDir, orderData);
+
+  return { ...taskWithId, filename };
 }
 
 export async function updateTask(status, filename, updates) {
@@ -159,9 +346,11 @@ export async function updateTask(status, filename, updates) {
   return updatedTask;
 }
 
-export async function moveTask(fromStatus, filename, toStatus, newPriority) {
+export async function moveTask(fromStatus, filename, toStatus, newPosition) {
   const tasksDir = await getTasksDir();
-  const fromPath = path.join(tasksDir, fromStatus, filename);
+  const fromDir = path.join(tasksDir, fromStatus);
+  const toDir = path.join(tasksDir, toStatus);
+  const fromPath = path.join(fromDir, filename);
 
   const content = await fs.readFile(fromPath, 'utf-8');
   let task = parseTaskFile(content, filename, fromStatus);
@@ -172,57 +361,54 @@ export async function moveTask(fromStatus, filename, toStatus, newPriority) {
     task.completed = new Date().toISOString();
   }
 
-  const toDir = path.join(tasksDir, toStatus);
-  const files = await fs.readdir(toDir).catch(() => []);
-  const mdFiles = files.filter(f => f.endsWith('.md')).sort();
-
-  const priority = newPriority !== undefined ? newPriority : mdFiles.length + 1;
-  const paddedPriority = String(priority).padStart(2, '0');
-  const slug = filename.replace(/^\d+-/, '').replace('.md', '');
-  const newFilename = `${paddedPriority}-${slug}.md`;
-
+  // Keep the same filename (no renaming)
   const newContent = serializeTask(task);
-  await fs.writeFile(path.join(toDir, newFilename), newContent, 'utf-8');
+  await fs.writeFile(path.join(toDir, filename), newContent, 'utf-8');
   await fs.unlink(fromPath);
 
-  return { ...task, filename: newFilename, id: `${toStatus}/${newFilename}` };
+  // Update order files: remove from source, add to destination
+  const fromOrderData = await readOrderFile(fromDir);
+  fromOrderData.order = fromOrderData.order.filter(id => id !== task.id);
+  await writeOrderFile(fromDir, fromOrderData);
+
+  const toOrderData = await readOrderFile(toDir);
+  if (newPosition !== undefined && newPosition >= 0) {
+    toOrderData.order.splice(newPosition, 0, task.id);
+  } else {
+    toOrderData.order.push(task.id);
+  }
+  await writeOrderFile(toDir, toOrderData);
+
+  return { ...task, filename };
 }
 
-export async function reorderTasks(status, orderedFilenames) {
+// Simplified reorderTasks - only updates order file, no file renames
+export async function reorderTasks(status, orderedIds) {
   const tasksDir = await getTasksDir();
   const statusDir = path.join(tasksDir, status);
 
-  const renames = [];
-  for (let i = 0; i < orderedFilenames.length; i++) {
-    const oldFilename = orderedFilenames[i];
-    const paddedPriority = String(i + 1).padStart(2, '0');
-    const slug = oldFilename.replace(/^\d+-/, '').replace('.md', '');
-    const newFilename = `${paddedPriority}-${slug}.md`;
-
-    if (oldFilename !== newFilename) {
-      renames.push({ oldFilename, newFilename });
-    }
-  }
-
-  for (const { oldFilename, newFilename } of renames) {
-    const oldPath = path.join(statusDir, oldFilename);
-    const tempPath = path.join(statusDir, `_temp_${newFilename}`);
-    await fs.rename(oldPath, tempPath);
-  }
-
-  for (const { newFilename } of renames) {
-    const tempPath = path.join(statusDir, `_temp_${newFilename}`);
-    const newPath = path.join(statusDir, newFilename);
-    await fs.rename(tempPath, newPath);
-  }
+  // Just update the order file with the new ID sequence
+  await writeOrderFile(statusDir, { order: orderedIds });
 
   return await getAllTasks();
 }
 
 export async function deleteTask(status, filename) {
   const tasksDir = await getTasksDir();
-  const filePath = path.join(tasksDir, status, filename);
+  const statusDir = path.join(tasksDir, status);
+  const filePath = path.join(statusDir, filename);
+
+  // Read the task to get its ID before deleting
+  const content = await fs.readFile(filePath, 'utf-8');
+  const task = parseTaskFile(content, filename, status);
+
+  // Delete the file
   await fs.unlink(filePath);
+
+  // Remove from order file
+  const orderData = await readOrderFile(statusDir);
+  orderData.order = orderData.order.filter(id => id !== task.id);
+  await writeOrderFile(statusDir, orderData);
 }
 
 export async function getProjectConfig() {

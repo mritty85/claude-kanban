@@ -24,19 +24,25 @@ Tasks are stored as markdown files in `/tasks/{status}/` directories:
 ### Working on Tasks
 
 When asked to work on tasks:
-1. Read the top file in `/tasks/backlog/` (lowest number prefix = highest priority)
-2. Move the file to `/tasks/implementing/`
-3. Update the `## Status` field to `implementing`
-4. Implement the work described
-5. Check off acceptance criteria as completed
-6. Add notes to `## Notes` section for any decisions
-7. When complete, move file to `/tasks/uat/`
-8. Update the `## Status` field to `uat`
+1. Check the `_order.json` file in `/tasks/backlog/` to see task priority order
+2. Read the first task ID from the order, then find and read the corresponding `.md` file
+3. Move the file to `/tasks/implementing/` (keep the same filename)
+4. Update the `## Status` field to `implementing`
+5. Update the `_order.json` files (remove from source, add to destination)
+6. Implement the work described
+7. Check off acceptance criteria as completed
+8. Add notes to `## Notes` section for any decisions
+9. When complete, move file to `/tasks/uat/`
+10. Update the `## Status` field to `uat`
+11. Update the `_order.json` files accordingly
 
 ### Task File Format
 
 ```markdown
 # {Title}
+
+## Id
+task_1734523687000
 
 ## Status
 planning
@@ -71,11 +77,18 @@ This Kanban tool is designed as a **centralized installation** that manages mult
 /project-a/                   ← Any registered project
   /tasks/
     /ideation/
+      _order.json             ← Task ordering for this column
+      some-task.md
     /planning/
+      _order.json
     /backlog/
+      _order.json
     /implementing/
+      _order.json
     /uat/
+      _order.json
     /done/
+      _order.json
     project.json              ← Per-project config (board name)
 
 /project-b/                   ← Another registered project
@@ -169,10 +182,14 @@ server/
 
 **`fileService.js`:**
 - `getTasksDir()` - Async, reads from current project config
-- `getAllTasks()` - Reads all .md files from all status dirs
-- `parseTaskFile(content)` - Markdown → task object
-- `serializeTask(task)` - Task object → markdown
-- `moveTask()`, `reorderTasks()` - File operations with renaming
+- `getAllTasks()` - Reads all tasks, auto-migrates on first access, sorts by order files
+- `parseTaskFile(content)` - Markdown → task object (extracts stable ID)
+- `serializeTask(task)` - Task object → markdown (includes ID section)
+- `generateTaskId()` - Creates timestamp-based unique ID
+- `generateSlug(title, existingFiles)` - Creates filename with deduplication
+- `readOrderFile(statusDir)` / `writeOrderFile(statusDir, data)` - Manage column ordering
+- `moveTask()` - Moves file, updates both order files
+- `reorderTasks()` - Updates order file only (no file renames)
 
 **`watcher.js`:**
 - `initWatcher()` - Sets up chokidar on current project
@@ -210,6 +227,9 @@ server/
 ```markdown
 # {Title}
 
+## Id
+task_1734523687000
+
 ## Status
 ideation | planning | backlog | implementing | uat | done
 
@@ -231,7 +251,19 @@ ideation | planning | backlog | implementing | uat | done
 {Implementation notes, blockers, decisions}
 ```
 
-**File Naming:** `{priority}-{slug}.md` (e.g., `01-user-auth.md`)
+**File Naming:** `{slug}.md` (e.g., `user-auth.md`)
+- Filenames are stable once created (no renaming on reorder/move)
+- Task ID stored in markdown is the unique identifier
+
+**Column Ordering:** Each status folder contains `_order.json`:
+```json
+{
+  "order": ["task_1734523687000", "task_1734523698000"]
+}
+```
+- Order determined by position in array (first = highest priority)
+- Reordering only updates this file, not task files
+- Tasks not in order file appear at the end
 
 ## Configuration
 

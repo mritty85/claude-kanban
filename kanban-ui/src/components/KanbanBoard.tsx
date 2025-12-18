@@ -60,7 +60,7 @@ export function KanbanBoard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>({ preset: null });
-  const [doneSort, setDoneSort] = useState<DoneSortOption>('priority');
+  const [doneSort, setDoneSort] = useState<DoneSortOption>('default');
   const [collapsedColumns, setCollapsedColumns] = useState<Set<TaskStatus>>(new Set());
   const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
 
@@ -178,11 +178,11 @@ export function KanbanBoard() {
       });
     }
 
-    // Apply sorting
-    if (status === 'done' && doneSort !== 'priority') {
+    // Apply sorting for Done column
+    if (status === 'done' && doneSort !== 'default') {
       return statusTasks.sort((a, b) => {
         // Tasks without completion date go to the end
-        if (!a.completed && !b.completed) return a.priority - b.priority;
+        if (!a.completed && !b.completed) return 0;
         if (!a.completed) return 1;
         if (!b.completed) return -1;
 
@@ -197,7 +197,8 @@ export function KanbanBoard() {
       });
     }
 
-    return statusTasks.sort((a, b) => a.priority - b.priority);
+    // Tasks are already sorted by order file on the backend
+    return statusTasks;
   }, [filteredTasks, dateFilter, doneSort, getDateRange]);
 
   function handleDragStart(event: DragStartEvent) {
@@ -237,7 +238,7 @@ export function KanbanBoard() {
           const newOrder = [...columnTasks];
           const [removed] = newOrder.splice(oldIndex, 1);
           newOrder.splice(newIndex, 0, removed);
-          await reorderTasks(activeTask.status, newOrder.map(t => t.filename));
+          await reorderTasks(activeTask.status, newOrder.map(t => t.id));
         }
       } else {
         await moveTask(activeTask.status, activeTask.filename, overTask.status);

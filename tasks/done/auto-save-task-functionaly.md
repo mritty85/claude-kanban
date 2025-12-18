@@ -1,7 +1,10 @@
 # Auto-save Task Functionality
 
+## Id
+task_1765883654815
+
 ## Status
-uat
+done
 
 ## Tags
 - feature-enhancement
@@ -56,15 +59,11 @@ Add auto-save functionality when editing existing tasks to prevent losing work. 
 - Brief "Saving..." state visible but not intrusive
 - If save fails, show error and retry option
 - Status dropdown could show brief confirmation toast when status changes
-
 ---
 **Implementation completed 2025-12-16 (simplified approach):**
-
 After testing, simplified to auto-save only for long text fields as a safety net:
-
 - **Auto-save (1.5s debounce):** Description, Notes only
 - **Explicit Save Changes button:** Title, Status, Tags, Epic, Completed date, Acceptance Criteria
-
 Changes made:
 - Added auto-save state (`autoSaving`, `lastSaved`) and debounce ref to TaskPanel
 - Added `formatRelativeTime()` helper (from NotesPanel pattern)
@@ -72,3 +71,6 @@ Changes made:
 - Save indicator in header shows "Saving..." / "Saved X ago"
 - 10-second interval updates relative timestamp
 - All other fields require explicit "Save Changes" click
+
+## Completed
+2025-12-18T10:51:14.629Z

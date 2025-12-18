@@ -8,10 +8,9 @@ export interface AcceptanceCriterion {
 }
 
 export interface Task {
-  id: string;
+  id: string; // Stable ID (e.g., "task_1734523687000")
   filename: string;
   status: TaskStatus;
-  priority: number;
   title: string;
   description: string;
   tags: TaskTag[];
@@ -62,7 +61,7 @@ export interface DateFilter {
   endDate?: string;   // ISO date string
 }
 
-export type DoneSortOption = 'priority' | 'completedNewest' | 'completedOldest';
+export type DoneSortOption = 'default' | 'completedNewest' | 'completedOldest';
 
 // Project types for multi-project support
 export interface Project {

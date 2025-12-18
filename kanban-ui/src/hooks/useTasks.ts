@@ -54,8 +54,8 @@ export function useTasks() {
     return task;
   }, []);
 
-  const reorderTasks = useCallback(async (status: TaskStatus, orderedFilenames: string[]) => {
-    const allTasks = await api.reorderTasks(status, orderedFilenames);
+  const reorderTasks = useCallback(async (status: TaskStatus, orderedIds: string[]) => {
+    const allTasks = await api.reorderTasks(status, orderedIds);
     setTasks(allTasks);
   }, []);
 
@@ -65,9 +65,8 @@ export function useTasks() {
   }, []);
 
   const getTasksByStatus = useCallback((status: TaskStatus) => {
-    return tasks
-      .filter(t => t.status === status)
-      .sort((a, b) => a.priority - b.priority);
+    // Tasks are already sorted by order file on the backend
+    return tasks.filter(t => t.status === status);
   }, [tasks]);
 
   return {
