@@ -1,4 +1,4 @@
-import { useEffect, useRef, useReducer } from 'react';
+import { useEffect, useRef, useReducer, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { useProjectNotes } from '../hooks/useProjectNotes';
 
@@ -33,8 +33,14 @@ export function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
     saving,
     lastSaved,
     loadNotes,
-    updateContent
+    updateContent,
+    flushSave
   } = useProjectNotes();
+
+  const handleSaveAndClose = useCallback(async () => {
+    await flushSave();
+    onClose();
+  }, [flushSave, onClose]);
 
   // Load notes when panel opens
   useEffect(() => {
@@ -57,12 +63,12 @@ export function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape' && isOpen) {
-        onClose();
+        handleSaveAndClose();
       }
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleSaveAndClose]);
 
   // Update relative time display
   const [, forceUpdate] = useReducer(x => x + 1, 0);
@@ -81,7 +87,7 @@ export function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
         className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        onClick={onClose}
+        onClick={handleSaveAndClose}
       />
 
       {/* Panel - slides from LEFT */}
@@ -104,7 +110,7 @@ export function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
             </span>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleSaveAndClose}
             className="p-1.5 rounded hover:bg-[var(--color-bg-elevated)] transition-colors"
           >
             <X size={20} className="text-[var(--color-text-muted)]" />
@@ -132,10 +138,10 @@ export function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
         <div className="flex items-center justify-end px-6 py-4 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)]">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleSaveAndClose}
             className="px-4 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
           >
-            Close
+            Save & Close
           </button>
         </div>
       </div>

@@ -56,6 +56,21 @@ export function useProjectNotes() {
     }, 5000);
   }, [saveNotes]);
 
+  // Immediately save any pending changes (for Save & Close)
+  const flushSave = useCallback(async () => {
+    // Clear pending debounced save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
+    // Only save if content differs from server
+    if (content !== serverContentRef.current) {
+      await saveNotes(content);
+    }
+    setIsEditing(false);
+  }, [content, saveNotes]);
+
   // Handle SSE updates - only apply if not actively editing or within grace period
   useEffect(() => {
     const unsubscribe = api.subscribeToChanges((event) => {
@@ -96,6 +111,7 @@ export function useProjectNotes() {
     lastSaved,
     loadNotes,
     updateContent,
+    flushSave,
     setContent
   };
 }
