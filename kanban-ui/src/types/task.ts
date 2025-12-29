@@ -18,6 +18,7 @@ export interface Task {
   notes: string;
   completed?: string; // ISO 8601 datetime when task moved to Done
   epic?: string; // Optional epic name for grouping related tasks
+  additionalContent?: string; // Raw markdown for unknown ## sections (preserved but not editable in UI)
 }
 
 export interface TaskFormData {
@@ -29,6 +30,7 @@ export interface TaskFormData {
   notes: string;
   completed?: string; // ISO 8601 datetime when task moved to Done
   epic?: string; // Optional epic name for grouping related tasks
+  additionalContent?: string; // Raw markdown for unknown ## sections (preserved but not editable in UI)
 }
 
 export const STATUSES: TaskStatus[] = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useReducer, useCallback } from 'react';
-import { X, Plus, Trash2, Copy, Check, Pencil, GripVertical } from 'lucide-react';
+import { X, Plus, Trash2, Copy, Check, Pencil, GripVertical, ChevronDown } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -192,6 +192,8 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
   const [deleting, setDeleting] = useState(false);
   const [completed, setCompleted] = useState<string>('');
   const [epic, setEpic] = useState<string>('');
+  const [additionalContent, setAdditionalContent] = useState<string>('');
+  const [additionalExpanded, setAdditionalExpanded] = useState(false);
 
   // Auto-save state
   const [autoSaving, setAutoSaving] = useState(false);
@@ -224,6 +226,8 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
         setAcceptanceCriteria(task.acceptanceCriteria);
         setCompleted(task.completed || '');
         setEpic(task.epic || '');
+        setAdditionalContent(task.additionalContent || '');
+        setAdditionalExpanded(false); // Collapse by default when opening a task
 
         // Only reset description/notes if NOT within grace period
         // This prevents SSE-triggered updates from resetting cursor position
@@ -241,6 +245,8 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
         setNotes('');
         setCompleted('');
         setEpic('');
+        setAdditionalContent('');
+        setAdditionalExpanded(false);
       }
       setNewCriterion('');
       setEditingIndex(null);
@@ -302,8 +308,9 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
     acceptanceCriteria,
     notes: notes.trim(),
     completed: completed || undefined,
-    epic: epic.trim() || undefined
-  }), [title, status, description, tags, acceptanceCriteria, notes, completed, epic]);
+    epic: epic.trim() || undefined,
+    additionalContent: additionalContent || undefined
+  }), [title, status, description, tags, acceptanceCriteria, notes, completed, epic, additionalContent]);
 
   // Perform the save operation (for existing tasks only)
   const performAutoSave = useCallback(async (data: TaskFormData) => {
@@ -415,7 +422,8 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
         acceptanceCriteria,
         notes: notes.trim(),
         completed: completed || undefined,
-        epic: epic.trim() || undefined
+        epic: epic.trim() || undefined,
+        additionalContent: additionalContent || undefined
       });
       onClose(); // Close panel after explicit save
     } finally {
@@ -681,6 +689,30 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
                 className="w-full px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none min-h-[120px]"
               />
             </div>
+
+            {/* Additional Content - read-only display of unknown ## sections */}
+            {additionalContent && (
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={() => setAdditionalExpanded(!additionalExpanded)}
+                  className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                >
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${additionalExpanded ? '' : '-rotate-90'}`}
+                  />
+                  Additional Content
+                </button>
+                {additionalExpanded && (
+                  <div className="mt-2 px-3 py-2.5 bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] rounded-[6px]">
+                    <pre className="text-[12px] text-[var(--color-text-secondary)] whitespace-pre-wrap font-mono overflow-x-auto">
+                      {additionalContent}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sticky Footer */}

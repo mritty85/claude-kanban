@@ -216,6 +216,9 @@ export async function getAllTasks() {
 export function parseTaskFile(content, filename, status) {
   const lines = content.split('\n');
 
+  // Known sections that we parse into structured fields
+  const KNOWN_SECTIONS = ['id', 'status', 'tags', 'description', 'acceptance criteria', 'notes', 'completed', 'epic'];
+
   let title = '';
   let taskId = '';
   let description = '';
@@ -224,13 +227,28 @@ export function parseTaskFile(content, filename, status) {
   let notes = '';
   let completed = '';
   let epic = '';
+  let additionalContent = '';
   let currentSection = '';
+  let inUnknownSection = false;
 
   for (const line of lines) {
     if (line.startsWith('# ')) {
       title = line.slice(2).trim();
+      inUnknownSection = false;
     } else if (line.startsWith('## ')) {
-      currentSection = line.slice(3).trim().toLowerCase();
+      const sectionName = line.slice(3).trim().toLowerCase();
+      if (KNOWN_SECTIONS.includes(sectionName)) {
+        currentSection = sectionName;
+        inUnknownSection = false;
+      } else {
+        // Unknown section - capture it including the header
+        inUnknownSection = true;
+        currentSection = '';
+        additionalContent += (additionalContent ? '\n' : '') + line;
+      }
+    } else if (inUnknownSection) {
+      // Continue capturing unknown section content
+      additionalContent += '\n' + line;
     } else if (currentSection === 'id' && line.trim()) {
       taskId = line.trim();
     } else if (currentSection === 'tags' && line.startsWith('- ')) {
@@ -272,6 +290,12 @@ export function parseTaskFile(content, filename, status) {
     task.epic = epic;
   }
 
+  // Preserve any unknown sections (trimmed to remove leading/trailing whitespace)
+  const trimmedAdditional = additionalContent.trim();
+  if (trimmedAdditional) {
+    task.additionalContent = trimmedAdditional;
+  }
+
   return task;
 }
 
@@ -298,6 +322,10 @@ export function serializeTask(task) {
   content += `\n## Notes\n${task.notes || ''}\n`;
   if (task.completed) {
     content += `\n## Completed\n${task.completed}\n`;
+  }
+  // Preserve any additional content (unknown ## sections) at the end
+  if (task.additionalContent) {
+    content += `\n${task.additionalContent}\n`;
   }
   return content;
 }
