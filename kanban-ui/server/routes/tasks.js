@@ -9,7 +9,9 @@ import {
   getProjectConfig,
   updateProjectConfig,
   getProjectNotes,
-  updateProjectNotes
+  updateProjectNotes,
+  getProjectRoadmap,
+  updateProjectRoadmap
 } from '../services/fileService.js';
 import { addSSEClient } from '../services/watcher.js';
 
@@ -121,6 +123,27 @@ router.put('/notes', async (req, res) => {
   } catch (err) {
     console.error('Error updating notes:', err);
     res.status(500).json({ error: 'Failed to update notes' });
+  }
+});
+
+router.get('/roadmap', async (req, res) => {
+  try {
+    const content = await getProjectRoadmap();
+    res.json({ content });
+  } catch (err) {
+    console.error('Error getting roadmap:', err);
+    res.status(500).json({ error: 'Failed to get roadmap' });
+  }
+});
+
+router.put('/roadmap', async (req, res) => {
+  try {
+    const { content } = req.body;
+    await updateProjectRoadmap(content);
+    res.json({ content });
+  } catch (err) {
+    console.error('Error updating roadmap:', err);
+    res.status(500).json({ error: 'Failed to update roadmap' });
   }
 });
 

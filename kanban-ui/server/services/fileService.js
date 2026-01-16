@@ -479,3 +479,24 @@ export async function updateProjectNotes(content) {
   await fs.writeFile(notesPath, content, 'utf-8');
   return content;
 }
+
+export async function getProjectRoadmap() {
+  const tasksDir = await getTasksDir();
+  const roadmapPath = path.join(tasksDir, 'ROADMAP.md');
+  try {
+    const content = await fs.readFile(roadmapPath, 'utf-8');
+    return content;
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return ''; // Return empty string if file doesn't exist
+    }
+    throw err;
+  }
+}
+
+export async function updateProjectRoadmap(content) {
+  const tasksDir = await getTasksDir();
+  const roadmapPath = path.join(tasksDir, 'ROADMAP.md');
+  await fs.writeFile(roadmapPath, content, 'utf-8');
+  return content;
+}

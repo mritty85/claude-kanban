@@ -292,6 +292,25 @@ planning
 
 - **`## Id`**: Unique timestamp-based identifier (preserve when editing)
 - **Filename**: Slug-only, e.g., `user-auth.md` (no numeric prefix)
+
+### Project Documentation Files
+
+The Kanban UI provides two markdown files for project documentation:
+
+- **`/tasks/NOTES.md`** - Scratch pad for quick notes, temporary thoughts, session notes
+- **`/tasks/ROADMAP.md`** - Long-form planning document for project vision, milestones, and roadmap
+
+Both files:
+- Are per-project (each registered project has its own)
+- Auto-save with a 5-second debounce when edited in the UI
+- Can be edited directly in your editor (changes sync via file watcher)
+- Are created lazily on first save (don't exist until you write to them)
+
+**Usage from Claude Code:**
+When working on a project, you can reference these files:
+- Read `/tasks/ROADMAP.md` to understand the project's long-term direction
+- Read `/tasks/NOTES.md` for recent context or session notes
+- Update either file to document decisions or progress
 ```
 
 ---

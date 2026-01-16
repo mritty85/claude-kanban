@@ -20,13 +20,14 @@ import { Column } from './Column';
 import { Card } from './Card';
 import { TaskPanel } from './TaskPanel';
 import { NotesPanel } from './NotesPanel';
+import { RoadmapPanel } from './RoadmapPanel';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { ProjectsModal } from './ProjectsModal';
 import { useTasks } from '../hooks/useTasks';
 import { useProjects } from '../hooks/useProjects';
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText, Map } from 'lucide-react';
 
 export function KanbanBoard() {
   const {
@@ -57,6 +58,7 @@ export function KanbanBoard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(false);
+  const [isRoadmapPanelOpen, setIsRoadmapPanelOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>({ preset: null });
@@ -306,6 +308,13 @@ export function KanbanBoard() {
             onManage={() => setIsProjectsModalOpen(true)}
           />
           <button
+            onClick={() => setIsRoadmapPanelOpen(true)}
+            className="p-2 rounded-[6px] hover:bg-[var(--color-bg-elevated)] transition-colors"
+            title="Roadmap"
+          >
+            <Map size={20} className="text-[var(--color-text-secondary)]" />
+          </button>
+          <button
             onClick={() => setIsNotesPanelOpen(true)}
             className="p-2 rounded-[6px] hover:bg-[var(--color-bg-elevated)] transition-colors"
             title="Project Notes"
@@ -382,6 +391,11 @@ export function KanbanBoard() {
       <NotesPanel
         isOpen={isNotesPanelOpen}
         onClose={() => setIsNotesPanelOpen(false)}
+      />
+
+      <RoadmapPanel
+        isOpen={isRoadmapPanelOpen}
+        onClose={() => setIsRoadmapPanelOpen(false)}
       />
 
       {isProjectsModalOpen && (

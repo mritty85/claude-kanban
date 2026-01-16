@@ -175,3 +175,23 @@ export async function updateNotes(content: string): Promise<string> {
   const data = await res.json();
   return data.content;
 }
+
+// Project Roadmap API functions
+
+export async function fetchRoadmap(): Promise<string> {
+  const res = await fetch(`${API_BASE}/tasks/roadmap`);
+  if (!res.ok) throw new Error('Failed to fetch roadmap');
+  const data = await res.json();
+  return data.content;
+}
+
+export async function updateRoadmap(content: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/tasks/roadmap`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+  if (!res.ok) throw new Error('Failed to update roadmap');
+  const data = await res.json();
+  return data.content;
+}
