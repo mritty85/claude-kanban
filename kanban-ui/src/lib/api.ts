@@ -59,23 +59,63 @@ export async function deleteTask(status: TaskStatus, filename: string): Promise<
   if (!res.ok) throw new Error('Failed to delete task');
 }
 
-export function subscribeToChanges(onEvent: (event: { event: string; path: string; timestamp: number }) => void): () => void {
-  const eventSource = new EventSource(`${API_BASE}/tasks/events`);
+export function subscribeToChanges(
+  onEvent: (event: { event: string; path: string; timestamp: number }) => void,
+  onReconnect?: () => void
+): () => void {
+  let eventSource: EventSource | null = null;
+  let reconnectAttempts = 0;
+  const maxReconnectDelay = 30000;
 
-  eventSource.onmessage = (e) => {
-    try {
-      const data = JSON.parse(e.data);
-      onEvent(data);
-    } catch {
-      // Ignore parse errors
+  function connect() {
+    eventSource = new EventSource(`${API_BASE}/tasks/events`);
+
+    eventSource.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        reconnectAttempts = 0; // Reset on successful message
+        onEvent(data);
+      } catch {
+        // Ignore parse errors
+      }
+    };
+
+    eventSource.onerror = () => {
+      console.error('SSE connection error, reconnecting...');
+      eventSource?.close();
+
+      // Exponential backoff
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), maxReconnectDelay);
+      reconnectAttempts++;
+      setTimeout(connect, delay);
+    };
+
+    eventSource.onopen = () => {
+      if (reconnectAttempts > 0 && onReconnect) {
+        onReconnect(); // Trigger data refresh after reconnect
+      }
+    };
+  }
+
+  connect();
+
+  // Reconnect when tab becomes visible (after sleep/wake)
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'visible') {
+      console.log('Tab visible, checking SSE connection...');
+      if (eventSource?.readyState === EventSource.CLOSED) {
+        connect();
+      }
+      onReconnect?.(); // Always refresh data when tab becomes visible
     }
-  };
+  }
 
-  eventSource.onerror = () => {
-    console.error('SSE connection error, will attempt reconnect');
-  };
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  return () => eventSource.close();
+  return () => {
+    eventSource?.close();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
 }
 
 export async function fetchConfig(): Promise<ProjectConfig> {

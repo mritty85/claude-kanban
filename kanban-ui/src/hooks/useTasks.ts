@@ -24,12 +24,15 @@ export function useTasks() {
   }, [loadTasks]);
 
   useEffect(() => {
-    const unsubscribe = api.subscribeToChanges((event) => {
-      // Reload tasks for any file change or project switch
-      if (event.event === 'project-switched' || event.event === 'add' || event.event === 'change' || event.event === 'unlink') {
-        loadTasks();
-      }
-    });
+    const unsubscribe = api.subscribeToChanges(
+      (event) => {
+        // Reload tasks for any file change or project switch
+        if (event.event === 'project-switched' || event.event === 'add' || event.event === 'change' || event.event === 'unlink') {
+          loadTasks();
+        }
+      },
+      loadTasks // onReconnect callback - refresh data after sleep/wake
+    );
     return unsubscribe;
   }, [loadTasks]);
 

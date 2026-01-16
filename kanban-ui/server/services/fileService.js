@@ -218,6 +218,8 @@ export function parseTaskFile(content, filename, status) {
 
   // Known sections that we parse into structured fields
   const KNOWN_SECTIONS = ['id', 'status', 'tags', 'description', 'acceptance criteria', 'notes', 'completed', 'epic'];
+  // Sections that can contain freeform multi-line content (including ## patterns)
+  const FREEFORM_SECTIONS = ['description', 'notes'];
 
   let title = '';
   let taskId = '';
@@ -237,11 +239,20 @@ export function parseTaskFile(content, filename, status) {
       inUnknownSection = false;
     } else if (line.startsWith('## ')) {
       const sectionName = line.slice(3).trim().toLowerCase();
+      // Only treat as section header if it's a KNOWN section
+      // This allows description/notes to contain arbitrary ## markdown headers
       if (KNOWN_SECTIONS.includes(sectionName)) {
         currentSection = sectionName;
         inUnknownSection = false;
+      } else if (FREEFORM_SECTIONS.includes(currentSection)) {
+        // We're in a freeform section - treat ## as content, not a section header
+        if (currentSection === 'description') {
+          description += (description ? '\n' : '') + line;
+        } else if (currentSection === 'notes') {
+          notes += (notes ? '\n' : '') + line;
+        }
       } else {
-        // Unknown section - capture it including the header
+        // Unknown section outside of freeform sections - capture it
         inUnknownSection = true;
         currentSection = '';
         additionalContent += (additionalContent ? '\n' : '') + line;
@@ -253,13 +264,15 @@ export function parseTaskFile(content, filename, status) {
       taskId = line.trim();
     } else if (currentSection === 'tags' && line.startsWith('- ')) {
       tags.push(line.slice(2).trim());
-    } else if (currentSection === 'description' && line.trim()) {
+    } else if (currentSection === 'description') {
+      // Preserve all lines including empty ones for proper markdown formatting
       description += (description ? '\n' : '') + line;
     } else if (currentSection === 'acceptance criteria' && line.startsWith('- [')) {
       const checked = line.includes('[x]') || line.includes('[X]');
       const text = line.replace(/- \[[ xX]\] /, '').trim();
       acceptanceCriteria.push({ text, checked });
-    } else if (currentSection === 'notes' && line.trim()) {
+    } else if (currentSection === 'notes') {
+      // Preserve all lines including empty ones for proper markdown formatting
       notes += (notes ? '\n' : '') + line;
     } else if (currentSection === 'completed' && line.trim()) {
       completed = line.trim();

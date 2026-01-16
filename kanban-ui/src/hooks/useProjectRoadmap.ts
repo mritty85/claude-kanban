@@ -11,6 +11,7 @@ export function useProjectRoadmap() {
   const saveTimeoutRef = useRef<number | null>(null);
   const serverContentRef = useRef<string>('');
   const lastSaveTimeRef = useRef<number>(0);
+  const isEditingRef = useRef<boolean>(false);
 
   const loadRoadmap = useCallback(async () => {
     setLoading(true);
@@ -43,6 +44,7 @@ export function useProjectRoadmap() {
   const updateContent = useCallback((newContent: string) => {
     setContent(newContent);
     setIsEditing(true);
+    isEditingRef.current = true;
 
     // Clear existing timeout
     if (saveTimeoutRef.current) {
@@ -53,6 +55,7 @@ export function useProjectRoadmap() {
     saveTimeoutRef.current = window.setTimeout(() => {
       saveRoadmap(newContent);
       setIsEditing(false);
+      isEditingRef.current = false;
     }, 5000);
   }, [saveRoadmap]);
 
@@ -69,29 +72,40 @@ export function useProjectRoadmap() {
       await saveRoadmap(content);
     }
     setIsEditing(false);
+    isEditingRef.current = false;
   }, [content, saveRoadmap]);
 
   // Handle SSE updates - only apply if not actively editing or within grace period
   useEffect(() => {
-    const unsubscribe = api.subscribeToChanges((event) => {
-      // Handle project switch - reload roadmap
-      if (event.event === 'project-switched') {
+    // Reconnect callback - refresh if not editing (uses ref for current value)
+    const handleReconnect = () => {
+      if (!isEditingRef.current) {
         loadRoadmap();
-        setLastSaved(null);
-        return;
       }
+    };
 
-      // Handle ROADMAP.md changes from external source
-      if ((event.event === 'add' || event.event === 'change') && event.path?.includes('ROADMAP.md')) {
-        // Check if we're within the grace period after saving (2 seconds)
-        const withinGracePeriod = Date.now() - lastSaveTimeRef.current < 2000;
-
-        // Only reload if not actively editing and not within grace period
-        if (!isEditing && !withinGracePeriod) {
+    const unsubscribe = api.subscribeToChanges(
+      (event) => {
+        // Handle project switch - reload roadmap
+        if (event.event === 'project-switched') {
           loadRoadmap();
+          setLastSaved(null);
+          return;
         }
-      }
-    });
+
+        // Handle ROADMAP.md changes from external source
+        if ((event.event === 'add' || event.event === 'change') && event.path?.includes('ROADMAP.md')) {
+          // Check if we're within the grace period after saving (2 seconds)
+          const withinGracePeriod = Date.now() - lastSaveTimeRef.current < 2000;
+
+          // Only reload if not actively editing and not within grace period
+          if (!isEditing && !withinGracePeriod) {
+            loadRoadmap();
+          }
+        }
+      },
+      handleReconnect // Refresh on reconnect/visibility change if not editing
+    );
     return unsubscribe;
   }, [loadRoadmap, isEditing]);
 
