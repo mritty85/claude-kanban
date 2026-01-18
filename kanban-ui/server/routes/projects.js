@@ -9,7 +9,7 @@ import {
   setCurrentProject,
   validateProjectPath
 } from '../services/configService.js';
-import { switchProject } from '../services/watcher.js';
+import { switchProject, refreshWatcher } from '../services/watcher.js';
 import { ensureDirectories, getProjectConfig, updateProjectConfig } from '../services/fileService.js';
 
 const router = express.Router();
@@ -73,6 +73,10 @@ router.post('/', async (req, res) => {
     }
 
     const project = await addProject(name, projectPath);
+
+    // Refresh watcher to include the new project's directory
+    await refreshWatcher();
+
     res.status(201).json({
       ...project,
       tasksCreated: validation.created || false
@@ -139,6 +143,10 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await removeProject(req.params.id);
+
+    // Refresh watcher to stop watching the removed project's directory
+    await refreshWatcher();
+
     res.status(204).send();
   } catch (err) {
     console.error('Error removing project:', err);
@@ -149,15 +157,29 @@ router.delete('/:id', async (req, res) => {
 // Switch to a project
 router.post('/:id/switch', async (req, res) => {
   try {
-    const project = await setCurrentProject(req.params.id);
+    const { broadcast } = req.body;
+    const projectId = req.params.id;
 
-    // Ensure directories exist for the new project
+    // Get the project to validate it exists
+    const project = await getProjectById(projectId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Update global config (needed for getProjectConfig and ensureDirectories)
+    await setCurrentProject(projectId);
+
+    // Only broadcast if explicitly requested (CLI usage)
+    // UI switches don't need broadcast - the frontend handles its own reload
+    // via state change, and the SSE will reconnect with the new projectId
+    if (broadcast) {
+      await switchProject(projectId);
+    }
+
+    // Ensure directories exist for the project
     await ensureDirectories();
 
-    // Switch watcher and notify clients
-    await switchProject(req.params.id);
-
-    // Get board name from new project's config
+    // Get board name from project's config
     const config = await getProjectConfig();
 
     res.json({ ...project, boardName: config.boardName });

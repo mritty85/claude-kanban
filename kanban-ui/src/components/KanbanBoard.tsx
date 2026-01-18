@@ -31,18 +31,6 @@ import { Plus, FileText, Map } from 'lucide-react';
 
 export function KanbanBoard() {
   const {
-    tasks,
-    loading: tasksLoading,
-    error: tasksError,
-    createTask,
-    updateTask,
-    moveTask,
-    reorderTasks,
-    deleteTask,
-    getTasksByStatus
-  } = useTasks();
-
-  const {
     projects,
     currentProject,
     loading: projectsLoading,
@@ -52,6 +40,18 @@ export function KanbanBoard() {
     switchToProject,
     validatePath
   } = useProjects();
+
+  const {
+    tasks,
+    loading: tasksLoading,
+    error: tasksError,
+    createTask,
+    updateTask,
+    moveTask,
+    reorderTasks,
+    deleteTask,
+    getTasksByStatus
+  } = useTasks(currentProject?.id || null);
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [modalTask, setModalTask] = useState<Task | null>(null);
@@ -391,11 +391,13 @@ export function KanbanBoard() {
       <NotesPanel
         isOpen={isNotesPanelOpen}
         onClose={() => setIsNotesPanelOpen(false)}
+        projectId={currentProject?.id || null}
       />
 
       <RoadmapPanel
         isOpen={isRoadmapPanelOpen}
         onClose={() => setIsRoadmapPanelOpen(false)}
+        projectId={currentProject?.id || null}
       />
 
       {isProjectsModalOpen && (

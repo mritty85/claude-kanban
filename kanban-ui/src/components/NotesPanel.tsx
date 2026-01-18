@@ -5,6 +5,7 @@ import { useProjectNotes } from '../hooks/useProjectNotes';
 interface NotesPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  projectId: string | null;
 }
 
 function formatRelativeTime(date: Date | null): string {
@@ -23,7 +24,7 @@ function formatRelativeTime(date: Date | null): string {
   return `Saved on ${date.toLocaleDateString()}`;
 }
 
-export function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
+export function NotesPanel({ isOpen, onClose, projectId }: NotesPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,7 +36,7 @@ export function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
     loadNotes,
     updateContent,
     flushSave
-  } = useProjectNotes();
+  } = useProjectNotes(projectId, isOpen);
 
   const handleSaveAndClose = useCallback(async () => {
     await flushSave();

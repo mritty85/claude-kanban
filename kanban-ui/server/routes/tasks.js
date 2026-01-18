@@ -14,11 +14,24 @@ import {
   updateProjectRoadmap
 } from '../services/fileService.js';
 import { addSSEClient } from '../services/watcher.js';
+import { getCurrentProject } from '../services/configService.js';
 
 const router = express.Router();
 
-router.get('/events', (req, res) => {
-  addSSEClient(res);
+router.get('/events', async (req, res) => {
+  let projectId = req.query.project;
+
+  // If no project specified, use the current project from global config
+  if (!projectId) {
+    const current = await getCurrentProject();
+    projectId = current?.id;
+  }
+
+  if (!projectId) {
+    return res.status(400).json({ error: 'No project specified and no current project set' });
+  }
+
+  addSSEClient(res, projectId);
 });
 
 router.get('/', async (req, res) => {

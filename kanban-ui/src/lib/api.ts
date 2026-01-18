@@ -6,6 +6,21 @@ export interface ProjectConfig {
   boardName: string;
 }
 
+export interface SSEEvent {
+  event: string;
+  path?: string;
+  projectId?: string;
+  clientId?: number;
+  timestamp: number;
+}
+
+// Track the current client ID assigned by the server
+let currentClientId: number | null = null;
+
+export function getCurrentClientId(): number | null {
+  return currentClientId;
+}
+
 export async function fetchTasks(): Promise<Task[]> {
   const res = await fetch(`${API_BASE}/tasks`);
   if (!res.ok) throw new Error('Failed to fetch tasks');
@@ -60,7 +75,8 @@ export async function deleteTask(status: TaskStatus, filename: string): Promise<
 }
 
 export function subscribeToChanges(
-  onEvent: (event: { event: string; path: string; timestamp: number }) => void,
+  projectId: string,
+  onEvent: (event: SSEEvent) => void,
   onReconnect?: () => void
 ): () => void {
   let eventSource: EventSource | null = null;
@@ -68,12 +84,19 @@ export function subscribeToChanges(
   const maxReconnectDelay = 30000;
 
   function connect() {
-    eventSource = new EventSource(`${API_BASE}/tasks/events`);
+    const url = `${API_BASE}/tasks/events?project=${encodeURIComponent(projectId)}`;
+    eventSource = new EventSource(url);
 
     eventSource.onmessage = (e) => {
       try {
-        const data = JSON.parse(e.data);
+        const data = JSON.parse(e.data) as SSEEvent;
         reconnectAttempts = 0; // Reset on successful message
+
+        // Track client ID from connected event
+        if (data.event === 'connected' && data.clientId) {
+          currentClientId = data.clientId;
+        }
+
         onEvent(data);
       } catch {
         // Ignore parse errors
@@ -114,6 +137,7 @@ export function subscribeToChanges(
 
   return () => {
     eventSource?.close();
+    currentClientId = null;
     document.removeEventListener('visibilitychange', handleVisibilityChange);
   };
 }
@@ -179,8 +203,13 @@ export async function updateProject(id: string, data: Partial<ProjectFormData>):
 }
 
 export async function switchProject(id: string): Promise<Project> {
+  // Note: We don't send clientId here because the SSE subscription will be
+  // recreated with the new projectId, which automatically registers the client
+  // as watching the correct project. This avoids race conditions.
   const res = await fetch(`${API_BASE}/projects/${id}/switch`, {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({})
   });
   if (!res.ok) throw new Error('Failed to switch project');
   return res.json();

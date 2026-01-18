@@ -2,12 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Task, TaskFormData, TaskStatus } from '../types/task';
 import * as api from '../lib/api';
 
-export function useTasks() {
+export function useTasks(projectId: string | null) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadTasks = useCallback(async () => {
+    if (!projectId) {
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
     try {
       const data = await api.fetchTasks();
       setTasks(data);
@@ -17,15 +22,21 @@ export function useTasks() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
 
   useEffect(() => {
+    if (!projectId) return;
+
     const unsubscribe = api.subscribeToChanges(
+      projectId,
       (event) => {
+        // Ignore events for other projects (shouldn't happen with per-connection tracking, but just in case)
+        if (event.projectId && event.projectId !== projectId) return;
+
         // Reload tasks for any file change or project switch
         if (event.event === 'project-switched' || event.event === 'add' || event.event === 'change' || event.event === 'unlink') {
           loadTasks();
@@ -34,7 +45,7 @@ export function useTasks() {
       loadTasks // onReconnect callback - refresh data after sleep/wake
     );
     return unsubscribe;
-  }, [loadTasks]);
+  }, [projectId, loadTasks]);
 
   const createTask = useCallback(async (data: TaskFormData) => {
     const task = await api.createTask(data);

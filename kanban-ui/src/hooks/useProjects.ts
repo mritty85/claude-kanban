@@ -55,14 +55,24 @@ export function useProjects() {
   }, [currentProject?.id]);
 
   const switchToProject = useCallback(async (id: string) => {
+    // Get the project info first to update UI immediately
+    const targetProject = projects.find(p => p.id === id);
+
+    // Update local state immediately for responsive UI
+    if (targetProject) {
+      setCurrentProject(targetProject);
+    }
+
+    // Then call API to switch on server (for per-client tracking)
     const project = await api.switchProject(id);
     setCurrentProject(project);
+
     // Update lastAccessed in local state
     setProjects(prev => prev.map(p =>
       p.id === id ? { ...p, lastAccessed: new Date().toISOString() } : p
     ));
     return project;
-  }, []);
+  }, [projects]);
 
   const validatePath = useCallback(async (path: string) => {
     return api.validateProjectPath(path);

@@ -5,6 +5,7 @@ import { useProjectRoadmap } from '../hooks/useProjectRoadmap';
 interface RoadmapPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  projectId: string | null;
 }
 
 function formatRelativeTime(date: Date | null): string {
@@ -23,7 +24,7 @@ function formatRelativeTime(date: Date | null): string {
   return `Saved on ${date.toLocaleDateString()}`;
 }
 
-export function RoadmapPanel({ isOpen, onClose }: RoadmapPanelProps) {
+export function RoadmapPanel({ isOpen, onClose, projectId }: RoadmapPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,7 +36,7 @@ export function RoadmapPanel({ isOpen, onClose }: RoadmapPanelProps) {
     loadRoadmap,
     updateContent,
     flushSave
-  } = useProjectRoadmap();
+  } = useProjectRoadmap(projectId, isOpen);
 
   const handleSaveAndClose = useCallback(async () => {
     await flushSave();

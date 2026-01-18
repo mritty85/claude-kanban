@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as api from '../lib/api';
 
-export function useProjectRoadmap() {
+export function useProjectRoadmap(projectId: string | null, isOpen: boolean) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -76,7 +76,10 @@ export function useProjectRoadmap() {
   }, [content, saveRoadmap]);
 
   // Handle SSE updates - only apply if not actively editing or within grace period
+  // Only subscribe when panel is open to avoid connection limit issues
   useEffect(() => {
+    if (!projectId || !isOpen) return;
+
     // Reconnect callback - refresh if not editing (uses ref for current value)
     const handleReconnect = () => {
       if (!isEditingRef.current) {
@@ -85,7 +88,11 @@ export function useProjectRoadmap() {
     };
 
     const unsubscribe = api.subscribeToChanges(
+      projectId,
       (event) => {
+        // Ignore events for other projects
+        if (event.projectId && event.projectId !== projectId) return;
+
         // Handle project switch - reload roadmap
         if (event.event === 'project-switched') {
           loadRoadmap();
@@ -107,7 +114,7 @@ export function useProjectRoadmap() {
       handleReconnect // Refresh on reconnect/visibility change if not editing
     );
     return unsubscribe;
-  }, [loadRoadmap, isEditing]);
+  }, [projectId, isOpen, loadRoadmap, isEditing]);
 
   // Cleanup on unmount
   useEffect(() => {

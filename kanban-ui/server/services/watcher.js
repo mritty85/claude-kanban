@@ -1,11 +1,34 @@
 import chokidar from 'chokidar';
-import { getTasksDir } from './fileService.js';
+import path from 'path';
+import { listProjects, getProjectById } from './configService.js';
 
 let watcher = null;
-const clients = new Set();
+const clients = new Map(); // Map<clientId, { response, projectId }>
+let clientIdCounter = 0;
+let projectPathMap = new Map(); // Map<tasksDir, projectId>
+
+// Get project ID from a file path by finding which watched directory contains it
+function getProjectIdFromPath(filePath) {
+  for (const [tasksDir, projectId] of projectPathMap) {
+    if (filePath.startsWith(tasksDir)) {
+      return projectId;
+    }
+  }
+  return null;
+}
 
 export async function initWatcher() {
-  const tasksDir = await getTasksDir();
+  const projects = await listProjects();
+
+  // Build project path lookup map
+  projectPathMap = new Map();
+  const watchPaths = [];
+
+  for (const project of projects) {
+    const tasksDir = path.join(project.path, 'tasks');
+    projectPathMap.set(tasksDir, project.id);
+    watchPaths.push(tasksDir);
+  }
 
   // Close existing watcher if any
   if (watcher) {
@@ -13,7 +36,12 @@ export async function initWatcher() {
     watcher = null;
   }
 
-  watcher = chokidar.watch(tasksDir, {
+  if (watchPaths.length === 0) {
+    console.log('No projects to watch');
+    return;
+  }
+
+  watcher = chokidar.watch(watchPaths, {
     persistent: true,
     ignoreInitial: true,
     depth: 1,
@@ -24,11 +52,19 @@ export async function initWatcher() {
   });
 
   watcher.on('all', (event, filePath) => {
-    if (!filePath.endsWith('.md')) return;
+    // Only handle markdown and json files
+    if (!filePath.endsWith('.md') && !filePath.endsWith('.json')) return;
 
-    const data = JSON.stringify({ event, path: filePath, timestamp: Date.now() });
-    for (const client of clients) {
-      client.write(`data: ${data}\n\n`);
+    const projectId = getProjectIdFromPath(filePath);
+    if (!projectId) return;
+
+    const data = JSON.stringify({ event, path: filePath, projectId, timestamp: Date.now() });
+
+    // Only send to clients watching this project
+    for (const [, client] of clients) {
+      if (client.projectId === projectId) {
+        client.response.write(`data: ${data}\n\n`);
+      }
     }
   });
 
@@ -36,22 +72,42 @@ export async function initWatcher() {
     console.error('Watcher error:', error);
   });
 
-  console.log(`Watching for changes in: ${tasksDir}`);
+  console.log(`Watching for changes in ${watchPaths.length} project(s): ${watchPaths.join(', ')}`);
 }
 
-export function addSSEClient(res) {
+export function addSSEClient(res, projectId) {
+  const clientId = ++clientIdCounter;
+
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive'
   });
 
-  res.write('data: {"event":"connected"}\n\n');
-  clients.add(res);
+  res.write(`data: ${JSON.stringify({ event: 'connected', clientId, projectId })}\n\n`);
+  clients.set(clientId, { response: res, projectId });
 
   res.on('close', () => {
-    clients.delete(res);
+    clients.delete(clientId);
   });
+
+  return clientId;
+}
+
+// Update which project a client is watching
+export function updateClientProject(clientId, newProjectId) {
+  const client = clients.get(clientId);
+  if (client) {
+    client.projectId = newProjectId;
+    client.response.write(`data: ${JSON.stringify({
+      event: 'project-switched',
+      clientId,
+      projectId: newProjectId,
+      timestamp: Date.now()
+    })}\n\n`);
+    return true;
+  }
+  return false;
 }
 
 export function closeWatcher() {
@@ -61,20 +117,37 @@ export function closeWatcher() {
   }
 }
 
-// Broadcast a message to all SSE clients
+// Broadcast a message to all SSE clients (used for global events)
 export function broadcastToClients(message) {
   const data = JSON.stringify(message);
-  for (const client of clients) {
-    client.write(`data: ${data}\n\n`);
+  for (const [, client] of clients) {
+    client.response.write(`data: ${data}\n\n`);
   }
 }
 
-// Switch to a different project - reinitializes the watcher and notifies clients
-export async function switchProject(projectId) {
-  // Reinitialize watcher with new project path (getTasksDir will read from updated config)
-  await initWatcher();
+// Broadcast a message only to clients watching a specific project
+export function broadcastToProject(projectId, message) {
+  const data = JSON.stringify({ ...message, projectId });
+  for (const [, client] of clients) {
+    if (client.projectId === projectId) {
+      client.response.write(`data: ${data}\n\n`);
+    }
+  }
+}
 
-  // Notify all SSE clients to refresh their data
+// Refresh watcher when projects are added or removed
+export async function refreshWatcher() {
+  await initWatcher();
+}
+
+// Switch to a different project - for per-client switching
+export async function switchProject(projectId, clientId = null) {
+  if (clientId) {
+    // Per-client switch only - just update the client's project context
+    return updateClientProject(clientId, projectId);
+  }
+
+  // Global switch (CLI compatibility) - notify all clients
   broadcastToClients({
     event: 'project-switched',
     projectId,
