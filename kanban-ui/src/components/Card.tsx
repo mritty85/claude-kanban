@@ -48,17 +48,6 @@ export function Card({ task, onClick }: CardProps) {
         ${isDragging ? 'shadow-lg shadow-black/30' : ''}
       `}
     >
-      {task.epic && (
-        <span
-          className="inline-block px-2 py-0.5 rounded text-[10px] font-medium mb-1.5"
-          style={{
-            backgroundColor: getEpicColor(task.epic).bg,
-            color: getEpicColor(task.epic).text,
-          }}
-        >
-          {task.epic}
-        </span>
-      )}
       <h3 className="text-[14px] font-medium text-[var(--color-text-primary)] mb-2 leading-tight">
         {task.title}
       </h3>
@@ -81,6 +70,18 @@ export function Card({ task, onClick }: CardProps) {
         <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
           {formatCompletedDate(task.completed)}
         </p>
+      )}
+
+      {task.epic && (
+        <div
+          className="mt-3 -mx-3 -mb-3 px-3 py-1.5 text-xs font-medium rounded-b-[6px]"
+          style={{
+            backgroundColor: getEpicColor(task.epic).bg,
+            color: getEpicColor(task.epic).text,
+          }}
+        >
+          {task.epic}
+        </div>
       )}
     </div>
   );

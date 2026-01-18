@@ -309,17 +309,17 @@ export function KanbanBoard() {
           />
           <button
             onClick={() => setIsRoadmapPanelOpen(true)}
-            className="p-2 rounded-[6px] hover:bg-[var(--color-bg-elevated)] transition-colors"
-            title="Roadmap"
+            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
           >
-            <Map size={20} className="text-[var(--color-text-secondary)]" />
+            <Map size={16} />
+            Roadmap
           </button>
           <button
             onClick={() => setIsNotesPanelOpen(true)}
-            className="p-2 rounded-[6px] hover:bg-[var(--color-bg-elevated)] transition-colors"
-            title="Project Notes"
+            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
           >
-            <FileText size={20} className="text-[var(--color-text-secondary)]" />
+            <FileText size={16} />
+            Notes
           </button>
         </div>
 
