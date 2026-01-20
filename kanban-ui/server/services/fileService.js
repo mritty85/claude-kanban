@@ -1,6 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-import matter from 'gray-matter';
 import { getCurrentProjectPath } from './configService.js';
 
 const STATUSES = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];

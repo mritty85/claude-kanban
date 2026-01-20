@@ -4,7 +4,7 @@
 task_1767011520379
 
 ## Status
-planning
+ideation
 
 ## Tags
 - feature-enhancement

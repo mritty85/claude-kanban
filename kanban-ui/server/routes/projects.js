@@ -18,20 +18,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const projects = await listProjects();
-    // Enrich with board names from each project's project.json
-    const enriched = await Promise.all(
-      projects.map(async (project) => {
-        try {
-          // Temporarily we can't easily get another project's config
-          // since getProjectConfig uses current project
-          // For now, just return without boardName enrichment
-          return project;
-        } catch {
-          return project;
-        }
-      })
-    );
-    res.json(enriched);
+    res.json(projects);
   } catch (err) {
     console.error('Error listing projects:', err);
     res.status(500).json({ error: 'Failed to list projects' });

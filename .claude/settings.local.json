@@ -8,7 +8,10 @@
       "Bash(mv:*)",
       "Bash(ls:*)",
       "Bash(cd:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd per-connection project tracking for multi-tab support\n\nServer now watches all registered projects simultaneously and only\nbroadcasts file change events to clients viewing that specific project.\nEach SSE connection tracks which project it''s watching, enabling\nmultiple browser tabs to view different projects independently.\n\nKey changes:\n- watcher.js: Multi-project watching with filtered broadcasts\n- SSE endpoint accepts ?project= param for per-connection tracking\n- Frontend passes projectId to useTasks and panel hooks\n- Notes/Roadmap panels only create SSE connections when open\n  \\(fixes browser connection limit exhaustion\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []
