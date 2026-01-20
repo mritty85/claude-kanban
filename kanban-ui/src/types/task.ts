@@ -87,3 +87,17 @@ export interface PathValidation {
   tasksDir?: string;
   created?: boolean;
 }
+
+// Launch configuration types
+export interface LaunchConfig {
+  id: string;
+  name: string;
+  command: string;
+  workingDir?: string; // Optional - defaults to project root if empty
+}
+
+export interface LaunchConfigFormData {
+  name: string;
+  command: string;
+  workingDir?: string;
+}

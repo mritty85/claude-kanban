@@ -105,6 +105,7 @@ This Kanban tool is designed as a **centralized installation** that manages mult
 
 2. **Per-Project Config (`{project}/tasks/project.json`):**
    - Stores `boardName` displayed in header
+   - Stores `launchConfigs` array for terminal launch commands
    - Can be git-tracked with the project
 
 3. **Project Switching:**
@@ -124,6 +125,30 @@ This Kanban tool is designed as a **centralized installation** that manages mult
 | `src/components/ProjectSwitcher.tsx` | Dropdown in header |
 | `src/components/ProjectsModal.tsx` | Full project management UI |
 
+### Key Files for Launch Terminal
+
+| File | Purpose |
+|------|---------|
+| `server/routes/launch.js` | REST API for launch configs + spawn endpoint |
+| `server/services/fileService.js` | `getLaunchConfigs()`, `addLaunchConfig()`, etc. |
+| `src/components/LaunchModal.tsx` | Modal for viewing/managing launch configs |
+| `src/lib/api.ts` | `fetchLaunchConfigs()`, `launchTerminal()`, etc. |
+| `src/types/task.ts` | `LaunchConfig`, `LaunchConfigFormData` types |
+
+**Launch Config Schema (in project.json):**
+```json
+{
+  "launchConfigs": [
+    { "id": "lc_timestamp", "name": "Dev Server", "command": "npm run dev", "workingDir": "kanban-ui" }
+  ]
+}
+```
+- `workingDir` is optional - relative to project root or absolute path
+
+**Ghostty Spawn Notes:**
+- Commands wrapped in `/bin/bash -c '...'` to handle compound commands (`cd && ...`)
+- Opens new window (macOS limitation - no CLI for "open as tab")
+
 ## Frontend Architecture
 
 ### Component Hierarchy
@@ -136,7 +161,8 @@ App.tsx
     ├── Column.tsx            ← Droppable column (one per status)
     │   └── Card.tsx          ← Draggable task card (sortable)
     ├── TaskPanel.tsx         ← Slide-out panel for create/edit task
-    └── ProjectsModal.tsx     ← Manage projects (add/remove/rename)
+    ├── ProjectsModal.tsx     ← Manage projects (add/remove/rename)
+    └── LaunchModal.tsx       ← Terminal launch configs (spawn Ghostty)
 ```
 
 ### State Management
@@ -158,10 +184,11 @@ server/
 ├── index.js                  ← Express app setup, startup
 ├── routes/
 │   ├── tasks.js              ← Task CRUD endpoints
-│   └── projects.js           ← Project management endpoints
+│   ├── projects.js           ← Project management endpoints
+│   └── launch.js             ← Terminal launch endpoints
 └── services/
     ├── configService.js      ← Global config (~/.kanban-ui/)
-    ├── fileService.js        ← Task file operations
+    ├── fileService.js        ← Task file operations + launch configs
     └── watcher.js            ← Chokidar + SSE broadcasting
 ```
 
@@ -190,6 +217,10 @@ server/
 - `readOrderFile(statusDir)` / `writeOrderFile(statusDir, data)` - Manage column ordering
 - `moveTask()` - Moves file, updates both order files
 - `reorderTasks()` - Updates order file only (no file renames)
+- `getLaunchConfigs()` - Returns launchConfigs array from project.json
+- `addLaunchConfig(data)` - Adds new launch config with generated ID
+- `updateLaunchConfig(id, updates)` - Updates existing launch config
+- `deleteLaunchConfig(id)` - Removes launch config by ID
 
 **`watcher.js`:**
 - `initWatcher()` - Sets up chokidar on current project
@@ -221,6 +252,15 @@ server/
 | DELETE | `/api/projects/:id` | Remove project from registry |
 | POST | `/api/projects/:id/switch` | Switch to project |
 | POST | `/api/projects/validate-path` | Check if path is valid |
+
+### Launch Terminal
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/launch/configs` | List launch configs for current project |
+| POST | `/api/launch/configs` | Add new launch config |
+| PUT | `/api/launch/configs/:id` | Update launch config |
+| DELETE | `/api/launch/configs/:id` | Delete launch config |
+| POST | `/api/launch/:id` | Spawn Ghostty terminal with config command |
 
 ## Task File Format
 

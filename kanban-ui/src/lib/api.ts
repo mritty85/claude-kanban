@@ -1,4 +1,4 @@
-import type { Task, TaskFormData, TaskStatus, Project, ProjectFormData, PathValidation } from '../types/task';
+import type { Task, TaskFormData, TaskStatus, Project, ProjectFormData, PathValidation, LaunchConfig, LaunchConfigFormData } from '../types/task';
 
 const API_BASE = '/api';
 
@@ -263,4 +263,47 @@ export async function updateRoadmap(content: string): Promise<string> {
   if (!res.ok) throw new Error('Failed to update roadmap');
   const data = await res.json();
   return data.content;
+}
+
+// Launch Config API functions
+
+export async function fetchLaunchConfigs(): Promise<LaunchConfig[]> {
+  const res = await fetch(`${API_BASE}/launch/configs`);
+  if (!res.ok) throw new Error('Failed to fetch launch configs');
+  return res.json();
+}
+
+export async function addLaunchConfig(data: LaunchConfigFormData): Promise<LaunchConfig> {
+  const res = await fetch(`${API_BASE}/launch/configs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to add launch config');
+  return res.json();
+}
+
+export async function updateLaunchConfig(id: string, data: Partial<LaunchConfigFormData>): Promise<LaunchConfig> {
+  const res = await fetch(`${API_BASE}/launch/configs/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to update launch config');
+  return res.json();
+}
+
+export async function deleteLaunchConfig(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/launch/configs/${id}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error('Failed to delete launch config');
+}
+
+export async function launchTerminal(id: string): Promise<{ success: boolean; name: string }> {
+  const res = await fetch(`${API_BASE}/launch/${id}`, {
+    method: 'POST'
+  });
+  if (!res.ok) throw new Error('Failed to launch terminal');
+  return res.json();
 }

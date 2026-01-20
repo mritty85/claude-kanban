@@ -4,7 +4,7 @@
 task_1766052899400
 
 ## Status
-planning
+ideation
 
 ## Epic
 UI Enhancements

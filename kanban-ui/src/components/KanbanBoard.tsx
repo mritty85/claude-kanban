@@ -25,9 +25,10 @@ import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { ProjectsModal } from './ProjectsModal';
+import { LaunchModal } from './LaunchModal';
 import { useTasks } from '../hooks/useTasks';
 import { useProjects } from '../hooks/useProjects';
-import { Plus, FileText, Map } from 'lucide-react';
+import { Plus, FileText, Map, Terminal } from 'lucide-react';
 
 export function KanbanBoard() {
   const {
@@ -59,6 +60,7 @@ export function KanbanBoard() {
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(false);
   const [isRoadmapPanelOpen, setIsRoadmapPanelOpen] = useState(false);
+  const [isLaunchModalOpen, setIsLaunchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>({ preset: null });
@@ -308,18 +310,11 @@ export function KanbanBoard() {
             onManage={() => setIsProjectsModalOpen(true)}
           />
           <button
-            onClick={() => setIsRoadmapPanelOpen(true)}
+            onClick={() => setIsLaunchModalOpen(true)}
             className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
           >
-            <Map size={16} />
-            Roadmap
-          </button>
-          <button
-            onClick={() => setIsNotesPanelOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
-          >
-            <FileText size={16} />
-            Notes
+            <Terminal size={16} />
+            Launch
           </button>
         </div>
 
@@ -336,6 +331,20 @@ export function KanbanBoard() {
             doneSort={doneSort}
             onDoneSortChange={setDoneSort}
           />
+          <button
+            onClick={() => setIsRoadmapPanelOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
+          >
+            <Map size={16} />
+            Roadmap
+          </button>
+          <button
+            onClick={() => setIsNotesPanelOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
+          >
+            <FileText size={16} />
+            Notes
+          </button>
           <button
             onClick={handleCreateClick}
             className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[var(--color-accent-primary)] text-white text-[13px] font-medium hover:bg-[var(--color-accent-primary-hover)] transition-colors"
@@ -412,6 +421,11 @@ export function KanbanBoard() {
           onClose={() => setIsProjectsModalOpen(false)}
         />
       )}
+
+      <LaunchModal
+        isOpen={isLaunchModalOpen}
+        onClose={() => setIsLaunchModalOpen(false)}
+      />
     </div>
   );
 }

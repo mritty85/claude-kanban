@@ -512,3 +512,64 @@ export async function updateProjectRoadmap(content) {
   await fs.writeFile(roadmapPath, content, 'utf-8');
   return content;
 }
+
+// Launch config functions
+
+export function generateLaunchConfigId() {
+  return `lc_${Date.now()}`;
+}
+
+export async function getLaunchConfigs() {
+  const config = await getProjectConfig();
+  return config.launchConfigs || [];
+}
+
+export async function addLaunchConfig(configData) {
+  const config = await getProjectConfig();
+  const launchConfigs = config.launchConfigs || [];
+  const newConfig = {
+    id: generateLaunchConfigId(),
+    name: configData.name,
+    command: configData.command
+  };
+  // Only include workingDir if it's provided and non-empty
+  if (configData.workingDir?.trim()) {
+    newConfig.workingDir = configData.workingDir.trim();
+  }
+  launchConfigs.push(newConfig);
+  await updateProjectConfig({ launchConfigs });
+  return newConfig;
+}
+
+export async function updateLaunchConfig(id, updates) {
+  const config = await getProjectConfig();
+  const launchConfigs = config.launchConfigs || [];
+  const index = launchConfigs.findIndex(c => c.id === id);
+  if (index === -1) {
+    throw new Error('Launch config not found');
+  }
+  // Handle workingDir specially - remove if empty, otherwise update
+  const updatedConfig = { ...launchConfigs[index] };
+  if (updates.name !== undefined) updatedConfig.name = updates.name;
+  if (updates.command !== undefined) updatedConfig.command = updates.command;
+  if (updates.workingDir !== undefined) {
+    if (updates.workingDir?.trim()) {
+      updatedConfig.workingDir = updates.workingDir.trim();
+    } else {
+      delete updatedConfig.workingDir;
+    }
+  }
+  launchConfigs[index] = updatedConfig;
+  await updateProjectConfig({ launchConfigs });
+  return launchConfigs[index];
+}
+
+export async function deleteLaunchConfig(id) {
+  const config = await getProjectConfig();
+  const launchConfigs = config.launchConfigs || [];
+  const filtered = launchConfigs.filter(c => c.id !== id);
+  if (filtered.length === launchConfigs.length) {
+    throw new Error('Launch config not found');
+  }
+  await updateProjectConfig({ launchConfigs: filtered });
+}
