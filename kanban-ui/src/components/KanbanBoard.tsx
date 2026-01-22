@@ -28,7 +28,8 @@ import { ProjectsModal } from './ProjectsModal';
 import { LaunchModal } from './LaunchModal';
 import { useTasks } from '../hooks/useTasks';
 import { useProjects } from '../hooks/useProjects';
-import { Plus, FileText, Map, Terminal } from 'lucide-react';
+import { Plus, FileText, Map, Terminal, List, LayoutGrid } from 'lucide-react';
+import { ListView } from './ListView';
 
 export function KanbanBoard() {
   const {
@@ -67,6 +68,7 @@ export function KanbanBoard() {
   const [doneSort, setDoneSort] = useState<DoneSortOption>('default');
   const [collapsedColumns, setCollapsedColumns] = useState<Set<TaskStatus>>(new Set());
   const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   // Collect all unique epics from tasks for filtering and autocomplete
   const availableEpics = useMemo(() => {
@@ -316,6 +318,13 @@ export function KanbanBoard() {
             <Terminal size={16} />
             Launch
           </button>
+          <button
+            onClick={() => setViewMode(viewMode === 'kanban' ? 'list' : 'kanban')}
+            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
+            title={viewMode === 'kanban' ? 'Switch to list view' : 'Switch to kanban view'}
+          >
+            {viewMode === 'kanban' ? <List size={16} /> : <LayoutGrid size={16} />}
+          </button>
         </div>
 
         <div className="flex items-center gap-3">
@@ -355,37 +364,47 @@ export function KanbanBoard() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-x-auto p-4">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={collisionDetection}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex h-full">
-            {STATUSES.map((status, index) => (
-              <div key={status} className="flex">
-                <Column
-                  status={status}
-                  tasks={getFilteredTasksByStatus(status)}
-                  onTaskClick={handleTaskClick}
-                  isCollapsed={collapsedColumns.has(status)}
-                  onToggleCollapse={() => toggleColumnCollapse(status)}
-                />
-                {index < STATUSES.length - 1 && (
-                  <div className="w-px bg-[var(--color-border-subtle)] mx-2 self-stretch" />
-                )}
-              </div>
-            ))}
-          </div>
+      <main className={`flex-1 p-4 ${viewMode === 'kanban' ? 'overflow-x-auto' : 'overflow-y-auto'}`}>
+        {viewMode === 'kanban' ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={collisionDetection}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex h-full">
+              {STATUSES.map((status, index) => (
+                <div key={status} className="flex">
+                  <Column
+                    status={status}
+                    tasks={getFilteredTasksByStatus(status)}
+                    onTaskClick={handleTaskClick}
+                    isCollapsed={collapsedColumns.has(status)}
+                    onToggleCollapse={() => toggleColumnCollapse(status)}
+                  />
+                  {index < STATUSES.length - 1 && (
+                    <div className="w-px bg-[var(--color-border-subtle)] mx-2 self-stretch" />
+                  )}
+                </div>
+              ))}
+            </div>
 
-          <DragOverlay>
-            {activeTask && (
-              <Card task={activeTask} onClick={() => {}} />
-            )}
-          </DragOverlay>
-        </DndContext>
+            <DragOverlay>
+              {activeTask && (
+                <Card task={activeTask} onClick={() => {}} />
+              )}
+            </DragOverlay>
+          </DndContext>
+        ) : (
+          <ListView
+            tasksByStatus={STATUSES.reduce((acc, status) => {
+              acc[status] = getFilteredTasksByStatus(status);
+              return acc;
+            }, {} as Record<TaskStatus, Task[]>)}
+            onTaskClick={handleTaskClick}
+          />
+        )}
       </main>
 
       <TaskPanel

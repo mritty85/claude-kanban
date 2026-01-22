@@ -15,33 +15,33 @@ Add an alternative list view to complement the kanban board. List view displays 
 ## Acceptance Criteria
 
 ### Toggle UI
-- [ ] Add view toggle icon button in header (right of Launch Terminal button)
-- [ ] Icon indicates current view (grid icon for kanban, list icon for list)
-- [ ] Click toggles between views
-- [ ] View preference is session-only (resets to kanban on refresh)
+- [x] Add view toggle icon button in header (right of Launch Terminal button)
+- [x] Icon indicates current view (grid icon for kanban, list icon for list)
+- [x] Click toggles between views
+- [x] View preference is session-only (resets to kanban on refresh)
 
 ### List View Layout
-- [ ] Tasks grouped by status sections (Ideation, Planning, Backlog, etc.)
-- [ ] Each section is collapsible with expand/collapse toggle
-- [ ] Sections default to expanded
-- [ ] Section header shows status name and task count
+- [x] Tasks grouped by status sections (Ideation, Planning, Backlog, etc.)
+- [x] Each section is collapsible with expand/collapse toggle
+- [x] Sections default to expanded
+- [x] Section header shows status name and task count
 
 ### Task Rows
-- [ ] Columns: Task Name, Epic, Tags
-- [ ] Task name is primary column (wider)
-- [ ] Epic displays as pill/badge (same styling as card footer)
-- [ ] Tags display as small colored pills (same styling as cards)
-- [ ] Click anywhere on row opens task panel (same as card click)
-- [ ] Hover state to indicate clickable
+- [x] Columns: Task Name, Epic, Tags
+- [x] Task name is primary column (wider)
+- [x] Epic displays as pill/badge (same styling as card footer)
+- [x] Tags display as small colored pills (same styling as cards)
+- [x] Click anywhere on row opens task panel (same as card click)
+- [x] Hover state to indicate clickable
 
 ### Ordering & Filtering
-- [ ] Tasks within each section ordered by `_order.json` (same as kanban)
-- [ ] Search bar filters list view (same behavior as kanban)
-- [ ] Tag filter dropdown works on list view (same behavior as kanban)
+- [x] Tasks within each section ordered by `_order.json` (same as kanban)
+- [x] Search bar filters list view (same behavior as kanban)
+- [x] Tag filter dropdown works on list view (same behavior as kanban)
 
 ### No Drag-and-Drop
-- [ ] List view is read-only for ordering
-- [ ] Switch to kanban view to reorder tasks
+- [x] List view is read-only for ordering
+- [x] Switch to kanban view to reorder tasks
 
 ## Notes
 
@@ -80,3 +80,25 @@ Add an alternative list view to complement the kanban board. List view displays 
 - Sortable columns (click header to sort)
 - Persist view preference per-project
 - Bulk selection and actions
+
+---
+
+**Session Notes (2026-01-22):**
+
+Implementation complete. Files created/modified:
+- `src/components/ListSection.tsx` - Collapsible section with ChevronDown/ChevronRight toggle, task rows with title/epic/tags columns
+- `src/components/ListView.tsx` - Container that maps STATUSES to ListSection components
+- `src/components/KanbanBoard.tsx` - Added `viewMode` state, toggle button (List/LayoutGrid icons), conditional rendering
+
+Key implementation decisions:
+- Skipped separate `ViewToggle.tsx` component - toggle is simple enough to inline in KanbanBoard header
+- Toggle button placed between Launch and SearchBar (slight deviation from mockup which showed it right of SearchBar)
+- Epic column uses `getEpicColor()` for consistent hash-based coloring
+- Tags column reuses existing `Tag` component for consistent styling
+- Empty sections show "No tasks" message instead of hiding entirely
+
+Bug fix during implementation:
+- Initial version had sections clipping tasks due to `h-full` + `overflow-hidden` combination
+- Fixed by removing height constraints from ListView and using conditional `overflow-y-auto` on main element for list view
+
+All filters work: search, tag filter, epic filter, and done column date filter/sort all apply to list view via `getFilteredTasksByStatus()`.
