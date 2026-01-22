@@ -67,14 +67,39 @@ This simplifies the workflow of starting servers and Claude sessions without bui
 - Ghostty's `-e` flag requires wrapping compound commands in a shell: `spawn(ghostty, ['-e', '/bin/bash', '-c', shellCommand])`
 - Without the `/bin/bash -c` wrapper, commands with `&&` fail because Ghostty passes them directly to login
 
-**Ghostty "open as tab" limitation (macOS):**
+**Ghostty "open as tab" limitation (macOS) - SOLVED:**
 - Ghostty's `+new-window` CLI action only works on Linux/GTK, not macOS
 - No built-in config option to open new instances as tabs in existing window
-- Possible workaround: AppleScript to activate Ghostty → simulate Cmd+T → execute command
-- Decided to skip for now - always opens new window. Revisit if needed.
+- Direct binary invocation (`/Applications/Ghostty.app/Contents/MacOS/ghostty`) creates windows that can't be merged with existing Ghostty windows
+- `open -na Ghostty --args` also didn't work for merging
+
+**AppleScript solution (2025-01-22):**
+- Used AppleScript via `osascript` to create "native" tabs that integrate properly:
+  ```applescript
+  tell application "Ghostty" to activate
+  delay 0.3
+  tell application "System Events"
+      keystroke "t" using command down
+      delay 0.3
+      keystroke "{command}"
+      keystroke return
+  end tell
+  ```
+- Requires Accessibility permissions for the terminal running the server (e.g., Ghostty)
+- Tabs created this way can be merged with other Ghostty windows normally
+- Trade-off: Ghostty comes to foreground when launching (acceptable)
+
+**Window stays open after command exits:**
+- Added `; echo ""; echo "Press Enter to close..."; read` suffix to commands
+- Keeps tab open after Ctrl+C or normal exit, allowing time to merge windows
+- Using `echo` + `read` instead of `read -p` for zsh compatibility
+- Previous attempts: `exec $SHELL` worked but triggered "running process" warning on tab close
+
+**Shell compatibility:**
+- Uses `$SHELL` environment variable (falls back to `/bin/zsh`)
+- Escape function for AppleScript strings handles quotes and backslashes
 
 **Future considerations:**
 - Abstract terminal app (iTerm, Terminal.app support)
 - Linux/Windows support
 - Default configs for new projects (auto-detect package.json, etc.)
-- Open as tab in existing Ghostty window (requires AppleScript workaround on macOS)

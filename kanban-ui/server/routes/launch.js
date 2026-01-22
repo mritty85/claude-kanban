@@ -89,13 +89,31 @@ router.post('/:id', async (req, res) => {
       }
     }
 
-    // Spawn Ghostty terminal with the command
-    // Ghostty's -e flag executes commands directly, so we need to wrap
-    // compound commands (cd && ...) in a shell invocation
-    const ghosttyPath = '/Applications/Ghostty.app/Contents/MacOS/ghostty';
-    const shellCommand = `cd "${workingDir}" && ${config.command}`;
+    // Use AppleScript to create a new tab in existing Ghostty window
+    // This ensures the tab is "native" and can be merged with other windows
+    // After command exits, prompt to close (avoids "running process" warning on tab close)
+    const userShell = process.env.SHELL || '/bin/zsh';
+    const shellCommand = `cd "${workingDir}" && ${config.command}; echo ""; echo "Press Enter to close..."; read`;
 
-    const child = spawn(ghosttyPath, ['-e', '/bin/bash', '-c', shellCommand], {
+    // Escape special characters for AppleScript string
+    const escapeForAppleScript = (str) => {
+      return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    };
+
+    const escapedCommand = escapeForAppleScript(shellCommand);
+
+    const appleScript = `
+tell application "Ghostty" to activate
+delay 0.3
+tell application "System Events"
+    keystroke "t" using command down
+    delay 0.3
+    keystroke "${escapedCommand}"
+    keystroke return
+end tell
+`;
+
+    const child = spawn('osascript', ['-e', appleScript], {
       detached: true,
       stdio: 'ignore'
     });

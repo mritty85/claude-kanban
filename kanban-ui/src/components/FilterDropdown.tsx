@@ -122,6 +122,19 @@ export function FilterDropdown({
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-72 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[8px] shadow-lg z-10 py-2">
+          {/* Clear All Filters - at top when filters are active */}
+          {hasActiveFilters && (
+            <>
+              <button
+                onClick={clearAllFilters}
+                className="w-full px-3 py-2 text-left text-[12px] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-elevated)] transition-colors"
+              >
+                Clear all filters
+              </button>
+              <div className="border-t border-[var(--color-border-subtle)] my-2" />
+            </>
+          )}
+
           {/* Tags Section */}
           <div className="px-3 py-1">
             <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
@@ -266,17 +279,6 @@ export function FilterDropdown({
             </div>
           )}
 
-          {hasActiveFilters && (
-            <>
-              <div className="border-t border-[var(--color-border-subtle)] my-2" />
-              <button
-                onClick={clearAllFilters}
-                className="w-full px-3 py-2 text-left text-[12px] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-elevated)] transition-colors"
-              >
-                Clear all filters
-              </button>
-            </>
-          )}
         </div>
       )}
     </div>
