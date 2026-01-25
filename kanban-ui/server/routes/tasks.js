@@ -54,18 +54,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Simplified route - no status in path, just filename
-router.put('/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const task = await updateTask(filename, req.body);
-    res.json(task);
-  } catch (err) {
-    console.error('Error updating task:', err);
-    res.status(500).json({ error: 'Failed to update task' });
-  }
-});
-
 // Simplified move - no fromStatus needed
 router.post('/move', async (req, res) => {
   try {
@@ -86,18 +74,6 @@ router.post('/reorder', async (req, res) => {
   } catch (err) {
     console.error('Error reordering tasks:', err);
     res.status(500).json({ error: 'Failed to reorder tasks' });
-  }
-});
-
-// Simplified route - no status in path, just filename
-router.delete('/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    await deleteTask(filename);
-    res.status(204).send();
-  } catch (err) {
-    console.error('Error deleting task:', err);
-    res.status(500).json({ error: 'Failed to delete task' });
   }
 });
 
@@ -160,6 +136,29 @@ router.put('/roadmap', async (req, res) => {
   } catch (err) {
     console.error('Error updating roadmap:', err);
     res.status(500).json({ error: 'Failed to update roadmap' });
+  }
+});
+
+// Wildcard routes MUST come last (after specific routes like /config, /notes, /roadmap)
+router.put('/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const task = await updateTask(filename, req.body);
+    res.json(task);
+  } catch (err) {
+    console.error('Error updating task:', err);
+    res.status(500).json({ error: 'Failed to update task' });
+  }
+});
+
+router.delete('/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    await deleteTask(filename);
+    res.status(204).send();
+  } catch (err) {
+    console.error('Error deleting task:', err);
+    res.status(500).json({ error: 'Failed to delete task' });
   }
 });
 

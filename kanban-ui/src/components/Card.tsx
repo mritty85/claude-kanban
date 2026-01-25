@@ -7,6 +7,7 @@ import { getEpicColor } from '../utils/epicColors';
 interface CardProps {
   task: Task;
   onClick: () => void;
+  showPreview?: boolean;
 }
 
 function formatCompletedDate(isoDate: string): string {
@@ -14,7 +15,7 @@ function formatCompletedDate(isoDate: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export function Card({ task, onClick }: CardProps) {
+export function Card({ task, onClick, showPreview = true }: CardProps) {
   const {
     attributes,
     listeners,
@@ -60,7 +61,7 @@ export function Card({ task, onClick }: CardProps) {
         </div>
       )}
 
-      {task.description && (
+      {showPreview && task.description && (
         <p className="text-[12px] text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
           {task.description}
         </p>

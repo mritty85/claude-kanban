@@ -69,6 +69,18 @@ export function KanbanBoard() {
   const [collapsedColumns, setCollapsedColumns] = useState<Set<TaskStatus>>(new Set());
   const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [showPreview, setShowPreview] = useState<boolean>(() => {
+    const saved = localStorage.getItem('kanban-show-preview');
+    return saved === null ? true : saved === 'true';
+  });
+
+  const togglePreview = useCallback(() => {
+    setShowPreview(prev => {
+      const next = !prev;
+      localStorage.setItem('kanban-show-preview', String(next));
+      return next;
+    });
+  }, []);
 
   // Collect all unique epics from tasks for filtering and autocomplete
   const availableEpics = useMemo(() => {
@@ -310,6 +322,8 @@ export function KanbanBoard() {
             projects={projects}
             onSwitch={handleProjectSwitch}
             onManage={() => setIsProjectsModalOpen(true)}
+            showPreview={showPreview}
+            onTogglePreview={togglePreview}
           />
           <button
             onClick={() => setIsLaunchModalOpen(true)}
@@ -382,6 +396,7 @@ export function KanbanBoard() {
                     onTaskClick={handleTaskClick}
                     isCollapsed={collapsedColumns.has(status)}
                     onToggleCollapse={() => toggleColumnCollapse(status)}
+                    showPreview={showPreview}
                   />
                   {index < STATUSES.length - 1 && (
                     <div className="w-px bg-[var(--color-border-subtle)] mx-2 self-stretch" />
@@ -392,7 +407,7 @@ export function KanbanBoard() {
 
             <DragOverlay>
               {activeTask && (
-                <Card task={activeTask} onClick={() => {}} />
+                <Card task={activeTask} onClick={() => {}} showPreview={showPreview} />
               )}
             </DragOverlay>
           </DndContext>

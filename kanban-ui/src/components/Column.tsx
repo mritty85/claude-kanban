@@ -11,9 +11,10 @@ interface ColumnProps {
   onTaskClick: (task: Task) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  showPreview?: boolean;
 }
 
-export function Column({ status, tasks, onTaskClick, isCollapsed, onToggleCollapse }: ColumnProps) {
+export function Column({ status, tasks, onTaskClick, isCollapsed, onToggleCollapse, showPreview = true }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
     disabled: isCollapsed
@@ -76,7 +77,7 @@ export function Column({ status, tasks, onTaskClick, isCollapsed, onToggleCollap
       <div className="flex-1 flex flex-col gap-2 min-h-[200px]">
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map(task => (
-            <Card key={task.id} task={task} onClick={() => onTaskClick(task)} />
+            <Card key={task.id} task={task} onClick={() => onTaskClick(task)} showPreview={showPreview} />
           ))}
         </SortableContext>
       </div>
