@@ -44,7 +44,7 @@ export async function initWatcher() {
   watcher = chokidar.watch(watchPaths, {
     persistent: true,
     ignoreInitial: true,
-    depth: 1,
+    depth: 0, // Flat structure: only watch /tasks/*.md, not subfolders
     awaitWriteFinish: {
       stabilityThreshold: 100,
       pollInterval: 50

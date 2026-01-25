@@ -54,10 +54,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:status/:filename', async (req, res) => {
+// Simplified route - no status in path, just filename
+router.put('/:filename', async (req, res) => {
   try {
-    const { status, filename } = req.params;
-    const task = await updateTask(status, filename, req.body);
+    const { filename } = req.params;
+    const task = await updateTask(filename, req.body);
     res.json(task);
   } catch (err) {
     console.error('Error updating task:', err);
@@ -65,10 +66,11 @@ router.put('/:status/:filename', async (req, res) => {
   }
 });
 
+// Simplified move - no fromStatus needed
 router.post('/move', async (req, res) => {
   try {
-    const { fromStatus, filename, toStatus, newPriority } = req.body;
-    const task = await moveTask(fromStatus, filename, toStatus, newPriority);
+    const { filename, toStatus, newPriority } = req.body;
+    const task = await moveTask(filename, toStatus, newPriority);
     res.json(task);
   } catch (err) {
     console.error('Error moving task:', err);
@@ -87,10 +89,11 @@ router.post('/reorder', async (req, res) => {
   }
 });
 
-router.delete('/:status/:filename', async (req, res) => {
+// Simplified route - no status in path, just filename
+router.delete('/:filename', async (req, res) => {
   try {
-    const { status, filename } = req.params;
-    await deleteTask(status, filename);
+    const { filename } = req.params;
+    await deleteTask(filename);
     res.status(204).send();
   } catch (err) {
     console.error('Error deleting task:', err);

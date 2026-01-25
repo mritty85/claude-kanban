@@ -402,7 +402,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
 
   async function copyTaskPath() {
     if (!task) return;
-    const path = `tasks/${task.status}/${task.filename}`;
+    const path = `tasks/${task.filename}`;
     await navigator.clipboard.writeText(path);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

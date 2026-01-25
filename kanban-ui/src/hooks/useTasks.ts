@@ -53,16 +53,16 @@ export function useTasks(projectId: string | null) {
     return task;
   }, []);
 
-  const updateTask = useCallback(async (status: TaskStatus, filename: string, data: Partial<TaskFormData>) => {
-    const task = await api.updateTask(status, filename, data);
+  const updateTask = useCallback(async (filename: string, data: Partial<TaskFormData>) => {
+    const task = await api.updateTask(filename, data);
     setTasks(prev => prev.map(t => t.id === task.id ? task : t));
     return task;
   }, []);
 
-  const moveTask = useCallback(async (fromStatus: TaskStatus, filename: string, toStatus: TaskStatus, newPriority?: number) => {
-    const task = await api.moveTask(fromStatus, filename, toStatus, newPriority);
+  const moveTask = useCallback(async (filename: string, toStatus: TaskStatus, newPriority?: number) => {
+    const task = await api.moveTask(filename, toStatus, newPriority);
     setTasks(prev => {
-      const filtered = prev.filter(t => !(t.status === fromStatus && t.filename === filename));
+      const filtered = prev.filter(t => t.filename !== filename);
       return [...filtered, task];
     });
     return task;
@@ -73,9 +73,9 @@ export function useTasks(projectId: string | null) {
     setTasks(allTasks);
   }, []);
 
-  const deleteTask = useCallback(async (status: TaskStatus, filename: string) => {
-    await api.deleteTask(status, filename);
-    setTasks(prev => prev.filter(t => !(t.status === status && t.filename === filename)));
+  const deleteTask = useCallback(async (filename: string) => {
+    await api.deleteTask(filename);
+    setTasks(prev => prev.filter(t => t.filename !== filename));
   }, []);
 
   const getTasksByStatus = useCallback((status: TaskStatus) => {

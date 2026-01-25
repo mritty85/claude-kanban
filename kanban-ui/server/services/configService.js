@@ -189,10 +189,20 @@ export async function validateProjectPath(projectPath, createIfMissing = false) 
   } catch (err) {
     if (err.code === 'ENOENT') {
       if (createIfMissing) {
-        // Create tasks directory and all status subdirectories
-        for (const status of STATUSES) {
-          await fs.mkdir(path.join(tasksDir, status), { recursive: true });
-        }
+        // Create tasks directory (flat structure - no subfolders)
+        await fs.mkdir(tasksDir, { recursive: true });
+        // Create empty _board.json
+        const boardData = {
+          columns: STATUSES.reduce((acc, status) => {
+            acc[status] = [];
+            return acc;
+          }, {})
+        };
+        await fs.writeFile(
+          path.join(tasksDir, '_board.json'),
+          JSON.stringify(boardData, null, 2),
+          'utf-8'
+        );
         return { valid: true, tasksDir, created: true };
       }
       return { valid: false, error: 'tasks directory does not exist', canCreate: true };

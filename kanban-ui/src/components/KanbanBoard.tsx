@@ -232,7 +232,7 @@ export function KanbanBoard() {
     if (isOverColumn) {
       const targetStatus = overId as TaskStatus;
       if (activeTask.status !== targetStatus) {
-        await moveTask(activeTask.status, activeTask.filename, targetStatus);
+        await moveTask(activeTask.filename, targetStatus);
       }
     } else if (overTask) {
       if (activeTask.status === overTask.status) {
@@ -247,7 +247,7 @@ export function KanbanBoard() {
           await reorderTasks(activeTask.status, newOrder.map(t => t.id));
         }
       } else {
-        await moveTask(activeTask.status, activeTask.filename, overTask.status);
+        await moveTask(activeTask.filename, overTask.status);
       }
     }
   }
@@ -266,11 +266,11 @@ export function KanbanBoard() {
     if (modalTask) {
       if (data.status !== modalTask.status) {
         // Status changed - move the file first, then update other fields
-        const movedTask = await moveTask(modalTask.status, modalTask.filename, data.status);
+        const movedTask = await moveTask(modalTask.filename, data.status);
         // Update the other fields on the moved task
-        await updateTask(data.status, movedTask.filename, data);
+        await updateTask(movedTask.filename, data);
       } else {
-        await updateTask(modalTask.status, modalTask.filename, data);
+        await updateTask(modalTask.filename, data);
       }
     } else {
       await createTask(data);
@@ -279,7 +279,7 @@ export function KanbanBoard() {
   }
 
   async function handleDelete(task: Task) {
-    await deleteTask(task.status, task.filename);
+    await deleteTask(task.filename);
     setIsModalOpen(false);
   }
 

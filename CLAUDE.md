@@ -13,28 +13,25 @@ A local, file-based Kanban task manager built with React + Vite + TypeScript. Th
 This project uses its own file-based Kanban system for task management and enhancing the app.
 
 ### Task Location
-Tasks are stored as markdown files in `/tasks/{status}/` directories:
-- `/tasks/ideation/` - Rough ideas, not yet defined
-- `/tasks/planning/` - Needs design/discussion before ready
-- `/tasks/backlog/` - Fully planned and ready to be picked up
-- `/tasks/implementing/` - Currently being worked on
-- `/tasks/uat/` - Complete, awaiting review
-- `/tasks/done/` - Accepted and finished
+Tasks are stored as markdown files in the flat `/tasks/` directory:
+- All task files live directly in `/tasks/` (no subfolders)
+- Status is determined by the `## Status` field in each task file
+- Column ordering is managed by `_board.json`
+
+**Status values:** `ideation`, `planning`, `backlog`, `implementing`, `uat`, `done`
 
 ### Working on Tasks
 
 When asked to work on tasks:
-1. Check the `_order.json` file in `/tasks/backlog/` to see task priority order
-2. Read the first task ID from the order, then find and read the corresponding `.md` file
-3. Move the file to `/tasks/implementing/` (keep the same filename)
-4. Update the `## Status` field to `implementing`
-5. Update the `_order.json` files (remove from source, add to destination)
-6. Implement the work described
-7. Check off acceptance criteria as completed
-8. Add notes to `## Notes` section for any decisions
-9. When complete, move file to `/tasks/uat/`
-10. Update the `## Status` field to `uat`
-11. Update the `_order.json` files accordingly
+1. Read `_board.json` to see task priority order in the `backlog` column
+2. Read the first task file from the backlog list
+3. Update the `## Status` field in the task file to `implementing`
+4. Implement the work described
+5. Check off acceptance criteria as completed
+6. Add notes to `## Notes` section for any decisions
+7. When complete, update the `## Status` field to `uat`
+
+**Important:** Claude only edits task `.md` files. The `_board.json` file is managed by the UI for column ordering.
 
 ### Task File Format
 
@@ -59,6 +56,7 @@ planning
 
 ## Notes
 {Implementation notes}
+```
 ------
 
 ## Multi-Project Architecture
@@ -67,31 +65,21 @@ This Kanban tool is designed as a **centralized installation** that manages mult
 
 ```
 ~/.kanban-ui/
-  config.json                 ← Global config (machine-specific)
+  config.json                 <- Global config (machine-specific)
                                  Stores: registered projects, current project ID
 
-~/tools/kanban-ui/            ← Single installation (this codebase)
-  /src/                       ← React frontend
-  /server/                    ← Express backend
+~/tools/kanban-ui/            <- Single installation (this codebase)
+  /src/                       <- React frontend
+  /server/                    <- Express backend
 
-/project-a/                   ← Any registered project
+/project-a/                   <- Any registered project
   /tasks/
-    /ideation/
-      _order.json             ← Task ordering for this column
-      some-task.md
-    /planning/
-      _order.json
-    /backlog/
-      _order.json
-    /implementing/
-      _order.json
-    /uat/
-      _order.json
-    /done/
-      _order.json
-    project.json              ← Per-project config (board name)
+    _board.json               <- Column ordering (all statuses)
+    project.json              <- Per-project config (board name)
+    some-task.md              <- Tasks live here (flat)
+    another-task.md
 
-/project-b/                   ← Another registered project
+/project-b/                   <- Another registered project
   /tasks/
     ...
 ```
@@ -109,7 +97,7 @@ This Kanban tool is designed as a **centralized installation** that manages mult
    - Can be git-tracked with the project
 
 3. **Project Switching:**
-   - User clicks dropdown → selects project
+   - User clicks dropdown -> selects project
    - Backend updates `currentProject` in global config
    - File watcher reinitializes to watch new project's `/tasks`
    - SSE broadcasts `project-switched` event
@@ -154,15 +142,15 @@ This Kanban tool is designed as a **centralized installation** that manages mult
 ### Component Hierarchy
 ```
 App.tsx
-└── KanbanBoard.tsx           ← Main container, drag-and-drop context
-    ├── ProjectSwitcher.tsx   ← Header dropdown for switching projects
-    ├── SearchBar.tsx         ← Task title search
-    ├── FilterDropdown.tsx    ← Filter by tags
-    ├── Column.tsx            ← Droppable column (one per status)
-    │   └── Card.tsx          ← Draggable task card (sortable)
-    ├── TaskPanel.tsx         ← Slide-out panel for create/edit task
-    ├── ProjectsModal.tsx     ← Manage projects (add/remove/rename)
-    └── LaunchModal.tsx       ← Terminal launch configs (spawn Ghostty)
+└── KanbanBoard.tsx           <- Main container, drag-and-drop context
+    ├── ProjectSwitcher.tsx   <- Header dropdown for switching projects
+    ├── SearchBar.tsx         <- Task title search
+    ├── FilterDropdown.tsx    <- Filter by tags
+    ├── Column.tsx            <- Droppable column (one per status)
+    │   └── Card.tsx          <- Draggable task card (sortable)
+    ├── TaskPanel.tsx         <- Slide-out panel for create/edit task
+    ├── ProjectsModal.tsx     <- Manage projects (add/remove/rename)
+    └── LaunchModal.tsx       <- Terminal launch configs (spawn Ghostty)
 ```
 
 ### State Management
@@ -181,22 +169,22 @@ App.tsx
 ### Service Layer
 ```
 server/
-├── index.js                  ← Express app setup, startup
+├── index.js                  <- Express app setup, startup
 ├── routes/
-│   ├── tasks.js              ← Task CRUD endpoints
-│   ├── projects.js           ← Project management endpoints
-│   └── launch.js             ← Terminal launch endpoints
+│   ├── tasks.js              <- Task CRUD endpoints
+│   ├── projects.js           <- Project management endpoints
+│   └── launch.js             <- Terminal launch endpoints
 └── services/
-    ├── configService.js      ← Global config (~/.kanban-ui/)
-    ├── fileService.js        ← Task file operations + launch configs
-    └── watcher.js            ← Chokidar + SSE broadcasting
+    ├── configService.js      <- Global config (~/.kanban-ui/)
+    ├── fileService.js        <- Task file operations + launch configs
+    └── watcher.js            <- Chokidar + SSE broadcasting
 ```
 
 ### Data Flow
-1. **Task operations:** API → `fileService.js` → filesystem
-2. **File changes:** `chokidar` detects → `watcher.js` broadcasts SSE
-3. **Frontend:** SSE listener → triggers `loadTasks()` refresh
-4. **Project switch:** Update config → reinit watcher → broadcast SSE
+1. **Task operations:** API -> `fileService.js` -> filesystem
+2. **File changes:** `chokidar` detects -> `watcher.js` broadcasts SSE
+3. **Frontend:** SSE listener -> triggers `loadTasks()` refresh
+4. **Project switch:** Update config -> reinit watcher -> broadcast SSE
 
 ### Key Functions
 
@@ -209,21 +197,21 @@ server/
 
 **`fileService.js`:**
 - `getTasksDir()` - Async, reads from current project config
-- `getAllTasks()` - Reads all tasks, auto-migrates on first access, sorts by order files
-- `parseTaskFile(content)` - Markdown → task object (extracts stable ID)
-- `serializeTask(task)` - Task object → markdown (includes ID section)
+- `getAllTasks()` - Reads all tasks from flat /tasks/, auto-migrates old structure
+- `parseTaskFile(content, filename)` - Markdown -> task object (extracts stable ID and status)
+- `serializeTask(task)` - Task object -> markdown (includes ID and Status sections)
 - `generateTaskId()` - Creates timestamp-based unique ID
 - `generateSlug(title, existingFiles)` - Creates filename with deduplication
-- `readOrderFile(statusDir)` / `writeOrderFile(statusDir, data)` - Manage column ordering
-- `moveTask()` - Moves file, updates both order files
-- `reorderTasks()` - Updates order file only (no file renames)
+- `readBoardFile(tasksDir)` / `writeBoardFile(tasksDir, data)` - Manage column ordering
+- `moveTask(filename, toStatus, position)` - Updates status in file and _board.json
+- `reorderTasks(status, orderedIds)` - Updates _board.json only
 - `getLaunchConfigs()` - Returns launchConfigs array from project.json
 - `addLaunchConfig(data)` - Adds new launch config with generated ID
 - `updateLaunchConfig(id, updates)` - Updates existing launch config
 - `deleteLaunchConfig(id)` - Removes launch config by ID
 
 **`watcher.js`:**
-- `initWatcher()` - Sets up chokidar on current project
+- `initWatcher()` - Sets up chokidar on current project (depth: 0 for flat structure)
 - `switchProject(id)` - Closes old watcher, inits new, broadcasts event
 - `broadcastToClients(msg)` - Sends SSE to all connected clients
 
@@ -234,10 +222,10 @@ server/
 |--------|----------|---------|
 | GET | `/api/tasks` | List all tasks for current project |
 | POST | `/api/tasks` | Create task |
-| PUT | `/api/tasks/:status/:filename` | Update task |
+| PUT | `/api/tasks/:filename` | Update task |
 | POST | `/api/tasks/move` | Move task between columns |
 | POST | `/api/tasks/reorder` | Reorder within column |
-| DELETE | `/api/tasks/:status/:filename` | Delete task |
+| DELETE | `/api/tasks/:filename` | Delete task |
 | GET | `/api/tasks/events` | SSE stream |
 | GET | `/api/tasks/config` | Get project.json |
 | PUT | `/api/tasks/config` | Update project.json |
@@ -292,18 +280,27 @@ ideation | planning | backlog | implementing | uat | done
 ```
 
 **File Naming:** `{slug}.md` (e.g., `user-auth.md`)
+- All tasks live in `/tasks/` directory (flat structure)
 - Filenames are stable once created (no renaming on reorder/move)
 - Task ID stored in markdown is the unique identifier
+- Status is determined by `## Status` field, not folder location
 
-**Column Ordering:** Each status folder contains `_order.json`:
+**Column Ordering:** `/tasks/_board.json`:
 ```json
 {
-  "order": ["task_1734523687000", "task_1734523698000"]
+  "columns": {
+    "ideation": ["task_123", "task_456"],
+    "planning": ["task_789"],
+    "backlog": [],
+    "implementing": [],
+    "uat": [],
+    "done": ["task_001", "task_002"]
+  }
 }
 ```
 - Order determined by position in array (first = highest priority)
-- Reordering only updates this file, not task files
-- Tasks not in order file appear at the end
+- Tasks not in _board.json appear at TOP of their column (newest first)
+- Claude only needs to edit the task file's `## Status` to move tasks
 
 ## Configuration
 

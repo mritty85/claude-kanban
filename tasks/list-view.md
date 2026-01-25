@@ -4,7 +4,7 @@
 task_1768949772500
 
 ## Status
-planning
+uat
 
 ## Tags
 - new-functionality
@@ -13,38 +13,27 @@ planning
 Add an alternative list view to complement the kanban board. List view displays tasks in a compact table format grouped by status, making it easier to scan and review large projects. Users toggle between views via an icon button in the header.
 
 ## Acceptance Criteria
-
-### Toggle UI
 - [x] Add view toggle icon button in header (right of Launch Terminal button)
 - [x] Icon indicates current view (grid icon for kanban, list icon for list)
 - [x] Click toggles between views
 - [x] View preference is session-only (resets to kanban on refresh)
-
-### List View Layout
 - [x] Tasks grouped by status sections (Ideation, Planning, Backlog, etc.)
 - [x] Each section is collapsible with expand/collapse toggle
 - [x] Sections default to expanded
 - [x] Section header shows status name and task count
-
-### Task Rows
 - [x] Columns: Task Name, Epic, Tags
 - [x] Task name is primary column (wider)
 - [x] Epic displays as pill/badge (same styling as card footer)
 - [x] Tags display as small colored pills (same styling as cards)
 - [x] Click anywhere on row opens task panel (same as card click)
 - [x] Hover state to indicate clickable
-
-### Ordering & Filtering
 - [x] Tasks within each section ordered by `_order.json` (same as kanban)
 - [x] Search bar filters list view (same behavior as kanban)
 - [x] Tag filter dropdown works on list view (same behavior as kanban)
-
-### No Drag-and-Drop
 - [x] List view is read-only for ordering
 - [x] Switch to kanban view to reorder tasks
 
 ## Notes
-
 **Header layout with toggle:**
 ```
 [Project ▼] [Launch Terminal] [📋|▤] [Search...] [Filters ▼]  ─  [Roadmap] [Notes]

@@ -37,8 +37,8 @@ export async function createTask(data: TaskFormData): Promise<Task> {
   return res.json();
 }
 
-export async function updateTask(status: TaskStatus, filename: string, data: Partial<TaskFormData>): Promise<Task> {
-  const res = await fetch(`${API_BASE}/tasks/${status}/${encodeURIComponent(filename)}`, {
+export async function updateTask(filename: string, data: Partial<TaskFormData>): Promise<Task> {
+  const res = await fetch(`${API_BASE}/tasks/${encodeURIComponent(filename)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -47,11 +47,11 @@ export async function updateTask(status: TaskStatus, filename: string, data: Par
   return res.json();
 }
 
-export async function moveTask(fromStatus: TaskStatus, filename: string, toStatus: TaskStatus, newPriority?: number): Promise<Task> {
+export async function moveTask(filename: string, toStatus: TaskStatus, newPriority?: number): Promise<Task> {
   const res = await fetch(`${API_BASE}/tasks/move`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fromStatus, filename, toStatus, newPriority })
+    body: JSON.stringify({ filename, toStatus, newPriority })
   });
   if (!res.ok) throw new Error('Failed to move task');
   return res.json();
@@ -67,8 +67,8 @@ export async function reorderTasks(status: TaskStatus, orderedIds: string[]): Pr
   return res.json();
 }
 
-export async function deleteTask(status: TaskStatus, filename: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/tasks/${status}/${encodeURIComponent(filename)}`, {
+export async function deleteTask(filename: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/tasks/${encodeURIComponent(filename)}`, {
     method: 'DELETE'
   });
   if (!res.ok) throw new Error('Failed to delete task');

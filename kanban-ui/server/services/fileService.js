@@ -3,7 +3,7 @@ import path from 'path';
 import { getCurrentProjectPath } from './configService.js';
 
 const STATUSES = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
-const ORDER_FILE = '_order.json';
+const BOARD_FILE = '_board.json';
 
 // Generate a unique task ID (timestamp-based)
 export function generateTaskId() {
@@ -35,24 +35,30 @@ export function generateSlug(title, existingFiles) {
   return `${baseSlug}-${counter}.md`;
 }
 
-// Read order file for a status directory
-export async function readOrderFile(statusDir) {
-  const orderPath = path.join(statusDir, ORDER_FILE);
+// Read board file (column ordering)
+export async function readBoardFile(tasksDir) {
+  const boardPath = path.join(tasksDir, BOARD_FILE);
   try {
-    const content = await fs.readFile(orderPath, 'utf-8');
+    const content = await fs.readFile(boardPath, 'utf-8');
     return JSON.parse(content);
   } catch (err) {
     if (err.code === 'ENOENT') {
-      return { order: [] };
+      // Return empty columns structure
+      return {
+        columns: STATUSES.reduce((acc, status) => {
+          acc[status] = [];
+          return acc;
+        }, {})
+      };
     }
     throw err;
   }
 }
 
-// Write order file for a status directory
-export async function writeOrderFile(statusDir, orderData) {
-  const orderPath = path.join(statusDir, ORDER_FILE);
-  await fs.writeFile(orderPath, JSON.stringify(orderData, null, 2), 'utf-8');
+// Write board file (column ordering)
+export async function writeBoardFile(tasksDir, boardData) {
+  const boardPath = path.join(tasksDir, BOARD_FILE);
+  await fs.writeFile(boardPath, JSON.stringify(boardData, null, 2), 'utf-8');
 }
 
 export async function getTasksDir() {
@@ -60,102 +66,169 @@ export async function getTasksDir() {
   return path.join(projectPath, 'tasks');
 }
 
+// Ensure tasks directory exists (flat structure)
 export async function ensureDirectories() {
   const tasksDir = await getTasksDir();
-  for (const status of STATUSES) {
-    await fs.mkdir(path.join(tasksDir, status), { recursive: true });
+  await fs.mkdir(tasksDir, { recursive: true });
+
+  // Ensure _board.json exists
+  const boardPath = path.join(tasksDir, BOARD_FILE);
+  try {
+    await fs.access(boardPath);
+  } catch {
+    // Create empty board file
+    const boardData = {
+      columns: STATUSES.reduce((acc, status) => {
+        acc[status] = [];
+        return acc;
+      }, {})
+    };
+    await fs.writeFile(boardPath, JSON.stringify(boardData, null, 2), 'utf-8');
   }
 }
 
-// Check if project needs migration (no _order.json files exist)
-async function needsMigration(tasksDir) {
+// Check if project uses old structure (status subfolders with .md files)
+async function isOldStructure(tasksDir) {
   for (const status of STATUSES) {
-    const orderPath = path.join(tasksDir, status, ORDER_FILE);
+    const statusDir = path.join(tasksDir, status);
     try {
-      await fs.access(orderPath);
-      return false; // At least one order file exists, no migration needed
-    } catch {
-      // File doesn't exist, continue checking
+      const files = await fs.readdir(statusDir);
+      const mdFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_'));
+      if (mdFiles.length > 0) {
+        return true; // Found .md files in a status subfolder
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+      // Directory doesn't exist, continue checking
     }
   }
-  return true; // No order files found
+  return false;
 }
 
-// Migrate a project: add IDs to tasks, rename files, create order files
-async function migrateProject(tasksDir) {
-  console.log('Migrating project to stable IDs...');
+// Check if project already has flat structure (_board.json exists)
+async function hasFlatStructure(tasksDir) {
+  try {
+    await fs.access(path.join(tasksDir, BOARD_FILE));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Migrate from old structure to flat structure
+async function migrateToFlatStructure(tasksDir) {
+  console.log('Migrating project to flat folder structure...');
+
+  const boardData = { columns: {} };
 
   for (const status of STATUSES) {
     const statusDir = path.join(tasksDir, status);
-    const orderIds = [];
+    const orderedIds = [];
 
     try {
-      const files = await fs.readdir(statusDir);
-      // Sort by numeric prefix to preserve current order
-      const mdFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_')).sort();
-
-      for (const oldFilename of mdFiles) {
-        const filePath = path.join(statusDir, oldFilename);
-        const content = await fs.readFile(filePath, 'utf-8');
-
-        // Check if already has ## Id section
-        if (content.includes('## Id\n')) {
-          // Extract existing ID
-          const idMatch = content.match(/## Id\n([^\n]+)/);
-          if (idMatch) {
-            orderIds.push(idMatch[1].trim());
-          }
-          continue;
-        }
-
-        // Generate ID from file mtime (approximate creation time)
-        const stat = await fs.stat(filePath);
-        const id = `task_${Math.floor(stat.mtimeMs)}`;
-
-        // Add Id section to content (after title)
-        const titleMatch = content.match(/^# [^\n]+\n/);
-        let newContent;
-        if (titleMatch) {
-          const titleEnd = titleMatch[0].length;
-          newContent = content.slice(0, titleEnd) + `\n## Id\n${id}\n` + content.slice(titleEnd);
-        } else {
-          newContent = `## Id\n${id}\n\n` + content;
-        }
-
-        // Generate new slug-only filename
-        const slug = oldFilename.replace(/^\d+-/, '').replace('.md', '');
-        const existingFiles = (await fs.readdir(statusDir)).filter(f => f !== oldFilename);
-        let newFilename = `${slug}.md`;
-
-        // Handle duplicates
-        if (existingFiles.includes(newFilename)) {
-          let counter = 2;
-          while (existingFiles.includes(`${slug}-${counter}.md`)) {
-            counter++;
-          }
-          newFilename = `${slug}-${counter}.md`;
-        }
-
-        // Write updated content
-        await fs.writeFile(path.join(statusDir, newFilename), newContent, 'utf-8');
-
-        // Remove old file if renamed
-        if (oldFilename !== newFilename) {
-          await fs.unlink(filePath);
-        }
-
-        orderIds.push(id);
+      // Read old order file if it exists
+      let oldOrder = [];
+      try {
+        const orderPath = path.join(statusDir, '_order.json');
+        const orderContent = await fs.readFile(orderPath, 'utf-8');
+        const orderData = JSON.parse(orderContent);
+        oldOrder = orderData.order || [];
+      } catch {
+        // No order file, will use file order
       }
 
-      // Write order file for this status
-      await writeOrderFile(statusDir, { order: orderIds });
+      const files = await fs.readdir(statusDir);
+      const mdFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_'));
+
+      // Build a map of id -> filename for ordering
+      const idToFile = new Map();
+      for (const filename of mdFiles) {
+        const filePath = path.join(statusDir, filename);
+        const content = await fs.readFile(filePath, 'utf-8');
+
+        // Extract task ID from content
+        const idMatch = content.match(/## Id\n([^\n]+)/);
+        const taskId = idMatch ? idMatch[1].trim() : `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        idToFile.set(taskId, { filename, content });
+      }
+
+      // Add tasks in order (ordered first, then unordered)
+      for (const id of oldOrder) {
+        if (idToFile.has(id)) {
+          orderedIds.push(id);
+          const { filename, content } = idToFile.get(id);
+
+          // Move file to tasks root
+          const oldPath = path.join(statusDir, filename);
+          const newPath = path.join(tasksDir, filename);
+
+          // Check if file already exists at destination (shouldn't happen, but handle it)
+          try {
+            await fs.access(newPath);
+            // File exists, add suffix
+            const baseName = filename.replace('.md', '');
+            const newFilename = `${baseName}-${status}.md`;
+            await fs.writeFile(path.join(tasksDir, newFilename), content, 'utf-8');
+          } catch {
+            // File doesn't exist, safe to move
+            await fs.writeFile(newPath, content, 'utf-8');
+          }
+
+          await fs.unlink(oldPath);
+          idToFile.delete(id);
+        }
+      }
+
+      // Handle remaining unordered tasks
+      for (const [id, { filename, content }] of idToFile) {
+        orderedIds.push(id);
+
+        const oldPath = path.join(statusDir, filename);
+        const newPath = path.join(tasksDir, filename);
+
+        try {
+          await fs.access(newPath);
+          const baseName = filename.replace('.md', '');
+          const newFilename = `${baseName}-${status}.md`;
+          await fs.writeFile(path.join(tasksDir, newFilename), content, 'utf-8');
+        } catch {
+          await fs.writeFile(newPath, content, 'utf-8');
+        }
+
+        await fs.unlink(oldPath);
+      }
+
+      // Remove old order file
+      try {
+        await fs.unlink(path.join(statusDir, '_order.json'));
+      } catch {
+        // Ignore if doesn't exist
+      }
+
+      // Remove empty status directory
+      try {
+        const remaining = await fs.readdir(statusDir);
+        if (remaining.length === 0 || (remaining.length === 1 && remaining[0] === '.DS_Store')) {
+          // Remove .DS_Store if present
+          try {
+            await fs.unlink(path.join(statusDir, '.DS_Store'));
+          } catch {
+            // Ignore
+          }
+          await fs.rmdir(statusDir);
+        }
+      } catch {
+        // Ignore errors removing directory
+      }
     } catch (err) {
       if (err.code !== 'ENOENT') throw err;
-      // Directory doesn't exist yet, create empty order file
-      await fs.mkdir(statusDir, { recursive: true });
-      await writeOrderFile(statusDir, { order: [] });
     }
+
+    boardData.columns[status] = orderedIds;
   }
+
+  // Write the new board file
+  await writeBoardFile(tasksDir, boardData);
 
   console.log('Migration complete.');
 }
@@ -163,56 +236,78 @@ async function migrateProject(tasksDir) {
 export async function getAllTasks() {
   const tasksDir = await getTasksDir();
 
-  // Check if migration is needed and run it
-  if (await needsMigration(tasksDir)) {
-    await migrateProject(tasksDir);
+  // Check if migration is needed
+  if (await isOldStructure(tasksDir)) {
+    await migrateToFlatStructure(tasksDir);
   }
 
+  // Read all .md files from tasks root
+  let files;
+  try {
+    files = await fs.readdir(tasksDir);
+  } catch (err) {
+    if (err.code === 'ENOENT') return [];
+    throw err;
+  }
+
+  // Exclude special project files (NOTES.md, ROADMAP.md, etc.)
+  const EXCLUDED_FILES = ['NOTES.md', 'ROADMAP.md', 'README.md'];
+  const mdFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_') && !EXCLUDED_FILES.includes(f));
+
+  // Build a map of id -> task
+  const taskMap = new Map();
+  for (const filename of mdFiles) {
+    const filePath = path.join(tasksDir, filename);
+    const content = await fs.readFile(filePath, 'utf-8');
+    const task = parseTaskFile(content, filename);
+    taskMap.set(task.id, task);
+  }
+
+  // Read board file for ordering
+  const boardData = await readBoardFile(tasksDir);
+
+  // Group tasks by status, sorted by board order
+  // Unordered tasks appear at TOP of their column
   const tasks = [];
 
   for (const status of STATUSES) {
-    const statusDir = path.join(tasksDir, status);
-    try {
-      const files = await fs.readdir(statusDir);
-      const mdFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_'));
+    const columnOrder = boardData.columns[status] || [];
+    const statusTasks = [];
 
-      // Build a map of id -> task for this status
-      const taskMap = new Map();
-      for (const filename of mdFiles) {
-        const filePath = path.join(statusDir, filename);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const task = parseTaskFile(content, filename, status);
-        taskMap.set(task.id, task);
+    // Find all tasks with this status
+    const tasksForStatus = [];
+    for (const [id, task] of taskMap) {
+      if (task.status === status) {
+        tasksForStatus.push(task);
       }
-
-      // Read order file and sort tasks
-      const orderData = await readOrderFile(statusDir);
-      const orderedTasks = [];
-
-      // Add tasks in order file sequence
-      for (const id of orderData.order) {
-        const task = taskMap.get(id);
-        if (task) {
-          orderedTasks.push(task);
-          taskMap.delete(id);
-        }
-      }
-
-      // Append any tasks not in order file (e.g., added externally by Claude Code)
-      for (const task of taskMap.values()) {
-        orderedTasks.push(task);
-      }
-
-      tasks.push(...orderedTasks);
-    } catch (err) {
-      if (err.code !== 'ENOENT') throw err;
     }
+
+    // Separate ordered and unordered
+    const orderedTasks = [];
+    const unorderedTasks = [];
+
+    for (const task of tasksForStatus) {
+      if (columnOrder.includes(task.id)) {
+        orderedTasks.push(task);
+      } else {
+        unorderedTasks.push(task);
+      }
+    }
+
+    // Sort ordered tasks by their position in columnOrder
+    orderedTasks.sort((a, b) => {
+      return columnOrder.indexOf(a.id) - columnOrder.indexOf(b.id);
+    });
+
+    // Unordered tasks go at TOP, then ordered tasks
+    statusTasks.push(...unorderedTasks, ...orderedTasks);
+    tasks.push(...statusTasks);
   }
 
   return tasks;
 }
 
-export function parseTaskFile(content, filename, status) {
+export function parseTaskFile(content, filename) {
   const lines = content.split('\n');
 
   // Known sections that we parse into structured fields
@@ -222,6 +317,7 @@ export function parseTaskFile(content, filename, status) {
 
   let title = '';
   let taskId = '';
+  let status = 'ideation'; // Default status
   let description = '';
   let tags = [];
   let acceptanceCriteria = [];
@@ -261,6 +357,12 @@ export function parseTaskFile(content, filename, status) {
       additionalContent += '\n' + line;
     } else if (currentSection === 'id' && line.trim()) {
       taskId = line.trim();
+    } else if (currentSection === 'status' && line.trim()) {
+      const parsedStatus = line.trim().toLowerCase();
+      // Validate status
+      if (STATUSES.includes(parsedStatus)) {
+        status = parsedStatus;
+      }
     } else if (currentSection === 'tags' && line.startsWith('- ')) {
       tags.push(line.slice(2).trim());
     } else if (currentSection === 'description') {
@@ -280,8 +382,8 @@ export function parseTaskFile(content, filename, status) {
     }
   }
 
-  // Use parsed ID if present, otherwise fallback to composite ID (for unmigrated tasks)
-  const id = taskId || `${status}/${filename}`;
+  // Use parsed ID if present, otherwise fallback to generated ID
+  const id = taskId || `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
   const task = {
     id,
@@ -344,56 +446,81 @@ export function serializeTask(task) {
 
 export async function createTask(task) {
   const tasksDir = await getTasksDir();
-  const statusDir = path.join(tasksDir, task.status);
 
   // Generate stable ID
   const id = generateTaskId();
 
   // Generate slug-only filename with deduplication
-  const files = await fs.readdir(statusDir).catch(() => []);
+  let files;
+  try {
+    files = await fs.readdir(tasksDir);
+  } catch {
+    files = [];
+  }
   const existingFiles = files.filter(f => f.endsWith('.md') && !f.startsWith('_'));
   const filename = generateSlug(task.title, existingFiles);
 
   // Create task with stable ID
   const taskWithId = { ...task, id, status: task.status };
   const content = serializeTask(taskWithId);
-  await fs.writeFile(path.join(statusDir, filename), content, 'utf-8');
+  await fs.writeFile(path.join(tasksDir, filename), content, 'utf-8');
 
-  // Append new task ID to order file
-  const orderData = await readOrderFile(statusDir);
-  orderData.order.push(id);
-  await writeOrderFile(statusDir, orderData);
+  // Add new task ID to board file at TOP of column
+  const boardData = await readBoardFile(tasksDir);
+  if (!boardData.columns[task.status]) {
+    boardData.columns[task.status] = [];
+  }
+  boardData.columns[task.status].unshift(id); // Add at TOP
+  await writeBoardFile(tasksDir, boardData);
 
   return { ...taskWithId, filename };
 }
 
-export async function updateTask(status, filename, updates) {
+export async function updateTask(filename, updates) {
   const tasksDir = await getTasksDir();
-  const filePath = path.join(tasksDir, status, filename);
+  const filePath = path.join(tasksDir, filename);
 
   const content = await fs.readFile(filePath, 'utf-8');
-  const existingTask = parseTaskFile(content, filename, status);
+  const existingTask = parseTaskFile(content, filename);
+  const oldStatus = existingTask.status;
   const updatedTask = { ...existingTask, ...updates };
 
   // Auto-set completion date when status changed to Done (via form edit)
-  if (updates.status === 'done' && existingTask.status !== 'done') {
+  if (updates.status === 'done' && oldStatus !== 'done') {
     updatedTask.completed = new Date().toISOString();
   }
 
   const newContent = serializeTask(updatedTask);
   await fs.writeFile(filePath, newContent, 'utf-8');
 
+  // If status changed, update board file
+  if (updates.status && updates.status !== oldStatus) {
+    const boardData = await readBoardFile(tasksDir);
+
+    // Remove from old column
+    if (boardData.columns[oldStatus]) {
+      boardData.columns[oldStatus] = boardData.columns[oldStatus].filter(id => id !== existingTask.id);
+    }
+
+    // Add to new column at TOP
+    if (!boardData.columns[updates.status]) {
+      boardData.columns[updates.status] = [];
+    }
+    boardData.columns[updates.status].unshift(existingTask.id);
+
+    await writeBoardFile(tasksDir, boardData);
+  }
+
   return updatedTask;
 }
 
-export async function moveTask(fromStatus, filename, toStatus, newPosition) {
+export async function moveTask(filename, toStatus, newPosition) {
   const tasksDir = await getTasksDir();
-  const fromDir = path.join(tasksDir, fromStatus);
-  const toDir = path.join(tasksDir, toStatus);
-  const fromPath = path.join(fromDir, filename);
+  const filePath = path.join(tasksDir, filename);
 
-  const content = await fs.readFile(fromPath, 'utf-8');
-  let task = parseTaskFile(content, filename, fromStatus);
+  const content = await fs.readFile(filePath, 'utf-8');
+  let task = parseTaskFile(content, filename);
+  const fromStatus = task.status;
   task.status = toStatus;
 
   // Auto-set completion date when moving to Done
@@ -401,54 +528,65 @@ export async function moveTask(fromStatus, filename, toStatus, newPosition) {
     task.completed = new Date().toISOString();
   }
 
-  // Keep the same filename (no renaming)
+  // Update the file with new status
   const newContent = serializeTask(task);
-  await fs.writeFile(path.join(toDir, filename), newContent, 'utf-8');
-  await fs.unlink(fromPath);
+  await fs.writeFile(filePath, newContent, 'utf-8');
 
-  // Update order files: remove from source, add to destination
-  const fromOrderData = await readOrderFile(fromDir);
-  fromOrderData.order = fromOrderData.order.filter(id => id !== task.id);
-  await writeOrderFile(fromDir, fromOrderData);
+  // Update board file
+  const boardData = await readBoardFile(tasksDir);
 
-  const toOrderData = await readOrderFile(toDir);
-  if (newPosition !== undefined && newPosition >= 0) {
-    toOrderData.order.splice(newPosition, 0, task.id);
-  } else {
-    toOrderData.order.push(task.id);
+  // Remove from source column
+  if (boardData.columns[fromStatus]) {
+    boardData.columns[fromStatus] = boardData.columns[fromStatus].filter(id => id !== task.id);
   }
-  await writeOrderFile(toDir, toOrderData);
+
+  // Add to destination column
+  if (!boardData.columns[toStatus]) {
+    boardData.columns[toStatus] = [];
+  }
+
+  if (newPosition !== undefined && newPosition >= 0) {
+    boardData.columns[toStatus].splice(newPosition, 0, task.id);
+  } else {
+    // Add at TOP if no position specified
+    boardData.columns[toStatus].unshift(task.id);
+  }
+
+  await writeBoardFile(tasksDir, boardData);
 
   return { ...task, filename };
 }
 
-// Simplified reorderTasks - only updates order file, no file renames
+// Simplified reorderTasks - only updates board file
 export async function reorderTasks(status, orderedIds) {
   const tasksDir = await getTasksDir();
-  const statusDir = path.join(tasksDir, status);
+  const boardData = await readBoardFile(tasksDir);
 
-  // Just update the order file with the new ID sequence
-  await writeOrderFile(statusDir, { order: orderedIds });
+  // Update the column with new order
+  boardData.columns[status] = orderedIds;
+
+  await writeBoardFile(tasksDir, boardData);
 
   return await getAllTasks();
 }
 
-export async function deleteTask(status, filename) {
+export async function deleteTask(filename) {
   const tasksDir = await getTasksDir();
-  const statusDir = path.join(tasksDir, status);
-  const filePath = path.join(statusDir, filename);
+  const filePath = path.join(tasksDir, filename);
 
-  // Read the task to get its ID before deleting
+  // Read the task to get its ID and status before deleting
   const content = await fs.readFile(filePath, 'utf-8');
-  const task = parseTaskFile(content, filename, status);
+  const task = parseTaskFile(content, filename);
 
   // Delete the file
   await fs.unlink(filePath);
 
-  // Remove from order file
-  const orderData = await readOrderFile(statusDir);
-  orderData.order = orderData.order.filter(id => id !== task.id);
-  await writeOrderFile(statusDir, orderData);
+  // Remove from board file
+  const boardData = await readBoardFile(tasksDir);
+  if (boardData.columns[task.status]) {
+    boardData.columns[task.status] = boardData.columns[task.status].filter(id => id !== task.id);
+    await writeBoardFile(tasksDir, boardData);
+  }
 }
 
 export async function getProjectConfig() {
