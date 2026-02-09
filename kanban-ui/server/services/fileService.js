@@ -236,8 +236,8 @@ async function migrateToFlatStructure(tasksDir) {
 export async function getAllTasks() {
   const tasksDir = await getTasksDir();
 
-  // Check if migration is needed
-  if (await isOldStructure(tasksDir)) {
+  // Check if migration is needed (skip if _board.json already exists)
+  if (!(await hasFlatStructure(tasksDir)) && await isOldStructure(tasksDir)) {
     await migrateToFlatStructure(tasksDir);
   }
 
