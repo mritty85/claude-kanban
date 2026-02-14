@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --font-display: 'Instrument Sans', -apple-system, sans-serif;
+    --font-body: 'Source Code Pro', 'Menlo', monospace;
+
+    --bg-base: #0c0c14;
+    --bg-surface: #13131e;
+    --bg-elevated: #1a1a28;
+    --bg-card: #161622;
+    --bg-card-hover: #1c1c2e;
+    --bg-interactive: #222236;
+
+    --border: #252538;
+    --border-hover: #35354d;
+    --border-accent: #7c5cff;
+
+    --text-primary: #e4e4ed;
+    --text-secondary: #8e8ea3;
+    --text-muted: #555568;
+    --text-on-accent: #ffffff;
+
+    --accent: #7c5cff;
+    --accent-hover: #9078ff;
+    --accent-subtle: rgba(124, 92, 255, 0.08);
+    --accent-glow: rgba(124, 92, 255, 0.15);
+
+    --status-ideation: #a78bfa;
+    --status-planning: #6380f5;
+    --status-backlog: #8890a3;
+    --status-implementing: #f59e0b;
+    --status-uat: #10b981;
+    --status-done: #525b70;
+
+    --tag-feature: #a78bfa;
+    --tag-enhancement: #7dd3fc;
+    --tag-bug: #f87171;
+    --tag-refactor: #5eead4;
+    --tag-devops: #fbbf24;
+
+    --radius: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: var(--font-body);
+    background: var(--bg-base);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+  /* ── Layout ── */
+  .workspace {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 32px 64px;
+  }
+
+  /* ── Header ── */
+  .header {
+    margin-bottom: 48px;
+  }
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .header h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+  }
+
+  .header-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .add-project-btn {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 150ms ease-out;
+    margin-top: 4px;
+  }
+
+  .add-project-btn:hover {
+    background: var(--bg-interactive);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+  }
+
+  /* ── Summary Strip ── */
+  .summary-strip {
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  .summary-item {
+    flex: 1;
+    background: var(--bg-surface);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .summary-item:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .summary-item:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+
+  .summary-value {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .summary-value.accent { color: var(--accent); }
+  .summary-value.warn { color: var(--status-implementing); }
+  .summary-value.success { color: var(--status-uat); }
+
+  .summary-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Section Headers ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    background: var(--bg-elevated);
+    border-radius: 10px;
+  }
+
+  /* ── Project Cards ── */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  .project-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0;
+    cursor: pointer;
+    transition: all 180ms ease-out;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .project-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px var(--border-hover);
+  }
+
+  .project-card.active {
+    border-color: var(--border-accent);
+    box-shadow: 0 0 0 1px var(--border-accent), 0 0 20px var(--accent-glow);
+  }
+
+  .project-card.active:hover {
+    box-shadow: 0 0 0 1px var(--border-accent), 0 4px 24px rgba(0,0,0,0.3), 0 0 20px var(--accent-glow);
+  }
+
+  .card-main {
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-on-accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .card-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-name {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-name .active-badge {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--accent);
+    color: var(--text-on-accent);
+  }
+
+  .card-path {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 14px;
+  }
+
+  .card-path span {
+    color: var(--text-secondary);
+  }
+
+  /* ── Status Bar (within card) ── */
+  .status-bar {
+    display: flex;
+    gap: 1px;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: var(--bg-base);
+    margin-bottom: 12px;
+  }
+
+  .status-segment {
+    height: 100%;
+    transition: width 300ms ease-out;
+    min-width: 0;
+  }
+
+  .status-segment.ideation { background: var(--status-ideation); }
+  .status-segment.planning { background: var(--status-planning); }
+  .status-segment.backlog { background: var(--status-backlog); }
+  .status-segment.implementing { background: var(--status-implementing); }
+  .status-segment.uat { background: var(--status-uat); }
+  .status-segment.done { background: var(--status-done); opacity: 0.6; }
+
+  /* ── Status Breakdown ── */
+  .status-counts {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .status-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-dot.ideation { background: var(--status-ideation); }
+  .status-dot.planning { background: var(--status-planning); }
+  .status-dot.backlog { background: var(--status-backlog); }
+  .status-dot.implementing { background: var(--status-implementing); }
+  .status-dot.uat { background: var(--status-uat); }
+  .status-dot.done { background: var(--status-done); }
+
+  .status-count-value {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  /* ── Card Footer ── */
+  .card-footer {
+    border-top: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .card-action {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 150ms;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .card-action:hover {
+    color: var(--accent-hover);
+  }
+
+  .card-action svg {
+    transition: transform 150ms;
+  }
+
+  .card-action:hover svg {
+    transform: translateX(2px);
+  }
+
+  /* ── Attention Indicators ── */
+  .attention-badges {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .attention-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .attention-badge.implementing {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--status-implementing);
+  }
+
+  .attention-badge.uat {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--status-uat);
+  }
+
+  .attention-badge.backlog-ready {
+    background: rgba(136, 144, 163, 0.12);
+    color: var(--text-secondary);
+  }
+
+  /* ── Quick-Add Area ── */
+  .add-project-card {
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px 24px;
+    cursor: pointer;
+    transition: all 180ms ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    min-height: 180px;
+  }
+
+  .add-project-card:hover {
+    border-color: var(--border-hover);
+    background: var(--accent-subtle);
+    color: var(--text-secondary);
+  }
+
+  .add-project-card svg {
+    opacity: 0.5;
+    transition: opacity 150ms;
+  }
+
+  .add-project-card:hover svg {
+    opacity: 0.8;
+  }
+
+  /* ── Recent Activity Section ── */
+  .recent-activity {
+    margin-bottom: 40px;
+  }
+
+  .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .activity-item {
+    background: var(--bg-surface);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    transition: background 150ms;
+  }
+
+  .activity-item:hover {
+    background: var(--bg-elevated);
+  }
+
+  .activity-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .activity-text {
+    flex: 1;
+    color: var(--text-secondary);
+  }
+
+  .activity-text strong {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .activity-text .project-name {
+    color: var(--accent);
+  }
+
+  .activity-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* ── Keyboard Hint ── */
+  .keyboard-hints {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .keyboard-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  kbd {
+    font-family: var(--font-body);
+    font-size: 10px;
+    padding: 1px 5px;
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-secondary);
+  }
+
+  /* ── Project Icon Colors ── */
+  .icon-violet { background: linear-gradient(135deg, #7c5cff, #a78bfa); }
+  .icon-blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+  .icon-emerald { background: linear-gradient(135deg, #10b981, #34d399); }
+  .icon-amber { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+  .icon-rose { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+  .icon-cyan { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
+
+  /* ── Tooltip ── */
+  .status-bar-wrapper {
+    position: relative;
+  }
+
+  .status-bar-wrapper .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    white-space: nowrap;
+    z-index: 10;
+    font-size: 11px;
+    color: var(--text-secondary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .status-bar-wrapper:hover .tooltip {
+    display: block;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .workspace { padding: 24px 16px 48px; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .summary-strip { flex-direction: column; }
+    .summary-item:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+    .summary-item:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+    .keyboard-hints { display: none; }
+  }
+
+  /* ── Focus / Selection State ── */
+  .project-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .project-card.selected {
+    border-color: var(--accent);
+    background: var(--bg-card-hover);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .project-card {
+    animation: fadeInUp 300ms ease-out both;
+  }
+
+  .project-card:nth-child(1) { animation-delay: 0ms; }
+  .project-card:nth-child(2) { animation-delay: 50ms; }
+  .project-card:nth-child(3) { animation-delay: 100ms; }
+  .project-card:nth-child(4) { animation-delay: 150ms; }
+  .project-card:nth-child(5) { animation-delay: 200ms; }
+  .project-card:nth-child(6) { animation-delay: 250ms; }
+</style>
+</head>
+<body>
+
+<div class="workspace">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>Workspace</h1>
+      <span class="header-date">Friday, Feb 14</span>
+    </div>
+    <button class="add-project-btn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Register Project
+    </button>
+  </div>
+
+  <!-- Summary Strip -->
+  <div class="summary-strip">
+    <div class="summary-item">
+      <span class="summary-value">37</span>
+      <span class="summary-label">Total Tasks</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-value warn">5</span>
+      <span class="summary-label">Implementing</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-value success">3</span>
+      <span class="summary-label">Ready for Review</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-value accent">12</span>
+      <span class="summary-label">Backlog</span>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="recent-activity">
+    <div class="section-header">
+      <span class="section-title">Recent Activity</span>
+      <span class="section-line"></span>
+    </div>
+
+    <div class="activity-list">
+      <div class="activity-item">
+        <span class="activity-dot" style="background: var(--status-implementing)"></span>
+        <span class="activity-text"><strong>Workspace home page</strong> moved to implementing in <span class="project-name">Kanban UI</span></span>
+        <span class="activity-time">Just now</span>
+      </div>
+      <div class="activity-item">
+        <span class="activity-dot" style="background: var(--status-uat)"></span>
+        <span class="activity-text"><strong>Cart persistence</strong> moved to UAT in <span class="project-name">Commerce Platform</span></span>
+        <span class="activity-time">1h ago</span>
+      </div>
+      <div class="activity-item">
+        <span class="activity-dot" style="background: var(--status-done)"></span>
+        <span class="activity-text"><strong>Fix argument parsing</strong> completed in <span class="project-name">CLI Tooling</span></span>
+        <span class="activity-time">3h ago</span>
+      </div>
+      <div class="activity-item">
+        <span class="activity-dot" style="background: var(--tag-feature)"></span>
+        <span class="activity-text"><strong>User checkout flow</strong> created in <span class="project-name">Commerce Platform</span></span>
+        <span class="activity-time">Yesterday</span>
+      </div>
+      <div class="activity-item">
+        <span class="activity-dot" style="background: var(--status-implementing)"></span>
+        <span class="activity-text"><strong>Search indexing</strong> moved to implementing in <span class="project-name">Commerce Platform</span></span>
+        <span class="activity-time">Yesterday</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Work -->
+  <div class="section-header">
+    <span class="section-title">Active Work</span>
+    <span class="section-line"></span>
+    <span class="section-count">3 projects</span>
+  </div>
+
+  <div class="projects-grid">
+
+    <!-- Card 1: Kanban UI (current/active) -->
+    <div class="project-card active" tabindex="0">
+      <div class="card-main">
+        <div class="card-icon icon-violet">K</div>
+        <div class="card-body">
+          <div class="card-name">
+            Kanban UI
+            <span class="active-badge">Current</span>
+          </div>
+          <div class="card-path">~/Claude/kanban</div>
+
+          <div class="attention-badges">
+            <span class="attention-badge implementing">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+              2 implementing
+            </span>
+            <span class="attention-badge uat">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 5.5L4.5 7.5L7.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              1 awaiting review
+            </span>
+          </div>
+
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="card-action">
+          Open Board
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 2: Commerce Platform -->
+    <div class="project-card" tabindex="0">
+      <div class="card-main">
+        <div class="card-icon icon-blue">C</div>
+        <div class="card-body">
+          <div class="card-name">Commerce Platform</div>
+          <div class="card-path">~/work/commerce-platform</div>
+
+          <div class="attention-badges">
+            <span class="attention-badge implementing">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+              2 implementing
+            </span>
+            <span class="attention-badge uat">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 5.5L4.5 7.5L7.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              1 awaiting review
+            </span>
+          </div>
+
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="card-action">
+          Open Board
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 3: CLI Tooling -->
+    <div class="project-card" tabindex="0">
+      <div class="card-main">
+        <div class="card-icon icon-amber">T</div>
+        <div class="card-body">
+          <div class="card-name">CLI Tooling</div>
+          <div class="card-path">~/tools/cli-utils</div>
+
+          <div class="attention-badges">
+            <span class="attention-badge implementing">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+              1 implementing
+            </span>
+          </div>
+
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="card-action">
+          Open Board
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Other Projects -->
+  <div class="section-header">
+    <span class="section-title">Other Projects</span>
+    <span class="section-line"></span>
+    <span class="section-count">2 projects</span>
+  </div>
+
+  <div class="projects-grid">
+
+    <!-- Card 4: Personal Site -->
+    <div class="project-card" tabindex="0">
+      <div class="card-main">
+        <div class="card-icon icon-emerald">P</div>
+        <div class="card-body">
+          <div class="card-name">Personal Site</div>
+          <div class="card-path">~/projects/personal-site</div>
+
+          <div class="attention-badges">
+            <span class="attention-badge backlog-ready">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="2" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+              4 in backlog
+            </span>
+          </div>
+
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="card-action">
+          Open Board
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 5: Internal Docs -->
+    <div class="project-card" tabindex="0">
+      <div class="card-main">
+        <div class="card-icon icon-rose">D</div>
+        <div class="card-body">
+          <div class="card-name">Internal Docs</div>
+          <div class="card-path">~/work/internal-docs</div>
+
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="card-action">
+          Open Board
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Keyboard Hints -->
+<div class="keyboard-hints">
+  <div class="keyboard-hint"><kbd>↑</kbd><kbd>↓</kbd> Navigate</div>
+  <div class="keyboard-hint"><kbd>Enter</kbd> Open board</div>
+  <div class="keyboard-hint"><kbd>N</kbd> New project</div>
+</div>
+
+<script>
+  // Simple keyboard navigation prototype
+  const cards = document.querySelectorAll('.project-card');
+  let focusedIndex = -1;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'j') {
+      e.preventDefault();
+      focusedIndex = Math.min(focusedIndex + 1, cards.length - 1);
+      cards[focusedIndex]?.focus();
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      e.preventDefault();
+      focusedIndex = Math.max(focusedIndex - 1, 0);
+      cards[focusedIndex]?.focus();
+    } else if (e.key === 'Enter' && focusedIndex >= 0) {
+      e.preventDefault();
+      const name = cards[focusedIndex]?.querySelector('.card-name')?.textContent?.trim();
+      alert(`Opening board: ${name}`);
+    }
+  });
+
+  // Track focus from clicks
+  cards.forEach((card, i) => {
+    card.addEventListener('focus', () => { focusedIndex = i; });
+    card.addEventListener('click', () => {
+      const name = card.querySelector('.card-name')?.textContent?.trim();
+      alert(`Opening board: ${name}`);
+    });
+  });
+</script>
+
+</body>
+</html>
