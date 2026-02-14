@@ -61,6 +61,11 @@
   --spacing-4: 16px;
   --spacing-5: 24px;
 
+  /* Sidebar */
+  --color-bg-sidebar: #121520;
+  --color-bg-sidebar-hover: #1a1e2c;
+  --color-bg-sidebar-active: #1e2336;
+
   /* Motion */
   --transition-fast: 150ms ease-out;
   --transition-normal: 200ms ease-in-out;
@@ -142,6 +147,11 @@ html.light {
   --color-tag-refactor-text: #0f766e;
   --color-tag-devops-bg: #fef3c7;
   --color-tag-devops-text: #b45309;
+
+  /* Sidebar - light mode */
+  --color-bg-sidebar: #eaeaef;
+  --color-bg-sidebar-hover: #e0e0e5;
+  --color-bg-sidebar-active: #d8d8e0;
 
   /* Epic Colors - light mode */
   --color-epic-rose-bg: #fce7f3;

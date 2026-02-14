@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -23,12 +23,13 @@ import { NotesPanel } from './NotesPanel';
 import { RoadmapPanel } from './RoadmapPanel';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
-import { ProjectSwitcher } from './ProjectSwitcher';
 import { ProjectsModal } from './ProjectsModal';
 import { LaunchModal } from './LaunchModal';
+import { Sidebar } from './Sidebar';
 import { useTasks } from '../hooks/useTasks';
 import { useProjects } from '../hooks/useProjects';
-import { Plus, FileText, Map, Terminal, List, LayoutGrid } from 'lucide-react';
+import { fetchLaunchConfigs } from '../lib/api';
+import { Plus } from 'lucide-react';
 import { ListView } from './ListView';
 
 export function KanbanBoard() {
@@ -73,6 +74,15 @@ export function KanbanBoard() {
     const saved = localStorage.getItem('kanban-show-preview');
     return saved === null ? true : saved === 'true';
   });
+
+  const [launchConfigCount, setLaunchConfigCount] = useState(0);
+
+  useEffect(() => {
+    if (!currentProject) return;
+    fetchLaunchConfigs()
+      .then(configs => setLaunchConfigCount(configs.length))
+      .catch(() => setLaunchConfigCount(0));
+  }, [currentProject?.id]);
 
   const togglePreview = useCallback(() => {
     setShowPreview(prev => {
@@ -297,130 +307,129 @@ export function KanbanBoard() {
 
   const loading = tasksLoading || projectsLoading;
 
+  const sidebarElement = (
+    <Sidebar
+      currentProject={currentProject}
+      projects={projects}
+      onProjectSwitch={handleProjectSwitch}
+      onManageProjects={() => setIsProjectsModalOpen(true)}
+      showPreview={showPreview}
+      onTogglePreview={togglePreview}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      onOpenLaunchModal={() => setIsLaunchModalOpen(true)}
+      launchConfigCount={launchConfigCount}
+      onOpenRoadmap={() => setIsRoadmapPanelOpen(true)}
+      onOpenNotes={() => setIsNotesPanelOpen(true)}
+      isRoadmapActive={isRoadmapPanelOpen}
+      isNotesActive={isNotesPanelOpen}
+    />
+  );
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-[var(--color-text-muted)]">Loading...</p>
+      <div className="h-full flex">
+        {sidebarElement}
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-[var(--color-text-muted)]">Loading...</p>
+        </div>
       </div>
     );
   }
 
   if (tasksError) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-[var(--color-tag-bug-text)]">{tasksError}</p>
+      <div className="h-full flex">
+        {sidebarElement}
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-[var(--color-tag-bug-text)]">{tasksError}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <header className="flex items-center justify-between p-4 border-b border-[var(--color-border-subtle)]">
-        <div className="flex items-center gap-3">
-          <ProjectSwitcher
-            currentProject={currentProject}
-            projects={projects}
-            onSwitch={handleProjectSwitch}
-            onManage={() => setIsProjectsModalOpen(true)}
-            showPreview={showPreview}
-            onTogglePreview={togglePreview}
-          />
-          <button
-            onClick={() => setIsLaunchModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
-          >
-            <Terminal size={16} />
-            Launch
-          </button>
-          <button
-            onClick={() => setViewMode(viewMode === 'kanban' ? 'list' : 'kanban')}
-            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
-            title={viewMode === 'kanban' ? 'Switch to list view' : 'Switch to kanban view'}
-          >
-            {viewMode === 'kanban' ? <List size={16} /> : <LayoutGrid size={16} />}
-          </button>
-        </div>
+    <div className="h-full flex">
+      {sidebarElement}
 
-        <div className="flex items-center gap-3">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-          <FilterDropdown
-            selectedTags={selectedTags}
-            onTagsChange={setSelectedTags}
-            selectedEpics={selectedEpics}
-            onEpicsChange={setSelectedEpics}
-            availableEpics={availableEpics}
-            dateFilter={dateFilter}
-            onDateFilterChange={setDateFilter}
-            doneSort={doneSort}
-            onDoneSortChange={setDoneSort}
-          />
-          <button
-            onClick={() => setIsRoadmapPanelOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
-          >
-            <Map size={16} />
-            Roadmap
-          </button>
-          <button
-            onClick={() => setIsNotesPanelOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
-          >
-            <FileText size={16} />
-            Notes
-          </button>
-          <button
-            onClick={handleCreateClick}
-            className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[var(--color-accent-primary)] text-white text-[13px] font-bold hover:bg-[var(--color-accent-primary-hover)] transition-colors font-display"
-          >
-            <Plus size={16} />
-            New Task
-          </button>
-        </div>
-      </header>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="flex items-center justify-between px-5 py-[10px] border-b border-[var(--color-border-subtle)] flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="font-display text-[15px] font-bold tracking-[-0.02em]">
+              {currentProject?.boardName || currentProject?.name || 'Board'}
+            </span>
+            <span className="font-body text-[10px] text-[var(--color-text-muted)] bg-[var(--color-bg-surface)] px-2 py-[2px] rounded-[10px]">
+              {tasks.length} tasks
+            </span>
+          </div>
 
-      <main className={`flex-1 p-4 ${viewMode === 'kanban' ? 'overflow-x-auto' : 'overflow-y-auto'}`}>
-        {viewMode === 'kanban' ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={collisionDetection}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="flex h-full">
-              {STATUSES.map((status, index) => (
-                <div key={status} className="flex">
-                  <Column
-                    status={status}
-                    tasks={getFilteredTasksByStatus(status)}
-                    onTaskClick={handleTaskClick}
-                    isCollapsed={collapsedColumns.has(status)}
-                    onToggleCollapse={() => toggleColumnCollapse(status)}
-                    showPreview={showPreview}
-                  />
-                  {index < STATUSES.length - 1 && (
-                    <div className="w-px bg-[var(--color-border-subtle)] mx-2 self-stretch" />
-                  )}
-                </div>
-              ))}
-            </div>
+          <div className="flex items-center gap-2">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <FilterDropdown
+              selectedTags={selectedTags}
+              onTagsChange={setSelectedTags}
+              selectedEpics={selectedEpics}
+              onEpicsChange={setSelectedEpics}
+              availableEpics={availableEpics}
+              dateFilter={dateFilter}
+              onDateFilterChange={setDateFilter}
+              doneSort={doneSort}
+              onDoneSortChange={setDoneSort}
+            />
+            <button
+              onClick={handleCreateClick}
+              className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[var(--color-accent-primary)] text-white text-[13px] font-bold hover:bg-[var(--color-accent-primary-hover)] transition-colors font-display"
+            >
+              <Plus size={16} />
+              New Task
+            </button>
+          </div>
+        </header>
 
-            <DragOverlay>
-              {activeTask && (
-                <Card task={activeTask} onClick={() => {}} showPreview={showPreview} />
-              )}
-            </DragOverlay>
-          </DndContext>
-        ) : (
-          <ListView
-            tasksByStatus={STATUSES.reduce((acc, status) => {
-              acc[status] = getFilteredTasksByStatus(status);
-              return acc;
-            }, {} as Record<TaskStatus, Task[]>)}
-            onTaskClick={handleTaskClick}
-          />
-        )}
-      </main>
+        <main className={`flex-1 p-4 ${viewMode === 'kanban' ? 'overflow-x-auto' : 'overflow-y-auto'}`}>
+          {viewMode === 'kanban' ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={collisionDetection}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="flex h-full">
+                {STATUSES.map((status, index) => (
+                  <div key={status} className="flex">
+                    <Column
+                      status={status}
+                      tasks={getFilteredTasksByStatus(status)}
+                      onTaskClick={handleTaskClick}
+                      isCollapsed={collapsedColumns.has(status)}
+                      onToggleCollapse={() => toggleColumnCollapse(status)}
+                      showPreview={showPreview}
+                    />
+                    {index < STATUSES.length - 1 && (
+                      <div className="w-px bg-[var(--color-border-subtle)] mx-2 self-stretch" />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <DragOverlay>
+                {activeTask && (
+                  <Card task={activeTask} onClick={() => {}} showPreview={showPreview} />
+                )}
+              </DragOverlay>
+            </DndContext>
+          ) : (
+            <ListView
+              tasksByStatus={STATUSES.reduce((acc, status) => {
+                acc[status] = getFilteredTasksByStatus(status);
+                return acc;
+              }, {} as Record<TaskStatus, Task[]>)}
+              onTaskClick={handleTaskClick}
+            />
+          )}
+        </main>
+      </div>
 
       <TaskPanel
         isOpen={isModalOpen}
