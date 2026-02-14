@@ -52,7 +52,7 @@ export function ProjectSwitcher({ currentProject, projects, onSwitch, onManage, 
           flex items-center gap-2 px-3 py-2
           bg-transparent
           rounded-[6px]
-          text-[15px] font-medium text-[var(--color-text-primary)]
+          text-[15px] font-bold text-[var(--color-text-primary)] font-display
           hover:bg-[var(--color-bg-elevated)]
           transition-colors
         `}

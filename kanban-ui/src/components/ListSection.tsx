@@ -25,7 +25,7 @@ export function ListSection({ status, tasks, onTaskClick }: ListSectionProps) {
         ) : (
           <ChevronRight size={16} className="text-[var(--color-text-muted)]" />
         )}
-        <span className="text-[13px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+        <span className="text-[13px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] font-display">
           {STATUS_LABELS[status]}
         </span>
         <span className="ml-1 px-1.5 py-0.5 rounded text-[11px] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]">
@@ -42,7 +42,7 @@ export function ListSection({ status, tasks, onTaskClick }: ListSectionProps) {
               className="flex items-center gap-4 px-3 py-2 border-t border-[var(--color-border-subtle)] hover:bg-[var(--color-bg-elevated)] cursor-pointer transition-colors"
             >
               <div className="flex-1 min-w-0">
-                <span className="text-[14px] text-[var(--color-text-primary)] truncate block">
+                <span className="text-[14px] text-[var(--color-text-primary)] truncate block font-display">
                   {task.title}
                 </span>
               </div>

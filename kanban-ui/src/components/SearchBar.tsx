@@ -27,7 +27,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
           bg-[var(--color-bg-elevated)]
           border border-transparent
           rounded-[6px]
-          text-[13px] text-[var(--color-text-primary)]
+          text-[13px] text-[var(--color-text-primary)] font-display
           placeholder:text-[var(--color-text-muted)]
           focus:border-[var(--color-border-emphasis)]
           focus:outline-none

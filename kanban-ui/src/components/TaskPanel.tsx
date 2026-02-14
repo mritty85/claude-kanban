@@ -486,7 +486,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Task title..."
                 required
-                className="flex-1 px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none"
+                className="flex-1 px-3 py-2.5 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none font-display"
               />
               {/* Save indicator for existing tasks */}
               {task && (
@@ -519,7 +519,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
             {/* Compact row: Status + Completed */}
             <div className="flex flex-col sm:flex-row gap-4 mb-5">
               <div className="sm:w-48 shrink-0">
-                <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+                <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
                   Status
                 </label>
                 <select
@@ -536,7 +536,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
               {/* Completed Date - only show for done status or if already set */}
               {(status === 'done' || completed) && (
                 <div className="sm:w-48 shrink-0">
-                  <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+                  <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
                     Completed
                   </label>
                   <input
@@ -562,7 +562,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
 
             {/* Epic */}
             <div className="mb-5">
-              <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+              <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
                 Epic
               </label>
               <EpicCombobox
@@ -575,7 +575,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
 
             {/* Tags */}
             <div className="mb-5">
-              <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+              <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
                 Tags
               </label>
               <div className="flex flex-wrap gap-2">
@@ -598,7 +598,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
 
             {/* Description - largest textarea */}
             <div className="mb-5">
-              <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+              <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
                 Description
               </label>
               <textarea
@@ -614,7 +614,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
 
             {/* Acceptance Criteria */}
             <div className="mb-5">
-              <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+              <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
                 Acceptance Criteria
               </label>
               <DndContext
@@ -676,7 +676,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
 
             {/* Notes */}
             <div>
-              <label className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">
+              <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
                 Notes
               </label>
               <textarea
@@ -706,7 +706,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
                 </button>
                 {additionalExpanded && (
                   <div className="mt-2 px-3 py-2.5 bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] rounded-[6px]">
-                    <pre className="text-[12px] text-[var(--color-text-secondary)] whitespace-pre-wrap font-mono overflow-x-auto">
+                    <pre className="text-[12px] text-[var(--color-text-secondary)] whitespace-pre-wrap font-body overflow-x-auto">
                       {additionalContent}
                     </pre>
                   </div>

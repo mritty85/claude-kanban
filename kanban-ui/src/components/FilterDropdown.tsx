@@ -112,7 +112,7 @@ export function FilterDropdown({
         `}
       >
         <Filter size={16} />
-        Filter
+        <span className="font-display">Filter</span>
         {filterCount > 0 && (
           <span className="bg-[var(--color-accent-primary)] text-white text-[11px] px-1.5 py-0.5 rounded">
             {filterCount}
@@ -137,7 +137,7 @@ export function FilterDropdown({
 
           {/* Tags Section */}
           <div className="px-3 py-1">
-            <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
+            <span className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide font-display">
               Tags
             </span>
           </div>
@@ -169,7 +169,7 @@ export function FilterDropdown({
             <>
               <div className="border-t border-[var(--color-border-subtle)] my-2" />
               <div className="px-3 py-1">
-                <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
+                <span className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide font-display">
                   Epics
                 </span>
               </div>
@@ -208,7 +208,7 @@ export function FilterDropdown({
 
           {/* Done Column Sort */}
           <div className="px-3 py-1">
-            <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide flex items-center gap-1">
+            <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide flex items-center gap-1 font-display">
               <ArrowUpDown size={12} />
               Done Sort
             </span>
@@ -229,7 +229,7 @@ export function FilterDropdown({
 
           {/* Date Filter Section */}
           <div className="px-3 py-1">
-            <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide flex items-center gap-1">
+            <span className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide flex items-center gap-1 font-display">
               <Calendar size={12} />
               Done Date Filter
             </span>

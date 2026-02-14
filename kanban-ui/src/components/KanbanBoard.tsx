@@ -370,7 +370,7 @@ export function KanbanBoard() {
           </button>
           <button
             onClick={handleCreateClick}
-            className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[var(--color-accent-primary)] text-white text-[13px] font-medium hover:bg-[var(--color-accent-primary-hover)] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[var(--color-accent-primary)] text-white text-[13px] font-bold hover:bg-[var(--color-accent-primary-hover)] transition-colors font-display"
           >
             <Plus size={16} />
             New Task

@@ -109,7 +109,7 @@ export function ProjectsModal({
 
       <div className="relative bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[8px] w-full max-w-[560px] max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-[var(--color-border-subtle)]">
-          <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-[16px] font-bold text-[var(--color-text-primary)] font-display">
             Manage Projects
           </h2>
           <button
@@ -177,7 +177,7 @@ export function ProjectsModal({
                           onClick={() => project.id !== currentProject?.id && onSwitch(project.id)}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                            <span className="text-[13px] font-bold text-[var(--color-text-primary)] font-display">
                               {project.name}
                             </span>
                             {project.id === currentProject?.id && (
@@ -260,7 +260,7 @@ export function ProjectsModal({
                     }}
                     onBlur={handleValidatePath}
                     placeholder="/Users/you/projects/my-project"
-                    className="flex-1 px-3 py-2 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none font-mono"
+                    className="flex-1 px-3 py-2 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none font-body"
                   />
                 </div>
                 {validating && (

@@ -103,7 +103,7 @@ export function RoadmapPanel({ isOpen, onClose, projectId }: RoadmapPanelProps) 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border-subtle)]">
           <div className="flex items-center gap-3">
-            <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">
+            <h2 className="text-[16px] font-bold text-[var(--color-text-primary)] font-display">
               Roadmap
             </h2>
             <span className="text-[12px] text-[var(--color-text-muted)]">
@@ -130,7 +130,7 @@ export function RoadmapPanel({ isOpen, onClose, projectId }: RoadmapPanelProps) 
               value={content}
               onChange={(e) => updateContent(e.target.value)}
               placeholder="Write your project roadmap here..."
-              className="flex-1 w-full px-4 py-3 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none font-mono"
+              className="flex-1 w-full px-4 py-3 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none font-body"
             />
           )}
         </div>

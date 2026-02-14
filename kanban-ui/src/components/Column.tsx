@@ -32,7 +32,7 @@ export function Column({ status, tasks, onTaskClick, isCollapsed, onToggleCollap
         </button>
 
         <h2
-          className="text-[13px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mt-3 whitespace-nowrap"
+          className="text-[13px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] font-display mt-3 whitespace-nowrap"
           style={{ writingMode: 'vertical-lr' }}
         >
           {STATUS_LABELS[status]}
@@ -58,7 +58,7 @@ export function Column({ status, tasks, onTaskClick, isCollapsed, onToggleCollap
       `}
     >
       <div className="flex items-center gap-2 pb-3">
-        <h2 className="text-[13px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+        <h2 className="text-[13px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] font-display">
           {STATUS_LABELS[status]}
         </h2>
         <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">

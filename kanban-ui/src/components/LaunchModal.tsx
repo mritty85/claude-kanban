@@ -158,7 +158,7 @@ export function LaunchModal({ isOpen, onClose }: LaunchModalProps) {
         <div className="flex items-center justify-between p-5 border-b border-[var(--color-border-subtle)]">
           <div className="flex items-center gap-2">
             <Terminal size={18} className="text-[var(--color-text-secondary)]" />
-            <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">
+            <h2 className="text-[16px] font-bold text-[var(--color-text-primary)] font-display">
               {viewMode === 'list' ? 'Launch Terminal' : viewMode === 'add' ? 'Add Launch Config' : 'Edit Launch Config'}
             </h2>
           </div>
@@ -217,10 +217,10 @@ export function LaunchModal({ isOpen, onClose }: LaunchModalProps) {
                         className="flex-1 min-w-0 cursor-pointer"
                         onClick={() => handleLaunch(config)}
                       >
-                        <div className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                        <div className="text-[13px] font-bold text-[var(--color-text-primary)] font-display">
                           {config.name}
                         </div>
-                        <div className="text-[12px] text-[var(--color-text-muted)] font-mono truncate">
+                        <div className="text-[12px] text-[var(--color-text-muted)] font-body truncate">
                           {config.workingDir && <span className="text-[var(--color-text-muted)]">{config.workingDir}/</span>}
                           {config.command}
                         </div>
@@ -282,7 +282,7 @@ export function LaunchModal({ isOpen, onClose }: LaunchModalProps) {
                   value={formCommand}
                   onChange={(e) => setFormCommand(e.target.value)}
                   placeholder="npm run dev"
-                  className="w-full px-3 py-2 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none font-mono"
+                  className="w-full px-3 py-2 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none font-body"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSaveForm();
                     if (e.key === 'Escape') handleCancelForm();
@@ -299,7 +299,7 @@ export function LaunchModal({ isOpen, onClose }: LaunchModalProps) {
                   value={formWorkingDir}
                   onChange={(e) => setFormWorkingDir(e.target.value)}
                   placeholder="kanban-ui"
-                  className="w-full px-3 py-2 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none font-mono"
+                  className="w-full px-3 py-2 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none font-body"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSaveForm();
                     if (e.key === 'Escape') handleCancelForm();

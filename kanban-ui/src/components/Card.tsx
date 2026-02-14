@@ -49,7 +49,7 @@ export function Card({ task, onClick, showPreview = true }: CardProps) {
         ${isDragging ? 'shadow-lg shadow-black/30' : ''}
       `}
     >
-      <h3 className="text-[14px] font-medium text-[var(--color-text-primary)] mb-2 leading-tight">
+      <h3 className="text-[14px] font-bold text-[var(--color-text-primary)] mb-2 leading-tight font-display">
         {task.title}
       </h3>
 
