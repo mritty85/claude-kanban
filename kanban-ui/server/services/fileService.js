@@ -105,21 +105,33 @@ async function isOldStructure(tasksDir) {
   return false;
 }
 
-// Check if project already has flat structure (_board.json exists)
+// Check if project already has flat structure (_board.json exists AND no tasks remain in subfolders)
 async function hasFlatStructure(tasksDir) {
   try {
     await fs.access(path.join(tasksDir, BOARD_FILE));
-    return true;
   } catch {
     return false;
   }
+
+  // _board.json exists, but check if subfolders still have task files (incomplete migration)
+  if (await isOldStructure(tasksDir)) {
+    return false;
+  }
+
+  return true;
 }
 
 // Migrate from old structure to flat structure
 async function migrateToFlatStructure(tasksDir) {
   console.log('Migrating project to flat folder structure...');
 
-  const boardData = { columns: {} };
+  // Read existing board data if present (partial re-migration)
+  let boardData;
+  try {
+    boardData = await readBoardFile(tasksDir);
+  } catch {
+    boardData = { columns: {} };
+  }
 
   for (const status of STATUSES) {
     const statusDir = path.join(tasksDir, status);
@@ -224,7 +236,11 @@ async function migrateToFlatStructure(tasksDir) {
       if (err.code !== 'ENOENT') throw err;
     }
 
-    boardData.columns[status] = orderedIds;
+    // Append newly migrated IDs to existing column (avoid duplicates)
+    const existing = boardData.columns[status] || [];
+    const existingSet = new Set(existing);
+    const newIds = orderedIds.filter(id => !existingSet.has(id));
+    boardData.columns[status] = [...existing, ...newIds];
   }
 
   // Write the new board file
