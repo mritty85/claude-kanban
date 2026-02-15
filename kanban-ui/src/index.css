@@ -192,7 +192,6 @@ html *::after {
 /* Column collapse/expand transition */
 .column-transition {
   transition: width 200ms ease-in-out,
-              min-width 200ms ease-in-out,
-              max-width 200ms ease-in-out,
+              flex 200ms ease-in-out,
               opacity 150ms ease-in-out;
 }

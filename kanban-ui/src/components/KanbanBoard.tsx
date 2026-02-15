@@ -379,7 +379,7 @@ export function KanbanBoard() {
           </div>
         </header>
 
-        <main className={`flex-1 p-4 ${viewMode === 'kanban' ? 'overflow-x-auto' : 'overflow-y-auto'}`}>
+        <main className={`flex-1 p-4 ${viewMode === 'kanban' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           {viewMode === 'kanban' ? (
             <DndContext
               sensors={sensors}

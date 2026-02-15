@@ -49,7 +49,7 @@ export function Column({ status, tasks, onTaskClick, isCollapsed, onToggleCollap
     <div
       ref={setNodeRef}
       className={`
-        flex flex-col min-w-[280px] max-w-[320px] flex-1
+        flex flex-col min-w-0 flex-1
         rounded-lg p-2 transition-colors duration-150 column-transition
         ${isOver
           ? 'bg-[var(--color-accent-primary)]/10 ring-2 ring-dashed ring-[var(--color-accent-primary)]'
