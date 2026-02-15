@@ -29,7 +29,7 @@ import { useTasks } from '../hooks/useTasks';
 import { useProjects } from '../hooks/useProjects';
 import { useDocumentDetection } from '../hooks/useDocumentDetection';
 import { fetchLaunchConfigs } from '../lib/api';
-import { Plus, Home } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { ListView } from './ListView';
 
 interface KanbanBoardProps {
@@ -327,6 +327,7 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
       openDocumentSlug={openDocumentSlug}
       onOpenDocument={setOpenDocumentSlug}
       detectedDocs={detectedDocs}
+      onBackToWorkspace={onBackToWorkspace}
     />
   );
 
@@ -357,20 +358,7 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
       {sidebarElement}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex items-center justify-between px-5 py-[10px] border-b border-[var(--color-border-subtle)] flex-shrink-0">
-          <div>
-            {onBackToWorkspace && (
-              <button
-                onClick={onBackToWorkspace}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-elevated)] transition-colors text-xs font-display"
-                title="Back to workspace"
-              >
-                <Home size={15} />
-                <span>Workspace</span>
-              </button>
-            )}
-          </div>
-
+        <header className="flex items-center justify-end px-5 py-[10px] border-b border-[var(--color-border-subtle)] flex-shrink-0">
           <div className="flex items-center gap-2">
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
             <FilterDropdown
@@ -405,7 +393,7 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
             >
               <div className="flex h-full">
                 {STATUSES.map((status, index) => (
-                  <div key={status} className="flex">
+                  <div key={status} className={`flex ${collapsedColumns.has(status) ? 'flex-shrink-0' : 'flex-1 min-w-0'}`}>
                     <Column
                       status={status}
                       tasks={getFilteredTasksByStatus(status)}

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, FolderOpen } from 'lucide-react';
+import { ChevronDown, Check, FolderOpen, Home } from 'lucide-react';
 import type { Project } from '../types/task';
 
 interface ProjectSwitcherProps {
@@ -7,9 +7,10 @@ interface ProjectSwitcherProps {
   projects: Project[];
   onSwitch: (id: string) => Promise<void>;
   onManage: () => void;
+  onBackToWorkspace?: () => void;
 }
 
-export function ProjectSwitcher({ currentProject, projects, onSwitch, onManage }: ProjectSwitcherProps) {
+export function ProjectSwitcher({ currentProject, projects, onSwitch, onManage, onBackToWorkspace }: ProjectSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -63,6 +64,20 @@ export function ProjectSwitcher({ currentProject, projects, onSwitch, onManage }
 
       {isOpen && (
         <div className="absolute left-0 mt-2 w-72 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[8px] shadow-lg z-50 py-2">
+          {onBackToWorkspace && (
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onBackToWorkspace();
+              }}
+              className="w-full px-3 py-2.5 text-left flex items-center gap-3 hover:bg-[var(--color-bg-elevated)] transition-colors"
+            >
+              <div className="w-5 flex-shrink-0">
+                <Home size={16} className="text-[var(--color-text-secondary)]" />
+              </div>
+              <span className="text-[13px] text-[var(--color-text-primary)]">Workspace</span>
+            </button>
+          )}
           <div className="px-3 py-2 text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border-subtle)]">
             Projects
           </div>

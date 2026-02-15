@@ -18,6 +18,7 @@ interface SidebarProps {
   openDocumentSlug: string | null;
   onOpenDocument: (slug: string) => void;
   detectedDocs: Record<string, boolean>;
+  onBackToWorkspace?: () => void;
 }
 
 function SidebarItem({
@@ -148,6 +149,7 @@ export function Sidebar({
   openDocumentSlug,
   onOpenDocument,
   detectedDocs,
+  onBackToWorkspace,
 }: SidebarProps) {
   return (
     <aside className="w-[210px] flex-shrink-0 bg-[var(--color-bg-sidebar)] border-r border-[var(--color-border-subtle)] flex flex-col z-20">
@@ -158,6 +160,7 @@ export function Sidebar({
           projects={projects}
           onSwitch={onProjectSwitch}
           onManage={onManageProjects}
+          onBackToWorkspace={onBackToWorkspace}
         />
       </div>
 
