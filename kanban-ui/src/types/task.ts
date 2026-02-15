@@ -65,6 +65,19 @@ export interface DateFilter {
 
 export type DoneSortOption = 'default' | 'completedNewest' | 'completedOldest';
 
+// Lifecycle stage types for workspace view
+export type LifecycleStage = 'prototype' | 'poc' | 'beta' | 'production' | 'launched';
+
+export const LIFECYCLE_STAGES: LifecycleStage[] = ['prototype', 'poc', 'beta', 'production', 'launched'];
+
+export const LIFECYCLE_LABELS: Record<LifecycleStage, string> = {
+  prototype: 'Prototyping',
+  poc: 'Proof of Concept',
+  beta: 'Beta Development',
+  production: 'Production Dev',
+  launched: 'Launched / Archived',
+};
+
 // Project types for multi-project support
 export interface Project {
   id: string;
@@ -72,6 +85,8 @@ export interface Project {
   path: string;
   lastAccessed: string;
   boardName?: string;
+  lifecycleStage?: LifecycleStage;
+  summary?: string;
 }
 
 export interface ProjectFormData {

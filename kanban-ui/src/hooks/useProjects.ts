@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Project, ProjectFormData } from '../types/task';
+import type { Project, ProjectFormData, LifecycleStage } from '../types/task';
 import * as api from '../lib/api';
 
 export function useProjects() {
@@ -74,6 +74,22 @@ export function useProjects() {
     return project;
   }, [projects]);
 
+  const updateProjectStage = useCallback(async (id: string, lifecycleStage: LifecycleStage) => {
+    await api.updateProject(id, { lifecycleStage } as any);
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, lifecycleStage } : p));
+    if (currentProject?.id === id) {
+      setCurrentProject(prev => prev ? { ...prev, lifecycleStage } : null);
+    }
+  }, [currentProject?.id]);
+
+  const updateProjectSummary = useCallback(async (id: string, summary: string) => {
+    await api.updateProject(id, { summary } as any);
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, summary } : p));
+    if (currentProject?.id === id) {
+      setCurrentProject(prev => prev ? { ...prev, summary } : null);
+    }
+  }, [currentProject?.id]);
+
   const validatePath = useCallback(async (path: string) => {
     return api.validateProjectPath(path);
   }, []);
@@ -86,6 +102,8 @@ export function useProjects() {
     addProject,
     removeProject,
     updateProjectName,
+    updateProjectStage,
+    updateProjectSummary,
     switchToProject,
     validatePath,
     refresh: loadProjects

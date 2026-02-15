@@ -4,7 +4,7 @@
 task_1771104801506
 
 ## Status
-planning
+uat
 
 ## Tags
 - new-functionality
@@ -153,3 +153,25 @@ The prototype includes arrow-key navigation across columns and cards, plus `N` t
 **Existing project management UX:** The `ProjectsModal.tsx` and `ProjectSwitcher.tsx` components handle project CRUD and switching today. The workspace view effectively replaces `ProjectSwitcher` as the primary project-selection mechanism, but the switcher could remain in the board header as a quick-switch shortcut. `ProjectsModal` could be folded into the workspace view or kept as-is for the "Register Project" flow.
 
 **Naming clarity:** `summary` (workspace card one-liner) vs `documentation/notes.md` (full project notes panel) — these are intentionally different fields to avoid confusion. Summary lives in `config.json`, notes live on the filesystem.
+
+### Session Notes — 2026-02-15
+
+**v1 Core implementation complete.** All core features shipped:
+
+**Files created:**
+- `src/components/WorkspaceHome.tsx` — full workspace page (header, date, theme toggle, register button, summary, board)
+- `src/components/WorkspaceSummary.tsx` — stats strip with total + per-stage counts
+- `src/components/WorkspaceBoard.tsx` — 5 lifecycle columns rendering ProjectCards
+- `src/components/ProjectCard.tsx` — card with icon (hash-based color), name, path, inline-editable summary, stage dropdown, active badge
+
+**Files modified:**
+- `src/types/task.ts` — added `LifecycleStage` type, `LIFECYCLE_STAGES`, `LIFECYCLE_LABELS`; extended `Project` with `lifecycleStage?` and `summary?`
+- `src/index.css` — added `--color-stage-*` CSS variables (dark + light mode)
+- `server/services/configService.js` — `updateProject()` now persists `lifecycleStage` and `summary`
+- `src/hooks/useProjects.ts` — added `updateProjectStage()` and `updateProjectSummary()` methods
+- `src/App.tsx` — added `workspace`/`board` view state toggle
+- `src/components/KanbanBoard.tsx` — added `onBackToWorkspace` prop and Home button in header
+
+**Data storage decision:** `lifecycleStage` and `summary` live in `~/.kanban-ui/config.json` (machine-specific, not git-tracked). This means these values won't transfer when cloning to a new machine — they'd need to be re-set. This is acceptable for now since it's lightweight organizational metadata. If it becomes painful across Mac Mini ↔ MacBook syncing, could be moved to per-project `project.json` (git-tracked) in a future pass.
+
+**Deferred to v2:** Cross-project activity feed, project task summary counts, keyboard navigation, drag-to-reorder between lifecycle columns, light/dark mode for workspace (theme toggle is wired up but workspace components use CSS variables so it already works).

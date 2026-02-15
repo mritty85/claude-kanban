@@ -167,9 +167,15 @@ export async function updateProject(projectId, updates) {
     throw new Error(`Project not found: ${projectId}`);
   }
 
-  // Only allow updating name (path changes would break things)
+  // Only allow updating name, lifecycleStage, summary (path changes would break things)
   if (updates.name) {
     project.name = updates.name;
+  }
+  if (updates.lifecycleStage) {
+    project.lifecycleStage = updates.lifecycleStage;
+  }
+  if (updates.summary !== undefined) {
+    project.summary = updates.summary;
   }
 
   await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');

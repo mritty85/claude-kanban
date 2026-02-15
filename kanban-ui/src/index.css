@@ -66,6 +66,13 @@
   --color-bg-sidebar-hover: #1a1e2c;
   --color-bg-sidebar-active: #1e2336;
 
+  /* Lifecycle Stage Colors */
+  --color-stage-prototype: #a78bfa;
+  --color-stage-poc: #6380f5;
+  --color-stage-beta: #f59e0b;
+  --color-stage-production: #10b981;
+  --color-stage-launched: #525b70;
+
   /* Motion */
   --transition-fast: 150ms ease-out;
   --transition-normal: 200ms ease-in-out;
@@ -152,6 +159,13 @@ html.light {
   --color-bg-sidebar: #eaeaef;
   --color-bg-sidebar-hover: #e0e0e5;
   --color-bg-sidebar-active: #d8d8e0;
+
+  /* Lifecycle Stage Colors - light mode */
+  --color-stage-prototype: #7c3aed;
+  --color-stage-poc: #4361ee;
+  --color-stage-beta: #d97706;
+  --color-stage-production: #059669;
+  --color-stage-launched: #64748b;
 
   /* Epic Colors - light mode */
   --color-epic-rose-bg: #fce7f3;
