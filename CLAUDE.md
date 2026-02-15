@@ -23,13 +23,12 @@ Tasks are stored as markdown files in the flat `/tasks/` directory:
 ### Working on Tasks
 
 When asked to work on tasks:
-1. Read `_board.json` to see task priority order in the `backlog` column
-2. Read the first task file from the backlog list
-3. Update the `## Status` field in the task file to `implementing`
-4. Implement the work described
-5. Check off acceptance criteria as completed
-6. Add notes to `## Notes` section for any decisions
-7. When complete, update the `## Status` field to `uat`
+1. The user will link directly to the file e.g. tasks/example-task-name.md
+2. Update the `## Status` field in the task file to `implementing`
+3. Plan first, ask clarifying questions, then implement the work described
+4. Check off acceptance criteria as completed
+5. Add notes to `## Notes` section for any decisions
+6. When complete, update the `## Status` field to `uat`
 
 **Important:** Claude only edits task `.md` files. The `_board.json` file is managed by the UI for column ordering.
 

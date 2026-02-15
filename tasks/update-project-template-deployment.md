@@ -4,7 +4,7 @@
 task_1771152117406
 
 ## Status
-planning
+uat
 
 ## Tags
 - feature-enhancement

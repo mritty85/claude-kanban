@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Style Guide B — Cool Precision</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* === OPTION B: COOL PRECISION === */
+    /* Display Font: Instrument Sans — sharp, modern, slightly condensed feel */
+    /* Body/Code Font: Source Code Pro — clean monospace, excellent at small sizes */
+
+    --font-display: 'Instrument Sans', -apple-system, sans-serif;
+    --font-body: 'Source Code Pro', 'Menlo', monospace;
+
+    /* Light Mode Palette — cool slate foundations */
+    --bg-primary: #F6F7F9;
+    --bg-secondary: #ECEEF2;
+    --bg-card: #FFFFFF;
+    --bg-header: #FFFFFF;
+    --border: #D8DCE3;
+    --border-subtle: #E8EBF0;
+
+    --text-primary: #171B24;
+    --text-secondary: #5E6578;
+    --text-tertiary: #9198A8;
+    --text-on-accent: #FFFFFF;
+
+    --accent-primary: #4361EE;
+    --accent-primary-hover: #3451D4;
+    --accent-secondary: #10B981;
+
+    /* Tag Colors — vivid but slightly desaturated */
+    --tag-feature-bg: #10B981;
+    --tag-feature-text: #FFFFFF;
+    --tag-enhancement-bg: #4361EE;
+    --tag-enhancement-text: #FFFFFF;
+    --tag-bug-bg: #EF4444;
+    --tag-bug-text: #FFFFFF;
+    --tag-refactor-bg: #A855F7;
+    --tag-refactor-text: #FFFFFF;
+    --tag-devops-bg: #F59E0B;
+    --tag-devops-text: #171B24;
+
+    /* Column dots */
+    --col-ideation: #A855F7;
+    --col-planning: #4361EE;
+    --col-backlog: #9198A8;
+    --col-implementing: #F59E0B;
+    --col-uat: #10B981;
+    --col-done: #5E6578;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --shadow-card: 0 1px 2px rgba(23,27,36,0.05);
+    --shadow-card-hover: 0 4px 16px rgba(23,27,36,0.08), 0 1px 4px rgba(23,27,36,0.04);
+  }
+
+  [data-theme="dark"] {
+    --bg-primary: #0F1117;
+    --bg-secondary: #171B24;
+    --bg-card: #1E2230;
+    --bg-header: #141720;
+    --border: #2A2F3E;
+    --border-subtle: #232839;
+
+    --text-primary: #E8EBF0;
+    --text-secondary: #8890A3;
+    --text-tertiary: #525B70;
+
+    --accent-primary: #6380F5;
+    --accent-primary-hover: #4361EE;
+
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.2);
+
+    --tag-feature-bg: #059669;
+    --tag-enhancement-bg: #4361EE;
+    --tag-bug-bg: #DC2626;
+    --tag-refactor-bg: #9333EA;
+    --tag-devops-bg: #D97706;
+    --tag-devops-text: #FFFFFF;
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.5;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background 0.3s, color 0.3s;
+    min-height: 100vh;
+  }
+
+  /* === STYLE GUIDE WRAPPER === */
+  .guide-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 32px;
+  }
+
+  .guide-header {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .guide-label {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-primary);
+    margin-bottom: 8px;
+  }
+
+  .guide-title {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+
+  .guide-subtitle {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 640px;
+    line-height: 1.6;
+  }
+
+  .theme-toggle-bar {
+    display: flex;
+    gap: 4px;
+    margin-top: 20px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    width: fit-content;
+  }
+
+  .theme-btn {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 16px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .theme-btn.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* === SECTIONS === */
+  .section {
+    margin-bottom: 56px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .section-desc {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    font-size: 13px;
+    max-width: 560px;
+    line-height: 1.6;
+  }
+
+  /* === TYPOGRAPHY SHOWCASE === */
+  .type-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 20px 32px;
+    align-items: baseline;
+  }
+
+  .type-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    padding-top: 4px;
+  }
+
+  .type-sample-display {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
+
+  .type-sample-heading {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+  }
+
+  .type-sample-body {
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text-primary);
+  }
+
+  .type-sample-code {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent-primary);
+    background: var(--bg-secondary);
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .type-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    font-family: var(--font-body);
+  }
+
+  /* === COLOR PALETTE === */
+  .palette-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .swatch {
+    width: 72px;
+    text-align: center;
+  }
+
+  .swatch-color {
+    width: 72px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 6px;
+  }
+
+  .swatch-name {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .swatch-hex {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-family: var(--font-body);
+  }
+
+  /* === TAGS === */
+  .tag-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .tag {
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .tag-feature { background: var(--tag-feature-bg); color: var(--tag-feature-text); }
+  .tag-enhancement { background: var(--tag-enhancement-bg); color: var(--tag-enhancement-text); }
+  .tag-bug { background: var(--tag-bug-bg); color: var(--tag-bug-text); }
+  .tag-refactor { background: var(--tag-refactor-bg); color: var(--tag-refactor-text); }
+  .tag-devops { background: var(--tag-devops-bg); color: var(--tag-devops-text); }
+
+  /* === KANBAN PREVIEW === */
+  .kanban-preview {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .kanban-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--bg-header);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kanban-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .kanban-project-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .project-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent-primary), #7C3AED);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .project-icon svg {
+    width: 12px;
+    height: 12px;
+    color: white;
+  }
+
+  .kanban-launch-btn {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  .kanban-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .kanban-search {
+    font-family: var(--font-body);
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-tertiary);
+    width: 160px;
+    outline: none;
+  }
+
+  .kanban-header-btn {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .kanban-new-task-btn {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--accent-primary);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .kanban-new-task-btn:hover { background: var(--accent-primary-hover); }
+
+  .kanban-board {
+    display: flex;
+    gap: 0;
+    padding: 14px 12px 20px;
+    overflow-x: auto;
+  }
+
+  .kanban-column {
+    min-width: 230px;
+    flex: 1;
+    padding: 0 6px;
+  }
+
+  .column-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 6px 12px;
+  }
+
+  .column-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .kanban-column:nth-child(1) .column-dot { background: var(--col-ideation); }
+  .kanban-column:nth-child(2) .column-dot { background: var(--col-planning); }
+  .kanban-column:nth-child(3) .column-dot { background: var(--col-backlog); }
+  .kanban-column:nth-child(4) .column-dot { background: var(--col-implementing); }
+  .kanban-column:nth-child(5) .column-dot { background: var(--col-uat); }
+
+  .column-title {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+
+  .column-count {
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-left: auto;
+  }
+
+  .task-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .task-card:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--border);
+  }
+
+  .task-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  .task-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .task-tag {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .task-desc {
+    font-family: var(--font-body);
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .task-date {
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+  }
+
+  /* === COMPONENTS === */
+  .component-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .sample-btn {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 18px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: -0.01em;
+  }
+
+  .sample-btn-primary {
+    background: var(--accent-primary);
+    color: var(--text-on-accent);
+  }
+  .sample-btn-primary:hover { background: var(--accent-primary-hover); }
+
+  .sample-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .sample-btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--accent-primary);
+    font-weight: 500;
+  }
+
+  .sample-input {
+    font-family: var(--font-body);
+    font-size: 12px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    width: 220px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .sample-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(67,97,238,0.12);
+  }
+
+  .sample-select {
+    font-family: var(--font-body);
+    font-size: 12px;
+    padding: 7px 28px 7px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .sample-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+
+  .sample-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .checked-text {
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+  }
+
+  /* === MODAL SAMPLE === */
+  .modal-sample {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    max-width: 520px;
+    margin-top: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.06), 0 0 0 1px var(--border-subtle);
+  }
+
+  .modal-title-input {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    width: 100%;
+    padding: 0 0 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    outline: none;
+    letter-spacing: -0.02em;
+  }
+
+  .modal-field {
+    margin-top: 16px;
+  }
+
+  .modal-field-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+  }
+
+  .modal-desc-area {
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    outline: none;
+  }
+
+  .modal-ac-list {
+    list-style: none;
+    margin-top: 8px;
+  }
+
+  .modal-ac-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .modal-ac-item:last-child { border-bottom: none; }
+
+  /* Utilities */
+  .mt-24 { margin-top: 24px; }
+  .mb-8 { margin-bottom: 8px; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  .label-small {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section { animation: fadeInUp 0.4s ease-out both; }
+  .section:nth-child(2) { animation-delay: 0.05s; }
+  .section:nth-child(3) { animation-delay: 0.1s; }
+  .section:nth-child(4) { animation-delay: 0.15s; }
+  .section:nth-child(5) { animation-delay: 0.2s; }
+  .section:nth-child(6) { animation-delay: 0.25s; }
+</style>
+</head>
+<body>
+<div class="guide-wrapper">
+
+  <!-- HEADER -->
+  <div class="guide-header">
+    <div class="guide-label">Option B</div>
+    <h1 class="guide-title">Cool Precision</h1>
+    <p class="guide-subtitle">A sharp, modern feel with Instrument Sans for UI and Source Code Pro for body — cool slate tones, bold indigo accent, and clean geometric lines.</p>
+    <div class="theme-toggle-bar">
+      <button class="theme-btn active" onclick="setTheme('light')">Light</button>
+      <button class="theme-btn" onclick="setTheme('dark')">Dark</button>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div class="section">
+    <h2 class="section-title">Typography</h2>
+    <div class="type-grid">
+      <div class="type-label">Display / Headings</div>
+      <div>
+        <div class="type-sample-display">Instrument Sans</div>
+        <div class="type-meta">700 weight · -0.03em tracking · Sharp, modern, slightly compact</div>
+      </div>
+
+      <div class="type-label">Column Headers</div>
+      <div>
+        <div class="type-sample-heading">Ideation · Planning · Backlog</div>
+        <div class="type-meta">Instrument Sans 600 · 12px · Uppercase · 0.06em tracking</div>
+      </div>
+
+      <div class="type-label">Body / Descriptions</div>
+      <div>
+        <div class="type-sample-body">Source Code Pro — a clean, highly legible monospace with slightly rounder forms than JetBrains Mono. Great contrast with the sharper Instrument Sans headings.</div>
+        <div class="type-meta">400 weight · 13px · 1.65 line-height</div>
+      </div>
+
+      <div class="type-label">Code / Metadata</div>
+      <div>
+        <span class="type-sample-code">/api/launch</span>
+        <div class="type-meta">Source Code Pro 500 · 12px · accent color, pill with border</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- COLORS -->
+  <div class="section">
+    <h2 class="section-title">Color Palette</h2>
+    <p class="section-desc">Cool slate neutrals keep things professional. The indigo primary accent is confident and modern, with vivid tag colors that pop cleanly against both light and dark surfaces.</p>
+
+    <div class="mb-8 label-small">Surfaces</div>
+    <div class="palette-row">
+      <div class="swatch">
+        <div class="swatch-color" style="background:#F6F7F9;"></div>
+        <div class="swatch-name">Primary BG</div>
+        <div class="swatch-hex">#F6F7F9</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#ECEEF2;"></div>
+        <div class="swatch-name">Secondary</div>
+        <div class="swatch-hex">#ECEEF2</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#FFFFFF;"></div>
+        <div class="swatch-name">Card</div>
+        <div class="swatch-hex">#FFFFFF</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#0F1117;"></div>
+        <div class="swatch-name">Dark BG</div>
+        <div class="swatch-hex">#0F1117</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#1E2230;"></div>
+        <div class="swatch-name">Dark Card</div>
+        <div class="swatch-hex">#1E2230</div>
+      </div>
+    </div>
+
+    <div class="mb-8 mt-24 label-small">Accents & Tags</div>
+    <div class="palette-row">
+      <div class="swatch">
+        <div class="swatch-color" style="background:#4361EE;"></div>
+        <div class="swatch-name">Primary</div>
+        <div class="swatch-hex">#4361EE</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#10B981;"></div>
+        <div class="swatch-name">Feature</div>
+        <div class="swatch-hex">#10B981</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#EF4444;"></div>
+        <div class="swatch-name">Bug</div>
+        <div class="swatch-hex">#EF4444</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#A855F7;"></div>
+        <div class="swatch-name">Refactor</div>
+        <div class="swatch-hex">#A855F7</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#F59E0B;"></div>
+        <div class="swatch-name">DevOps</div>
+        <div class="swatch-hex">#F59E0B</div>
+      </div>
+    </div>
+
+    <div class="tag-row mt-24">
+      <span class="tag tag-feature">New Feature</span>
+      <span class="tag tag-enhancement">Enhancement</span>
+      <span class="tag tag-bug">Bug</span>
+      <span class="tag tag-refactor">Refactor</span>
+      <span class="tag tag-devops">DevOps</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- COMPONENTS -->
+  <div class="section">
+    <h2 class="section-title">Components</h2>
+    <p class="section-desc">Buttons, inputs, and form elements.</p>
+
+    <div class="component-row">
+      <button class="sample-btn sample-btn-primary">+ New Task</button>
+      <button class="sample-btn sample-btn-secondary">Filter</button>
+      <button class="sample-btn sample-btn-ghost">Roadmap →</button>
+    </div>
+
+    <div class="component-row mt-24">
+      <input class="sample-input" type="text" placeholder="Search tasks..." />
+      <select class="sample-select">
+        <option>UAT</option>
+        <option>Backlog</option>
+        <option>Done</option>
+      </select>
+    </div>
+
+    <div class="component-row mt-24" style="flex-direction:column;gap:6px;">
+      <label class="sample-checkbox-row">
+        <input type="checkbox" class="sample-checkbox" checked>
+        <span class="checked-text">Add launchConfigs array to project.json schema</span>
+      </label>
+      <label class="sample-checkbox-row">
+        <input type="checkbox" class="sample-checkbox" checked>
+        <span class="checked-text">Create POST /api/launch endpoint</span>
+      </label>
+      <label class="sample-checkbox-row">
+        <input type="checkbox" class="sample-checkbox">
+        <span>Display list of configured launch commands</span>
+      </label>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- TASK MODAL SAMPLE -->
+  <div class="section">
+    <h2 class="section-title">Task Detail Modal</h2>
+    <div class="modal-sample">
+      <input class="modal-title-input" value="Launch Terminal feature" readonly />
+      <div class="modal-field">
+        <div class="modal-field-label">Status</div>
+        <select class="sample-select"><option>UAT</option></select>
+      </div>
+      <div class="modal-field">
+        <div class="modal-field-label">Tags</div>
+        <div class="tag-row">
+          <span class="tag tag-feature">New Feature</span>
+        </div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-field-label">Description</div>
+        <textarea class="modal-desc-area" readonly>Add a "Launch Terminal" button to the header that opens a modal for managing and executing launch configurations.</textarea>
+      </div>
+      <div class="modal-field">
+        <div class="modal-field-label">Acceptance Criteria</div>
+        <ul class="modal-ac-list">
+          <li class="modal-ac-item"><input type="checkbox" class="sample-checkbox" checked><span class="checked-text">Add launchConfigs array to project.json schema</span></li>
+          <li class="modal-ac-item"><input type="checkbox" class="sample-checkbox" checked><span class="checked-text">Create POST /api/launch endpoint</span></li>
+          <li class="modal-ac-item"><input type="checkbox" class="sample-checkbox"><span>Create LaunchModal component</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- KANBAN PREVIEW -->
+  <div class="section">
+    <h2 class="section-title">Board Preview</h2>
+    <div class="kanban-preview">
+      <div class="kanban-header">
+        <div class="kanban-header-left">
+          <div class="kanban-project-name">
+            <div class="project-icon">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h8M8 4v8"/></svg>
+            </div>
+            Default Kanban Project
+          </div>
+          <button class="kanban-launch-btn">▸ Launch</button>
+        </div>
+        <div class="kanban-header-right">
+          <input class="kanban-search" placeholder="Search tasks..." />
+          <button class="kanban-header-btn">Filter</button>
+          <button class="kanban-header-btn">Roadmap</button>
+          <button class="kanban-new-task-btn">+ New Task</button>
+        </div>
+      </div>
+      <div class="kanban-board">
+        <!-- IDEATION -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <div class="column-dot"></div>
+            <span class="column-title">Ideation</span>
+            <span class="column-count">4</span>
+          </div>
+          <div class="task-card">
+            <div class="task-tags"><span class="task-tag tag-enhancement">Enhancement</span></div>
+            <div class="task-title">Limit Visible Tasks in Done Column</div>
+            <div class="task-desc">The Done column accumulates many tasks over time...</div>
+          </div>
+          <div class="task-card">
+            <div class="task-tags">
+              <span class="task-tag tag-refactor">Refactor</span>
+            </div>
+            <div class="task-title">Add 'View More' Functionality to Acceptance Criteria</div>
+            <div class="task-desc">Currently it's a challenge navigating massive Acceptance...</div>
+          </div>
+          <div class="task-card">
+            <div class="task-tags"><span class="task-tag tag-enhancement">Enhancement</span></div>
+            <div class="task-title">Allow Freeform Tags to Display</div>
+            <div class="task-desc">Currently, tags are constrained to a predefined 'TaskTag' union...</div>
+          </div>
+        </div>
+
+        <!-- PLANNING -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <div class="column-dot"></div>
+            <span class="column-title">Planning</span>
+            <span class="column-count">3</span>
+          </div>
+          <div class="task-card">
+            <div class="task-tags"><span class="task-tag tag-enhancement">Enhancement</span></div>
+            <div class="task-title">Add Copy Path Icon to Card View</div>
+            <div class="task-desc">Add a copy icon to task cards allowing users to quickly copy...</div>
+          </div>
+          <div class="task-card">
+            <div class="task-tags"><span class="task-tag tag-enhancement">Enhancement</span></div>
+            <div class="task-title">Change tasks to project management folder naming convention</div>
+            <div class="task-desc">Rename the default task folder from '/tasks/' to '/project-...'</div>
+          </div>
+          <div class="task-card">
+            <div class="task-tags"><span class="task-tag tag-feature">New Feature</span></div>
+            <div class="task-title">Create Task Logger</div>
+            <div class="task-desc">A single markdown that is updated each time a task is moved to...</div>
+          </div>
+        </div>
+
+        <!-- BACKLOG -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <div class="column-dot"></div>
+            <span class="column-title">Backlog</span>
+            <span class="column-count">0</span>
+          </div>
+        </div>
+
+        <!-- IMPLEMENTING -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <div class="column-dot"></div>
+            <span class="column-title">Implementing</span>
+            <span class="column-count">0</span>
+          </div>
+        </div>
+
+        <!-- UAT -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <div class="column-dot"></div>
+            <span class="column-title">UAT</span>
+            <span class="column-count">4</span>
+          </div>
+          <div class="task-card">
+            <div class="task-tags"><span class="task-tag tag-feature">New Feature</span></div>
+            <div class="task-title">Launch Terminal feature</div>
+            <div class="task-desc">Add a "Launch Terminal" button to the header that opens a modal fo...</div>
+            <div class="task-date">Feb 9, 2026</div>
+          </div>
+          <div class="task-card">
+            <div class="task-tags"><span class="task-tag tag-bug">Bug</span></div>
+            <div class="task-title">Sleep and Parsing Bugs</div>
+            <div class="task-desc">Two bugs affecting app reliability: 1. **SSE Connection...</div>
+          </div>
+          <div class="task-card">
+            <div class="task-tags">
+              <span class="task-tag tag-refactor">Refactor</span>
+              <span class="task-tag tag-feature">New Feature</span>
+            </div>
+            <div class="task-title">Update Architecture to Single Folder Structure</div>
+            <div class="task-desc">Simplify task management by eliminating status subfolders...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : '');
+  document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
