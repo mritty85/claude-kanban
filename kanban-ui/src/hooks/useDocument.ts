@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import * as api from '../lib/api';
+import { fetchDocument, updateDocument as apiUpdateDocument, subscribeToChanges } from '../lib/api';
+import { getDocDef } from '../lib/documentRegistry';
 
-export function useProjectRoadmap(projectId: string | null, isOpen: boolean) {
+export function useDocument(slug: string, projectId: string | null, isOpen: boolean) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -13,108 +14,101 @@ export function useProjectRoadmap(projectId: string | null, isOpen: boolean) {
   const lastSaveTimeRef = useRef<number>(0);
   const isEditingRef = useRef<boolean>(false);
 
-  const loadRoadmap = useCallback(async () => {
+  const def = getDocDef(slug);
+
+  const loadDocument = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.fetchRoadmap();
+      const data = await fetchDocument(slug);
       setContent(data);
       serverContentRef.current = data;
     } catch (err) {
-      console.error('Failed to load roadmap:', err);
+      console.error(`Failed to load ${slug}:`, err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [slug]);
 
-  const saveRoadmap = useCallback(async (newContent: string) => {
+  const saveDocument = useCallback(async (newContent: string) => {
     setSaving(true);
     try {
-      await api.updateRoadmap(newContent);
+      await apiUpdateDocument(slug, newContent);
       serverContentRef.current = newContent;
       setLastSaved(new Date());
-      // Set grace period timestamp to prevent SSE from resetting our state
       lastSaveTimeRef.current = Date.now();
     } catch (err) {
-      console.error('Failed to save roadmap:', err);
+      console.error(`Failed to save ${slug}:`, err);
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [slug]);
 
   const updateContent = useCallback((newContent: string) => {
     setContent(newContent);
     setIsEditing(true);
     isEditingRef.current = true;
 
-    // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Set new debounced save (5s)
     saveTimeoutRef.current = window.setTimeout(() => {
-      saveRoadmap(newContent);
+      saveDocument(newContent);
       setIsEditing(false);
       isEditingRef.current = false;
     }, 5000);
-  }, [saveRoadmap]);
+  }, [saveDocument]);
 
-  // Immediately save any pending changes (for Save & Close)
   const flushSave = useCallback(async () => {
-    // Clear pending debounced save
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
 
-    // Only save if content differs from server
     if (content !== serverContentRef.current) {
-      await saveRoadmap(content);
+      await saveDocument(content);
     }
     setIsEditing(false);
     isEditingRef.current = false;
-  }, [content, saveRoadmap]);
+  }, [content, saveDocument]);
 
-  // Handle SSE updates - only apply if not actively editing or within grace period
-  // Only subscribe when panel is open to avoid connection limit issues
+  // SSE subscription — only when panel is open
   useEffect(() => {
-    if (!projectId || !isOpen) return;
+    if (!projectId || !isOpen || !def) return;
 
-    // Reconnect callback - refresh if not editing (uses ref for current value)
     const handleReconnect = () => {
       if (!isEditingRef.current) {
-        loadRoadmap();
+        loadDocument();
       }
     };
 
-    const unsubscribe = api.subscribeToChanges(
+    const unsubscribe = subscribeToChanges(
       projectId,
       (event) => {
-        // Ignore events for other projects
         if (event.projectId && event.projectId !== projectId) return;
 
-        // Handle project switch - reload roadmap
         if (event.event === 'project-switched') {
-          loadRoadmap();
+          loadDocument();
           setLastSaved(null);
           return;
         }
 
-        // Handle roadmap.md / ROADMAP.md changes from external source
-        if ((event.event === 'add' || event.event === 'change') && event.path?.toLowerCase().includes('roadmap.md')) {
-          // Check if we're within the grace period after saving (2 seconds)
-          const withinGracePeriod = Date.now() - lastSaveTimeRef.current < 2000;
+        if ((event.event === 'add' || event.event === 'change') && event.path) {
+          const basename = event.path.split('/').pop()?.toLowerCase() || '';
+          const matches = def.sseMatchPatterns.some(p => basename === p.toLowerCase());
 
-          // Only reload if not actively editing and not within grace period
-          if (!isEditing && !withinGracePeriod) {
-            loadRoadmap();
+          if (matches) {
+            const withinGracePeriod = Date.now() - lastSaveTimeRef.current < 2000;
+            if (!isEditing && !withinGracePeriod) {
+              loadDocument();
+            }
           }
         }
       },
-      handleReconnect // Refresh on reconnect/visibility change if not editing
+      handleReconnect
     );
     return unsubscribe;
-  }, [projectId, isOpen, loadRoadmap, isEditing]);
+  }, [projectId, isOpen, loadDocument, isEditing, def]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -130,7 +124,7 @@ export function useProjectRoadmap(projectId: string | null, isOpen: boolean) {
     loading,
     saving,
     lastSaved,
-    loadRoadmap,
+    loadDocument,
     updateContent,
     flushSave,
     setContent

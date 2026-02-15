@@ -225,62 +225,28 @@ export async function validateProjectPath(path: string): Promise<PathValidation>
   return res.json();
 }
 
-// Project Notes API functions
+// Generic Document API functions
 
-export async function fetchNotes(): Promise<string> {
-  const res = await fetch(`${API_BASE}/tasks/notes`);
-  if (!res.ok) throw new Error('Failed to fetch notes');
+export async function fetchDocumentStatuses(): Promise<Record<string, { exists: boolean; alwaysShow: boolean }>> {
+  const res = await fetch(`${API_BASE}/documents`);
+  if (!res.ok) throw new Error('Failed to fetch document statuses');
+  return res.json();
+}
+
+export async function fetchDocument(slug: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/documents/${encodeURIComponent(slug)}`);
+  if (!res.ok) throw new Error(`Failed to fetch document: ${slug}`);
   const data = await res.json();
   return data.content;
 }
 
-export async function updateNotes(content: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/tasks/notes`, {
+export async function updateDocument(slug: string, content: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/documents/${encodeURIComponent(slug)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content })
   });
-  if (!res.ok) throw new Error('Failed to update notes');
-  const data = await res.json();
-  return data.content;
-}
-
-// Project Roadmap API functions
-
-export async function fetchRoadmap(): Promise<string> {
-  const res = await fetch(`${API_BASE}/tasks/roadmap`);
-  if (!res.ok) throw new Error('Failed to fetch roadmap');
-  const data = await res.json();
-  return data.content;
-}
-
-export async function updateRoadmap(content: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/tasks/roadmap`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content })
-  });
-  if (!res.ok) throw new Error('Failed to update roadmap');
-  const data = await res.json();
-  return data.content;
-}
-
-// Project PRD API functions
-
-export async function fetchPrd(): Promise<string> {
-  const res = await fetch(`${API_BASE}/tasks/prd`);
-  if (!res.ok) throw new Error('Failed to fetch PRD');
-  const data = await res.json();
-  return data.content;
-}
-
-export async function updatePrd(content: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/tasks/prd`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content })
-  });
-  if (!res.ok) throw new Error('Failed to update PRD');
+  if (!res.ok) throw new Error(`Failed to update document: ${slug}`);
   const data = await res.json();
   return data.content;
 }

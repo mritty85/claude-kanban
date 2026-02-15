@@ -1,30 +1,20 @@
 import { useEffect, useRef, useReducer, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { useProjectPrd } from '../hooks/useProjectPrd';
+import { useDocument } from '../hooks/useDocument';
+import { getDocDef } from '../lib/documentRegistry';
+import { formatRelativeTime } from '../utils/formatRelativeTime';
 
-interface PrdPanelProps {
-  isOpen: boolean;
+interface DocumentPanelProps {
+  slug: string | null;
   onClose: () => void;
   projectId: string | null;
 }
 
-function formatRelativeTime(date: Date | null): string {
-  if (!date) return '';
+export function DocumentPanel({ slug, onClose, projectId }: DocumentPanelProps) {
+  const isOpen = slug !== null;
+  const activeSlug = slug || 'notes'; // fallback for hook (won't render)
+  const def = getDocDef(activeSlug);
 
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-
-  if (diffSeconds < 10) return 'Saved just now';
-  if (diffSeconds < 60) return `Saved ${diffSeconds}s ago`;
-  if (diffMinutes < 60) return `Saved ${diffMinutes}m ago`;
-  if (diffHours < 24) return `Saved ${diffHours}h ago`;
-  return `Saved on ${date.toLocaleDateString()}`;
-}
-
-export function PrdPanel({ isOpen, onClose, projectId }: PrdPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -33,22 +23,22 @@ export function PrdPanel({ isOpen, onClose, projectId }: PrdPanelProps) {
     loading,
     saving,
     lastSaved,
-    loadPrd,
+    loadDocument,
     updateContent,
     flushSave
-  } = useProjectPrd(projectId, isOpen);
+  } = useDocument(activeSlug, projectId, isOpen);
 
   const handleSaveAndClose = useCallback(async () => {
     await flushSave();
     onClose();
   }, [flushSave, onClose]);
 
-  // Load PRD when panel opens
+  // Load document when panel opens
   useEffect(() => {
     if (isOpen) {
-      loadPrd();
+      loadDocument();
     }
-  }, [isOpen, loadPrd]);
+  }, [isOpen, loadDocument]);
 
   // Focus textarea when panel opens
   useEffect(() => {
@@ -104,7 +94,7 @@ export function PrdPanel({ isOpen, onClose, projectId }: PrdPanelProps) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border-subtle)]">
           <div className="flex items-center gap-3">
             <h2 className="text-[16px] font-bold text-[var(--color-text-primary)] font-display">
-              PRD
+              {def?.panelTitle || 'Document'}
             </h2>
             <span className="text-[12px] text-[var(--color-text-muted)]">
               {saving ? 'Saving...' : formatRelativeTime(lastSaved)}
@@ -122,14 +112,14 @@ export function PrdPanel({ isOpen, onClose, projectId }: PrdPanelProps) {
         <div className="flex-1 flex flex-col min-h-0 p-6">
           {loading ? (
             <div className="flex items-center justify-center h-full">
-              <p className="text-[var(--color-text-muted)]">Loading PRD...</p>
+              <p className="text-[var(--color-text-muted)]">{def?.loadingText || 'Loading...'}</p>
             </div>
           ) : (
             <textarea
               ref={textareaRef}
               value={content}
               onChange={(e) => updateContent(e.target.value)}
-              placeholder="Write your product requirements document here..."
+              placeholder={def?.placeholder || 'Write here...'}
               className="flex-1 w-full px-4 py-3 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none font-body"
             />
           )}

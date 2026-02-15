@@ -38,6 +38,14 @@ export async function initWatcher() {
     watchPaths.push(tasksDir);
     watchPaths.push(docDir);
     watchPaths.push(rootConfig);
+
+    // Watch root-level CLAUDE.md (both casings) for document detection
+    const claudeUpper = path.join(project.path, 'CLAUDE.md');
+    const claudeLower = path.join(project.path, 'claude.md');
+    projectPathMap.set(claudeUpper, project.id);
+    projectPathMap.set(claudeLower, project.id);
+    watchPaths.push(claudeUpper);
+    watchPaths.push(claudeLower);
   }
 
   // Close existing watcher if any

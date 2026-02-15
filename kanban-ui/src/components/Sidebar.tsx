@@ -1,7 +1,8 @@
 import type { Project } from '../types/task';
 import { ProjectSwitcher } from './ProjectSwitcher';
-import { LayoutGrid, List, Terminal, Map, FileText, ClipboardList, Sun, Moon, AlignLeft } from 'lucide-react';
+import { LayoutGrid, List, Terminal, Sun, Moon, AlignLeft } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
+import { DOCUMENT_DEFINITIONS } from '../lib/documentRegistry';
 
 interface SidebarProps {
   currentProject: Project | null;
@@ -14,12 +15,9 @@ interface SidebarProps {
   onViewModeChange: (mode: 'kanban' | 'list') => void;
   onOpenLaunchModal: () => void;
   launchConfigCount: number;
-  onOpenRoadmap: () => void;
-  onOpenNotes: () => void;
-  onOpenPrd: () => void;
-  isRoadmapActive: boolean;
-  isNotesActive: boolean;
-  isPrdActive: boolean;
+  openDocumentSlug: string | null;
+  onOpenDocument: (slug: string) => void;
+  detectedDocs: Record<string, boolean>;
 }
 
 function SidebarItem({
@@ -147,12 +145,9 @@ export function Sidebar({
   onViewModeChange,
   onOpenLaunchModal,
   launchConfigCount,
-  onOpenRoadmap,
-  onOpenNotes,
-  onOpenPrd,
-  isRoadmapActive,
-  isNotesActive,
-  isPrdActive,
+  openDocumentSlug,
+  onOpenDocument,
+  detectedDocs,
 }: SidebarProps) {
   return (
     <aside className="w-[210px] flex-shrink-0 bg-[var(--color-bg-sidebar)] border-r border-[var(--color-border-subtle)] flex flex-col z-20">
@@ -229,24 +224,19 @@ export function Sidebar({
           Documents
         </div>
         <nav className="flex flex-col gap-[1px]">
-          <SidebarItem
-            icon={<FileText />}
-            label="Notes"
-            active={isNotesActive}
-            onClick={onOpenNotes}
-          />
-          <SidebarItem
-            icon={<ClipboardList />}
-            label="PRD"
-            active={isPrdActive}
-            onClick={onOpenPrd}
-          />
-          <SidebarItem
-            icon={<Map />}
-            label="Roadmap"
-            active={isRoadmapActive}
-            onClick={onOpenRoadmap}
-          />
+          {DOCUMENT_DEFINITIONS.map(def => {
+            if (!def.alwaysShow && !detectedDocs[def.slug]) return null;
+            const Icon = def.icon;
+            return (
+              <SidebarItem
+                key={def.slug}
+                icon={<Icon />}
+                label={def.label}
+                active={openDocumentSlug === def.slug}
+                onClick={() => onOpenDocument(def.slug)}
+              />
+            );
+          })}
         </nav>
       </div>
 

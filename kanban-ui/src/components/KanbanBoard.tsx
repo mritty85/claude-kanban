@@ -19,9 +19,7 @@ import { STATUSES } from '../types/task';
 import { Column } from './Column';
 import { Card } from './Card';
 import { TaskPanel } from './TaskPanel';
-import { NotesPanel } from './NotesPanel';
-import { RoadmapPanel } from './RoadmapPanel';
-import { PrdPanel } from './PrdPanel';
+import { DocumentPanel } from './DocumentPanel';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 import { ProjectsModal } from './ProjectsModal';
@@ -29,6 +27,7 @@ import { LaunchModal } from './LaunchModal';
 import { Sidebar } from './Sidebar';
 import { useTasks } from '../hooks/useTasks';
 import { useProjects } from '../hooks/useProjects';
+import { useDocumentDetection } from '../hooks/useDocumentDetection';
 import { fetchLaunchConfigs } from '../lib/api';
 import { Plus } from 'lucide-react';
 import { ListView } from './ListView';
@@ -61,10 +60,10 @@ export function KanbanBoard() {
   const [modalTask, setModalTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
-  const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(false);
-  const [isRoadmapPanelOpen, setIsRoadmapPanelOpen] = useState(false);
-  const [isPrdPanelOpen, setIsPrdPanelOpen] = useState(false);
+  const [openDocumentSlug, setOpenDocumentSlug] = useState<string | null>(null);
   const [isLaunchModalOpen, setIsLaunchModalOpen] = useState(false);
+
+  const { detectedDocs } = useDocumentDetection(currentProject?.id || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>({ preset: null });
@@ -321,12 +320,9 @@ export function KanbanBoard() {
       onViewModeChange={setViewMode}
       onOpenLaunchModal={() => setIsLaunchModalOpen(true)}
       launchConfigCount={launchConfigCount}
-      onOpenRoadmap={() => setIsRoadmapPanelOpen(true)}
-      onOpenNotes={() => setIsNotesPanelOpen(true)}
-      onOpenPrd={() => setIsPrdPanelOpen(true)}
-      isRoadmapActive={isRoadmapPanelOpen}
-      isNotesActive={isNotesPanelOpen}
-      isPrdActive={isPrdPanelOpen}
+      openDocumentSlug={openDocumentSlug}
+      onOpenDocument={setOpenDocumentSlug}
+      detectedDocs={detectedDocs}
     />
   );
 
@@ -437,21 +433,9 @@ export function KanbanBoard() {
         onDelete={handleDelete}
       />
 
-      <NotesPanel
-        isOpen={isNotesPanelOpen}
-        onClose={() => setIsNotesPanelOpen(false)}
-        projectId={currentProject?.id || null}
-      />
-
-      <RoadmapPanel
-        isOpen={isRoadmapPanelOpen}
-        onClose={() => setIsRoadmapPanelOpen(false)}
-        projectId={currentProject?.id || null}
-      />
-
-      <PrdPanel
-        isOpen={isPrdPanelOpen}
-        onClose={() => setIsPrdPanelOpen(false)}
+      <DocumentPanel
+        slug={openDocumentSlug}
+        onClose={() => setOpenDocumentSlug(null)}
         projectId={currentProject?.id || null}
       />
 
