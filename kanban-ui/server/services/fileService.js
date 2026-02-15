@@ -66,10 +66,22 @@ export async function getTasksDir() {
   return path.join(projectPath, 'tasks');
 }
 
-// Ensure tasks directory exists (flat structure)
+export async function getProjectDir() {
+  return await getCurrentProjectPath();
+}
+
+export async function getDocumentationDir() {
+  const projectDir = await getProjectDir();
+  return path.join(projectDir, 'documentation');
+}
+
+// Ensure tasks and documentation directories exist (flat structure)
 export async function ensureDirectories() {
   const tasksDir = await getTasksDir();
   await fs.mkdir(tasksDir, { recursive: true });
+
+  const docDir = await getDocumentationDir();
+  await fs.mkdir(docDir, { recursive: true });
 
   // Ensure _board.json exists
   const boardPath = path.join(tasksDir, BOARD_FILE);
@@ -606,19 +618,29 @@ export async function deleteTask(filename) {
 }
 
 export async function getProjectConfig() {
+  const projectDir = await getProjectDir();
   const tasksDir = await getTasksDir();
-  const configPath = path.join(tasksDir, 'project.json');
+
+  // Primary: project root
+  const rootConfigPath = path.join(projectDir, 'project.json');
   try {
-    const content = await fs.readFile(configPath, 'utf-8');
+    const content = await fs.readFile(rootConfigPath, 'utf-8');
     return JSON.parse(content);
   } catch (err) {
-    return { boardName: 'Task Manager' };
+    // Fallback: tasks/project.json (pre-migration)
+    const legacyConfigPath = path.join(tasksDir, 'project.json');
+    try {
+      const content = await fs.readFile(legacyConfigPath, 'utf-8');
+      return JSON.parse(content);
+    } catch {
+      return { boardName: 'Task Manager' };
+    }
   }
 }
 
 export async function updateProjectConfig(updates) {
-  const tasksDir = await getTasksDir();
-  const configPath = path.join(tasksDir, 'project.json');
+  const projectDir = await getProjectDir();
+  const configPath = path.join(projectDir, 'project.json');
   const current = await getProjectConfig();
   const updated = { ...current, ...updates };
   await fs.writeFile(configPath, JSON.stringify(updated, null, 2), 'utf-8');
@@ -626,45 +648,128 @@ export async function updateProjectConfig(updates) {
 }
 
 export async function getProjectNotes() {
+  const docDir = await getDocumentationDir();
   const tasksDir = await getTasksDir();
-  const notesPath = path.join(tasksDir, 'NOTES.md');
+
+  // Primary: documentation/notes.md
+  const newPath = path.join(docDir, 'notes.md');
   try {
-    const content = await fs.readFile(notesPath, 'utf-8');
-    return content;
+    return await fs.readFile(newPath, 'utf-8');
   } catch (err) {
-    if (err.code === 'ENOENT') {
-      return ''; // Return empty string if file doesn't exist
-    }
+    if (err.code !== 'ENOENT') throw err;
+  }
+
+  // Fallback: tasks/NOTES.md (pre-migration)
+  const legacyPath = path.join(tasksDir, 'NOTES.md');
+  try {
+    return await fs.readFile(legacyPath, 'utf-8');
+  } catch (err) {
+    if (err.code === 'ENOENT') return '';
     throw err;
   }
 }
 
 export async function updateProjectNotes(content) {
-  const tasksDir = await getTasksDir();
-  const notesPath = path.join(tasksDir, 'NOTES.md');
+  const docDir = await getDocumentationDir();
+  await fs.mkdir(docDir, { recursive: true });
+  const notesPath = path.join(docDir, 'notes.md');
   await fs.writeFile(notesPath, content, 'utf-8');
   return content;
 }
 
 export async function getProjectRoadmap() {
+  const docDir = await getDocumentationDir();
   const tasksDir = await getTasksDir();
-  const roadmapPath = path.join(tasksDir, 'ROADMAP.md');
+
+  // Primary: documentation/roadmap.md
+  const newPath = path.join(docDir, 'roadmap.md');
   try {
-    const content = await fs.readFile(roadmapPath, 'utf-8');
-    return content;
+    return await fs.readFile(newPath, 'utf-8');
   } catch (err) {
-    if (err.code === 'ENOENT') {
-      return ''; // Return empty string if file doesn't exist
-    }
+    if (err.code !== 'ENOENT') throw err;
+  }
+
+  // Fallback: tasks/ROADMAP.md (pre-migration)
+  const legacyPath = path.join(tasksDir, 'ROADMAP.md');
+  try {
+    return await fs.readFile(legacyPath, 'utf-8');
+  } catch (err) {
+    if (err.code === 'ENOENT') return '';
     throw err;
   }
 }
 
 export async function updateProjectRoadmap(content) {
-  const tasksDir = await getTasksDir();
-  const roadmapPath = path.join(tasksDir, 'ROADMAP.md');
+  const docDir = await getDocumentationDir();
+  await fs.mkdir(docDir, { recursive: true });
+  const roadmapPath = path.join(docDir, 'roadmap.md');
   await fs.writeFile(roadmapPath, content, 'utf-8');
   return content;
+}
+
+export async function getProjectPrd() {
+  const docDir = await getDocumentationDir();
+  const prdPath = path.join(docDir, 'prd.md');
+  try {
+    return await fs.readFile(prdPath, 'utf-8');
+  } catch (err) {
+    if (err.code === 'ENOENT') return '';
+    throw err;
+  }
+}
+
+export async function updateProjectPrd(content) {
+  const docDir = await getDocumentationDir();
+  await fs.mkdir(docDir, { recursive: true });
+  const prdPath = path.join(docDir, 'prd.md');
+  await fs.writeFile(prdPath, content, 'utf-8');
+  return content;
+}
+
+// Auto-migration: move project files from tasks/ to new locations
+export async function migrateProjectStructure() {
+  const projectDir = await getProjectDir();
+  const tasksDir = await getTasksDir();
+  const docDir = await getDocumentationDir();
+
+  // Migrate tasks/project.json → project.json
+  const oldConfig = path.join(tasksDir, 'project.json');
+  const newConfig = path.join(projectDir, 'project.json');
+  await migrateFile(oldConfig, newConfig, 'project.json');
+
+  // Migrate tasks/NOTES.md → documentation/notes.md
+  const oldNotes = path.join(tasksDir, 'NOTES.md');
+  const newNotes = path.join(docDir, 'notes.md');
+  await migrateFile(oldNotes, newNotes, 'NOTES.md → documentation/notes.md');
+
+  // Migrate tasks/ROADMAP.md → documentation/roadmap.md
+  const oldRoadmap = path.join(tasksDir, 'ROADMAP.md');
+  const newRoadmap = path.join(docDir, 'roadmap.md');
+  await migrateFile(oldRoadmap, newRoadmap, 'ROADMAP.md → documentation/roadmap.md');
+}
+
+async function migrateFile(oldPath, newPath, label) {
+  try {
+    await fs.access(oldPath);
+  } catch {
+    return; // Old file doesn't exist, nothing to migrate
+  }
+
+  // Ensure target directory exists
+  await fs.mkdir(path.dirname(newPath), { recursive: true });
+
+  try {
+    await fs.access(newPath);
+    // New location already exists — remove old file
+    await fs.unlink(oldPath);
+    console.log(`Migration: removed stale ${label} (new location already exists)`);
+  } catch {
+    // New location doesn't exist — move the file
+    const content = await fs.readFile(oldPath, 'utf-8');
+    await fs.writeFile(newPath, content, 'utf-8');
+    await fs.unlink(oldPath);
+    console.log(`Migration: moved ${label}`);
+  }
 }
 
 // Launch config functions

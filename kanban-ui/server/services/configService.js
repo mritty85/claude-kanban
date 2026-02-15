@@ -177,7 +177,7 @@ export async function updateProject(projectId, updates) {
 }
 
 // Check if a path has a tasks directory, optionally create it
-export async function validateProjectPath(projectPath, createIfMissing = false) {
+export async function validateProjectPath(projectPath, createIfMissing = false, scaffold = false) {
   const tasksDir = path.join(projectPath, 'tasks');
 
   try {
@@ -203,6 +203,24 @@ export async function validateProjectPath(projectPath, createIfMissing = false) 
           JSON.stringify(boardData, null, 2),
           'utf-8'
         );
+
+        // Scaffold full project template if requested
+        if (scaffold) {
+          const docDir = path.join(projectPath, 'documentation');
+          await fs.mkdir(docDir, { recursive: true });
+
+          const configPath = path.join(projectPath, 'project.json');
+          try {
+            await fs.access(configPath);
+          } catch {
+            await fs.writeFile(
+              configPath,
+              JSON.stringify({ boardName: 'Task Manager' }, null, 2),
+              'utf-8'
+            );
+          }
+        }
+
         return { valid: true, tasksDir, created: true };
       }
       return { valid: false, error: 'tasks directory does not exist', canCreate: true };

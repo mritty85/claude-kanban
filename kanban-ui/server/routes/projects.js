@@ -10,7 +10,7 @@ import {
   validateProjectPath
 } from '../services/configService.js';
 import { switchProject, refreshWatcher } from '../services/watcher.js';
-import { ensureDirectories, getProjectConfig, updateProjectConfig } from '../services/fileService.js';
+import { ensureDirectories, migrateProjectStructure, getProjectConfig, updateProjectConfig } from '../services/fileService.js';
 
 const router = express.Router();
 
@@ -44,14 +44,14 @@ router.get('/current', async (req, res) => {
 // Add a new project
 router.post('/', async (req, res) => {
   try {
-    const { name, path: projectPath, createTasksDir } = req.body;
+    const { name, path: projectPath, createTasksDir, scaffold } = req.body;
 
     if (!name || !projectPath) {
       return res.status(400).json({ error: 'Name and path are required' });
     }
 
     // Validate the path
-    const validation = await validateProjectPath(projectPath, createTasksDir);
+    const validation = await validateProjectPath(projectPath, createTasksDir, scaffold !== false);
     if (!validation.valid) {
       return res.status(400).json({
         error: validation.error,
@@ -105,16 +105,24 @@ router.put('/:id', async (req, res) => {
         if (targetProject) {
           const fs = await import('fs/promises');
           const path = await import('path');
-          const configPath = path.default.join(targetProject.path, 'tasks', 'project.json');
+          const rootConfigPath = path.default.join(targetProject.path, 'project.json');
+          const legacyConfigPath = path.default.join(targetProject.path, 'tasks', 'project.json');
+          // Read from root first, then fallback to legacy location
+          let config = {};
           try {
-            const content = await fs.default.readFile(configPath, 'utf-8');
-            const config = JSON.parse(content);
-            config.boardName = req.body.name;
-            await fs.default.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
+            const content = await fs.default.readFile(rootConfigPath, 'utf-8');
+            config = JSON.parse(content);
           } catch {
-            // project.json may not exist yet, create it
-            await fs.default.writeFile(configPath, JSON.stringify({ boardName: req.body.name }, null, 2), 'utf-8');
+            try {
+              const content = await fs.default.readFile(legacyConfigPath, 'utf-8');
+              config = JSON.parse(content);
+            } catch {
+              // No existing config
+            }
           }
+          config.boardName = req.body.name;
+          // Always write to root location
+          await fs.default.writeFile(rootConfigPath, JSON.stringify(config, null, 2), 'utf-8');
         }
       }
     }
@@ -165,6 +173,7 @@ router.post('/:id/switch', async (req, res) => {
 
     // Ensure directories exist for the project
     await ensureDirectories();
+    await migrateProjectStructure();
 
     // Get board name from project's config
     const config = await getProjectConfig();

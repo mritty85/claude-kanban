@@ -100,8 +100,8 @@ export function useProjectNotes(projectId: string | null, isOpen: boolean) {
           return;
         }
 
-        // Handle NOTES.md changes from external source
-        if ((event.event === 'add' || event.event === 'change') && event.path?.includes('NOTES.md')) {
+        // Handle notes.md / NOTES.md changes from external source
+        if ((event.event === 'add' || event.event === 'change') && event.path?.toLowerCase().includes('notes.md')) {
           // Check if we're within the grace period after saving (2 seconds)
           const withinGracePeriod = Date.now() - lastSaveTimeRef.current < 2000;
 

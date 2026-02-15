@@ -30,6 +30,7 @@ export function ProjectsModal({
   const [pathValidation, setPathValidation] = useState<PathValidation | null>(null);
   const [validating, setValidating] = useState(false);
 
+  const [scaffold, setScaffold] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -58,7 +59,8 @@ export function ProjectsModal({
       const result = await onAdd({
         name: newName.trim(),
         path: newPath.trim(),
-        createTasksDir
+        createTasksDir,
+        scaffold
       });
       setNewName('');
       setNewPath('');
@@ -291,6 +293,21 @@ export function ProjectsModal({
                   </p>
                 )}
               </div>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={scaffold}
+                  onChange={(e) => setScaffold(e.target.checked)}
+                  className="w-4 h-4 rounded border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)] text-[var(--color-accent-primary)] focus:ring-[var(--color-accent-primary)] accent-[var(--color-accent-primary)]"
+                />
+                <span className="text-[12px] text-[var(--color-text-secondary)]">
+                  Scaffold project template
+                </span>
+                <span className="text-[11px] text-[var(--color-text-muted)]">
+                  (creates documentation/ and project.json)
+                </span>
+              </label>
 
               {addError && (
                 <div className="flex items-start gap-2 p-2 rounded bg-[var(--color-accent-danger)]/10 border border-[var(--color-accent-danger)]/20">

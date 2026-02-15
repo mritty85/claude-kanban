@@ -4,7 +4,7 @@
 task_1768949664727
 
 ## Status
-planning
+ideation
 
 ## Tags
 - new-functionality

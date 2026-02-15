@@ -21,6 +21,7 @@ import { Card } from './Card';
 import { TaskPanel } from './TaskPanel';
 import { NotesPanel } from './NotesPanel';
 import { RoadmapPanel } from './RoadmapPanel';
+import { PrdPanel } from './PrdPanel';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 import { ProjectsModal } from './ProjectsModal';
@@ -62,6 +63,7 @@ export function KanbanBoard() {
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(false);
   const [isRoadmapPanelOpen, setIsRoadmapPanelOpen] = useState(false);
+  const [isPrdPanelOpen, setIsPrdPanelOpen] = useState(false);
   const [isLaunchModalOpen, setIsLaunchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([]);
@@ -321,8 +323,10 @@ export function KanbanBoard() {
       launchConfigCount={launchConfigCount}
       onOpenRoadmap={() => setIsRoadmapPanelOpen(true)}
       onOpenNotes={() => setIsNotesPanelOpen(true)}
+      onOpenPrd={() => setIsPrdPanelOpen(true)}
       isRoadmapActive={isRoadmapPanelOpen}
       isNotesActive={isNotesPanelOpen}
+      isPrdActive={isPrdPanelOpen}
     />
   );
 
@@ -442,6 +446,12 @@ export function KanbanBoard() {
       <RoadmapPanel
         isOpen={isRoadmapPanelOpen}
         onClose={() => setIsRoadmapPanelOpen(false)}
+        projectId={currentProject?.id || null}
+      />
+
+      <PrdPanel
+        isOpen={isPrdPanelOpen}
+        onClose={() => setIsPrdPanelOpen(false)}
         projectId={currentProject?.id || null}
       />
 

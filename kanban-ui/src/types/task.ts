@@ -78,6 +78,7 @@ export interface ProjectFormData {
   name: string;
   path: string;
   createTasksDir?: boolean;
+  scaffold?: boolean;
 }
 
 export interface PathValidation {

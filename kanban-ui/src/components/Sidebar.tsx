@@ -1,6 +1,6 @@
 import type { Project } from '../types/task';
 import { ProjectSwitcher } from './ProjectSwitcher';
-import { LayoutGrid, List, Terminal, Map, FileText, Sun, Moon, AlignLeft } from 'lucide-react';
+import { LayoutGrid, List, Terminal, Map, FileText, ClipboardList, Sun, Moon, AlignLeft } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 
 interface SidebarProps {
@@ -16,8 +16,10 @@ interface SidebarProps {
   launchConfigCount: number;
   onOpenRoadmap: () => void;
   onOpenNotes: () => void;
+  onOpenPrd: () => void;
   isRoadmapActive: boolean;
   isNotesActive: boolean;
+  isPrdActive: boolean;
 }
 
 function SidebarItem({
@@ -147,8 +149,10 @@ export function Sidebar({
   launchConfigCount,
   onOpenRoadmap,
   onOpenNotes,
+  onOpenPrd,
   isRoadmapActive,
   isNotesActive,
+  isPrdActive,
 }: SidebarProps) {
   return (
     <aside className="w-[210px] flex-shrink-0 bg-[var(--color-bg-sidebar)] border-r border-[var(--color-border-subtle)] flex flex-col z-20">
@@ -226,16 +230,22 @@ export function Sidebar({
         </div>
         <nav className="flex flex-col gap-[1px]">
           <SidebarItem
-            icon={<Map />}
-            label="Roadmap"
-            active={isRoadmapActive}
-            onClick={onOpenRoadmap}
-          />
-          <SidebarItem
             icon={<FileText />}
             label="Notes"
             active={isNotesActive}
             onClick={onOpenNotes}
+          />
+          <SidebarItem
+            icon={<ClipboardList />}
+            label="PRD"
+            active={isPrdActive}
+            onClick={onOpenPrd}
+          />
+          <SidebarItem
+            icon={<Map />}
+            label="Roadmap"
+            active={isRoadmapActive}
+            onClick={onOpenRoadmap}
           />
         </nav>
       </div>

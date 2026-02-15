@@ -265,6 +265,26 @@ export async function updateRoadmap(content: string): Promise<string> {
   return data.content;
 }
 
+// Project PRD API functions
+
+export async function fetchPrd(): Promise<string> {
+  const res = await fetch(`${API_BASE}/tasks/prd`);
+  if (!res.ok) throw new Error('Failed to fetch PRD');
+  const data = await res.json();
+  return data.content;
+}
+
+export async function updatePrd(content: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/tasks/prd`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+  if (!res.ok) throw new Error('Failed to update PRD');
+  const data = await res.json();
+  return data.content;
+}
+
 // Launch Config API functions
 
 export async function fetchLaunchConfigs(): Promise<LaunchConfig[]> {

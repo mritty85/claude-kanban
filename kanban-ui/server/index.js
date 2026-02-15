@@ -3,7 +3,7 @@ import cors from 'cors';
 import tasksRouter from './routes/tasks.js';
 import projectsRouter from './routes/projects.js';
 import launchRouter from './routes/launch.js';
-import { ensureDirectories } from './services/fileService.js';
+import { ensureDirectories, migrateProjectStructure } from './services/fileService.js';
 import { initWatcher } from './services/watcher.js';
 import { ensureGlobalConfig, getCurrentProjectPath } from './services/configService.js';
 
@@ -29,6 +29,7 @@ async function start() {
   console.log(`Active project: ${projectPath}`);
 
   await ensureDirectories();
+  await migrateProjectStructure();
   await initWatcher();
 
   app.listen(PORT, () => {

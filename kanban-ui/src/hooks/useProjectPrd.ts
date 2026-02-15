@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as api from '../lib/api';
 
-export function useProjectRoadmap(projectId: string | null, isOpen: boolean) {
+export function useProjectPrd(projectId: string | null, isOpen: boolean) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -13,29 +13,28 @@ export function useProjectRoadmap(projectId: string | null, isOpen: boolean) {
   const lastSaveTimeRef = useRef<number>(0);
   const isEditingRef = useRef<boolean>(false);
 
-  const loadRoadmap = useCallback(async () => {
+  const loadPrd = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.fetchRoadmap();
+      const data = await api.fetchPrd();
       setContent(data);
       serverContentRef.current = data;
     } catch (err) {
-      console.error('Failed to load roadmap:', err);
+      console.error('Failed to load PRD:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const saveRoadmap = useCallback(async (newContent: string) => {
+  const savePrd = useCallback(async (newContent: string) => {
     setSaving(true);
     try {
-      await api.updateRoadmap(newContent);
+      await api.updatePrd(newContent);
       serverContentRef.current = newContent;
       setLastSaved(new Date());
-      // Set grace period timestamp to prevent SSE from resetting our state
       lastSaveTimeRef.current = Date.now();
     } catch (err) {
-      console.error('Failed to save roadmap:', err);
+      console.error('Failed to save PRD:', err);
     } finally {
       setSaving(false);
     }
@@ -46,77 +45,64 @@ export function useProjectRoadmap(projectId: string | null, isOpen: boolean) {
     setIsEditing(true);
     isEditingRef.current = true;
 
-    // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Set new debounced save (5s)
     saveTimeoutRef.current = window.setTimeout(() => {
-      saveRoadmap(newContent);
+      savePrd(newContent);
       setIsEditing(false);
       isEditingRef.current = false;
     }, 5000);
-  }, [saveRoadmap]);
+  }, [savePrd]);
 
-  // Immediately save any pending changes (for Save & Close)
   const flushSave = useCallback(async () => {
-    // Clear pending debounced save
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
 
-    // Only save if content differs from server
     if (content !== serverContentRef.current) {
-      await saveRoadmap(content);
+      await savePrd(content);
     }
     setIsEditing(false);
     isEditingRef.current = false;
-  }, [content, saveRoadmap]);
+  }, [content, savePrd]);
 
-  // Handle SSE updates - only apply if not actively editing or within grace period
-  // Only subscribe when panel is open to avoid connection limit issues
   useEffect(() => {
     if (!projectId || !isOpen) return;
 
-    // Reconnect callback - refresh if not editing (uses ref for current value)
     const handleReconnect = () => {
       if (!isEditingRef.current) {
-        loadRoadmap();
+        loadPrd();
       }
     };
 
     const unsubscribe = api.subscribeToChanges(
       projectId,
       (event) => {
-        // Ignore events for other projects
         if (event.projectId && event.projectId !== projectId) return;
 
-        // Handle project switch - reload roadmap
         if (event.event === 'project-switched') {
-          loadRoadmap();
+          loadPrd();
           setLastSaved(null);
           return;
         }
 
-        // Handle roadmap.md / ROADMAP.md changes from external source
-        if ((event.event === 'add' || event.event === 'change') && event.path?.toLowerCase().includes('roadmap.md')) {
-          // Check if we're within the grace period after saving (2 seconds)
+        // Handle prd.md changes from external source
+        if ((event.event === 'add' || event.event === 'change') && event.path?.toLowerCase().includes('prd.md')) {
           const withinGracePeriod = Date.now() - lastSaveTimeRef.current < 2000;
 
-          // Only reload if not actively editing and not within grace period
           if (!isEditing && !withinGracePeriod) {
-            loadRoadmap();
+            loadPrd();
           }
         }
       },
-      handleReconnect // Refresh on reconnect/visibility change if not editing
+      handleReconnect
     );
     return unsubscribe;
-  }, [projectId, isOpen, loadRoadmap, isEditing]);
+  }, [projectId, isOpen, loadPrd, isEditing]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
@@ -130,7 +116,7 @@ export function useProjectRoadmap(projectId: string | null, isOpen: boolean) {
     loading,
     saving,
     lastSaved,
-    loadRoadmap,
+    loadPrd,
     updateContent,
     flushSave,
     setContent

@@ -5,12 +5,14 @@ import { listProjects, getProjectById } from './configService.js';
 let watcher = null;
 const clients = new Map(); // Map<clientId, { response, projectId }>
 let clientIdCounter = 0;
-let projectPathMap = new Map(); // Map<tasksDir, projectId>
+let projectPathMap = new Map(); // Map<watchedPath, projectId>
 
 // Get project ID from a file path by finding which watched directory contains it
+// Sort by path length descending so longer (more specific) paths match first
 function getProjectIdFromPath(filePath) {
-  for (const [tasksDir, projectId] of projectPathMap) {
-    if (filePath.startsWith(tasksDir)) {
+  const entries = [...projectPathMap.entries()].sort((a, b) => b[0].length - a[0].length);
+  for (const [watchedPath, projectId] of entries) {
+    if (filePath.startsWith(watchedPath)) {
       return projectId;
     }
   }
@@ -20,14 +22,22 @@ function getProjectIdFromPath(filePath) {
 export async function initWatcher() {
   const projects = await listProjects();
 
-  // Build project path lookup map
+  // Build project path lookup map — watch tasks/, documentation/, and root project.json
   projectPathMap = new Map();
   const watchPaths = [];
 
   for (const project of projects) {
     const tasksDir = path.join(project.path, 'tasks');
+    const docDir = path.join(project.path, 'documentation');
+    const rootConfig = path.join(project.path, 'project.json');
+
     projectPathMap.set(tasksDir, project.id);
+    projectPathMap.set(docDir, project.id);
+    projectPathMap.set(rootConfig, project.id);
+
     watchPaths.push(tasksDir);
+    watchPaths.push(docDir);
+    watchPaths.push(rootConfig);
   }
 
   // Close existing watcher if any

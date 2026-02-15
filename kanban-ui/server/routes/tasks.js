@@ -11,7 +11,9 @@ import {
   getProjectNotes,
   updateProjectNotes,
   getProjectRoadmap,
-  updateProjectRoadmap
+  updateProjectRoadmap,
+  getProjectPrd,
+  updateProjectPrd
 } from '../services/fileService.js';
 import { addSSEClient } from '../services/watcher.js';
 import { getCurrentProject } from '../services/configService.js';
@@ -139,7 +141,28 @@ router.put('/roadmap', async (req, res) => {
   }
 });
 
-// Wildcard routes MUST come last (after specific routes like /config, /notes, /roadmap)
+router.get('/prd', async (req, res) => {
+  try {
+    const content = await getProjectPrd();
+    res.json({ content });
+  } catch (err) {
+    console.error('Error getting PRD:', err);
+    res.status(500).json({ error: 'Failed to get PRD' });
+  }
+});
+
+router.put('/prd', async (req, res) => {
+  try {
+    const { content } = req.body;
+    await updateProjectPrd(content);
+    res.json({ content });
+  } catch (err) {
+    console.error('Error updating PRD:', err);
+    res.status(500).json({ error: 'Failed to update PRD' });
+  }
+});
+
+// Wildcard routes MUST come last (after specific routes like /config, /notes, /roadmap, /prd)
 router.put('/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
