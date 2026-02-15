@@ -354,14 +354,7 @@ export function KanbanBoard() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center justify-between px-5 py-[10px] border-b border-[var(--color-border-subtle)] flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="font-display text-[15px] font-bold tracking-[-0.02em]">
-              {currentProject?.boardName || currentProject?.name || 'Board'}
-            </span>
-            <span className="font-body text-[10px] text-[var(--color-text-muted)] bg-[var(--color-bg-surface)] px-2 py-[2px] rounded-[10px]">
-              {tasks.length} tasks
-            </span>
-          </div>
+          <div />
 
           <div className="flex items-center gap-2">
             <SearchBar value={searchQuery} onChange={setSearchQuery} />

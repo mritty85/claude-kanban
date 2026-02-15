@@ -1,22 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, FolderOpen, Sun, Moon, AlignLeft } from 'lucide-react';
+import { ChevronDown, Check, FolderOpen } from 'lucide-react';
 import type { Project } from '../types/task';
-import { useTheme } from '../hooks/useTheme';
 
 interface ProjectSwitcherProps {
   currentProject: Project | null;
   projects: Project[];
   onSwitch: (id: string) => Promise<void>;
   onManage: () => void;
-  showPreview?: boolean;
-  onTogglePreview?: () => void;
 }
 
-export function ProjectSwitcher({ currentProject, projects, onSwitch, onManage, showPreview = true, onTogglePreview }: ProjectSwitcherProps) {
+export function ProjectSwitcher({ currentProject, projects, onSwitch, onManage }: ProjectSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const { isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -118,62 +114,6 @@ export function ProjectSwitcher({ currentProject, projects, onSwitch, onManage, 
             >
               Manage Projects...
             </button>
-
-            {/* Theme Toggle */}
-            <div className="flex items-center justify-between px-3 py-2">
-              <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)]">
-                {isDark ? <Moon size={14} /> : <Sun size={14} />}
-                <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
-              </div>
-              <button
-                onClick={toggleTheme}
-                className={`
-                  relative w-11 h-6 rounded-full transition-colors duration-200
-                  ${isDark
-                    ? 'bg-[var(--color-accent-primary)]'
-                    : 'bg-[var(--color-border-emphasis)]'
-                  }
-                `}
-                aria-label="Toggle theme"
-              >
-                <span
-                  className={`
-                    absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm
-                    transition-transform duration-200
-                    ${isDark ? 'left-6' : 'left-1'}
-                  `}
-                />
-              </button>
-            </div>
-
-            {/* Card Preview Toggle */}
-            {onTogglePreview && (
-              <div className="flex items-center justify-between px-3 py-2">
-                <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)]">
-                  <AlignLeft size={14} />
-                  <span>Card Preview</span>
-                </div>
-                <button
-                  onClick={onTogglePreview}
-                  className={`
-                    relative w-11 h-6 rounded-full transition-colors duration-200
-                    ${showPreview
-                      ? 'bg-[var(--color-accent-primary)]'
-                      : 'bg-[var(--color-border-emphasis)]'
-                    }
-                  `}
-                  aria-label="Toggle card preview"
-                >
-                  <span
-                    className={`
-                      absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm
-                      transition-transform duration-200
-                      ${showPreview ? 'left-6' : 'left-1'}
-                    `}
-                  />
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}

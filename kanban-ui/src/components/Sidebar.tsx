@@ -1,6 +1,7 @@
 import type { Project } from '../types/task';
 import { ProjectSwitcher } from './ProjectSwitcher';
-import { LayoutGrid, List, Terminal, Map, FileText } from 'lucide-react';
+import { LayoutGrid, List, Terminal, Map, FileText, Sun, Moon, AlignLeft } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
 
 interface SidebarProps {
   currentProject: Project | null;
@@ -65,6 +66,74 @@ function SidebarItem({
   );
 }
 
+function SidebarToggleItem({
+  icon,
+  label,
+  checked,
+  onToggle,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-[9px] w-full px-2 py-[7px]">
+      <span className="flex-shrink-0 opacity-60 [&>svg]:w-[15px] [&>svg]:h-[15px]">
+        {icon}
+      </span>
+      <span className="font-display text-[12.5px] font-medium text-[var(--color-text-secondary)]">
+        {label}
+      </span>
+      <button
+        onClick={onToggle}
+        className={`
+          relative ml-auto w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0
+          ${checked
+            ? 'bg-[var(--color-accent-primary)]'
+            : 'bg-[var(--color-border-emphasis)]'
+          }
+        `}
+        aria-label={`Toggle ${label}`}
+      >
+        <span
+          className={`
+            absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm
+            transition-transform duration-200
+            ${checked ? 'left-6' : 'left-1'}
+          `}
+        />
+      </button>
+    </div>
+  );
+}
+
+function SettingsSection({ showPreview, onTogglePreview }: { showPreview: boolean; onTogglePreview: () => void }) {
+  const { isDark, toggleTheme } = useTheme();
+
+  return (
+    <div className="px-[14px] pt-[10px] pb-[6px]">
+      <div className="px-2 mb-1 font-display text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+        Settings
+      </div>
+      <div className="flex flex-col gap-[1px]">
+        <SidebarToggleItem
+          icon={isDark ? <Moon /> : <Sun />}
+          label={isDark ? 'Dark Mode' : 'Light Mode'}
+          checked={isDark}
+          onToggle={toggleTheme}
+        />
+        <SidebarToggleItem
+          icon={<AlignLeft />}
+          label="Card Preview"
+          checked={showPreview}
+          onToggle={onTogglePreview}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar({
   currentProject,
   projects,
@@ -90,8 +159,6 @@ export function Sidebar({
           projects={projects}
           onSwitch={onProjectSwitch}
           onManage={onManageProjects}
-          showPreview={showPreview}
-          onTogglePreview={onTogglePreview}
         />
       </div>
 
@@ -172,6 +239,12 @@ export function Sidebar({
           />
         </nav>
       </div>
+
+      {/* Divider */}
+      <div className="h-px bg-[var(--color-border-subtle)] mx-[14px] my-[6px]" />
+
+      {/* Settings Section */}
+      <SettingsSection showPreview={showPreview} onTogglePreview={onTogglePreview} />
 
       {/* Spacer */}
       <div className="flex-1" />
