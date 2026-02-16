@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -19,7 +19,7 @@ import { STATUSES } from '../types/task';
 import { Column } from './Column';
 import { Card } from './Card';
 import { TaskPanel } from './TaskPanel';
-import { DocumentPanel } from './DocumentPanel';
+import { DocumentPanel, type DocumentPanelHandle } from './DocumentPanel';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 import { ProjectsModal } from './ProjectsModal';
@@ -66,6 +66,7 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [openDocumentSlug, setOpenDocumentSlug] = useState<string | null>(null);
   const [isLaunchModalOpen, setIsLaunchModalOpen] = useState(false);
+  const documentPanelRef = useRef<DocumentPanelHandle>(null);
 
   const { detectedDocs } = useDocumentDetection(currentProject?.id || null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,6 +96,21 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
       localStorage.setItem('kanban-show-preview', String(next));
       return next;
     });
+  }, []);
+
+  const handleOpenDocument = useCallback(async (slug: string) => {
+    if (slug === openDocumentSlug) {
+      // Toggle close: flush-save then close
+      await documentPanelRef.current?.flushSave();
+      setOpenDocumentSlug(null);
+    } else {
+      // Open or switch: useDocument's slug-change effect handles flushing old doc
+      setOpenDocumentSlug(slug);
+    }
+  }, [openDocumentSlug]);
+
+  const handleCloseDocument = useCallback(() => {
+    setOpenDocumentSlug(null);
   }, []);
 
   // Collect all unique epics from tasks for filtering and autocomplete
@@ -325,7 +341,7 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
       onOpenLaunchModal={() => setIsLaunchModalOpen(true)}
       launchConfigCount={launchConfigCount}
       openDocumentSlug={openDocumentSlug}
-      onOpenDocument={setOpenDocumentSlug}
+      onOpenDocument={handleOpenDocument}
       detectedDocs={detectedDocs}
       onBackToWorkspace={onBackToWorkspace}
     />
@@ -356,6 +372,13 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
   return (
     <div className="h-full flex">
       {sidebarElement}
+
+      <DocumentPanel
+        ref={documentPanelRef}
+        slug={openDocumentSlug}
+        onClose={handleCloseDocument}
+        projectId={currentProject?.id || null}
+      />
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center justify-end px-5 py-[10px] border-b border-[var(--color-border-subtle)] flex-shrink-0">
@@ -434,12 +457,6 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
         onSave={handleModalSave}
         onClose={() => setIsModalOpen(false)}
         onDelete={handleDelete}
-      />
-
-      <DocumentPanel
-        slug={openDocumentSlug}
-        onClose={() => setOpenDocumentSlug(null)}
-        projectId={currentProject?.id || null}
       />
 
       {isProjectsModalOpen && (

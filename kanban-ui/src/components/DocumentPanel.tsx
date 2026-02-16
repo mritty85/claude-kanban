@@ -1,4 +1,4 @@
-import { useEffect, useRef, useReducer, useCallback } from 'react';
+import { useEffect, useRef, useReducer, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { X } from 'lucide-react';
 import { useDocument } from '../hooks/useDocument';
 import { getDocDef } from '../lib/documentRegistry';
@@ -10,132 +10,127 @@ interface DocumentPanelProps {
   projectId: string | null;
 }
 
-export function DocumentPanel({ slug, onClose, projectId }: DocumentPanelProps) {
-  const isOpen = slug !== null;
-  const activeSlug = slug || 'notes'; // fallback for hook (won't render)
-  const def = getDocDef(activeSlug);
+export interface DocumentPanelHandle {
+  flushSave: () => Promise<void>;
+}
 
-  const panelRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+export const DocumentPanel = forwardRef<DocumentPanelHandle, DocumentPanelProps>(
+  function DocumentPanel({ slug, onClose, projectId }, ref) {
+    const isOpen = slug !== null;
+    const activeSlug = slug || 'notes'; // fallback for hook (won't render)
+    const def = getDocDef(activeSlug);
 
-  const {
-    content,
-    loading,
-    saving,
-    lastSaved,
-    loadDocument,
-    updateContent,
-    flushSave
-  } = useDocument(activeSlug, projectId, isOpen);
+    const panelRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSaveAndClose = useCallback(async () => {
-    await flushSave();
-    onClose();
-  }, [flushSave, onClose]);
+    const {
+      content,
+      loading,
+      saving,
+      lastSaved,
+      loadDocument,
+      updateContent,
+      flushSave
+    } = useDocument(activeSlug, projectId, isOpen);
 
-  // Load document when panel opens
-  useEffect(() => {
-    if (isOpen) {
-      loadDocument();
-    }
-  }, [isOpen, loadDocument]);
+    useImperativeHandle(ref, () => ({ flushSave }), [flushSave]);
 
-  // Focus textarea when panel opens
-  useEffect(() => {
-    if (isOpen && !loading) {
-      const timer = setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, loading]);
+    const handleSaveAndClose = useCallback(async () => {
+      await flushSave();
+      onClose();
+    }, [flushSave, onClose]);
 
-  // Escape key to close
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && isOpen) {
-        handleSaveAndClose();
+    // Load document when panel opens
+    useEffect(() => {
+      if (isOpen) {
+        loadDocument();
       }
-    }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleSaveAndClose]);
+    }, [isOpen, loadDocument]);
 
-  // Update relative time display
-  const [, forceUpdate] = useReducer(x => x + 1, 0);
-  useEffect(() => {
-    if (!lastSaved) return;
-    const interval = setInterval(() => {
-      forceUpdate();
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [lastSaved]);
+    // Focus textarea when panel opens
+    useEffect(() => {
+      if (isOpen && !loading) {
+        const timer = setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }, [isOpen, loading]);
 
-  return (
-    <>
-      {/* Backdrop */}
+    // Escape key to close
+    useEffect(() => {
+      function handleKeyDown(e: KeyboardEvent) {
+        if (e.key === 'Escape' && isOpen) {
+          handleSaveAndClose();
+        }
+      }
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, handleSaveAndClose]);
+
+    // Update relative time display
+    const [, forceUpdate] = useReducer(x => x + 1, 0);
+    useEffect(() => {
+      if (!lastSaved) return;
+      const interval = setInterval(() => {
+        forceUpdate();
+      }, 10000);
+      return () => clearInterval(interval);
+    }, [lastSaved]);
+
+    return (
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={handleSaveAndClose}
-      />
-
-      {/* Panel - slides from LEFT */}
-      <div
-        ref={panelRef}
-        style={{
-          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-          transition: 'transform 300ms ease-out'
-        }}
-        className="fixed top-0 left-0 h-full w-full md:w-[70vw] max-w-[900px] bg-[var(--color-bg-surface)] border-r border-[var(--color-border-subtle)] z-50 flex flex-col"
+        style={{ width: isOpen ? 550 : 0, transition: 'width 250ms ease-out' }}
+        className="flex-shrink-0 overflow-hidden h-full"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border-subtle)]">
-          <div className="flex items-center gap-3">
-            <h2 className="text-[16px] font-bold text-[var(--color-text-primary)] font-display">
-              {def?.panelTitle || 'Document'}
-            </h2>
-            <span className="text-[12px] text-[var(--color-text-muted)]">
-              {saving ? 'Saving...' : formatRelativeTime(lastSaved)}
-            </span>
-          </div>
-          <button
-            onClick={handleSaveAndClose}
-            className="p-1.5 rounded hover:bg-[var(--color-bg-elevated)] transition-colors"
-          >
-            <X size={20} className="text-[var(--color-text-muted)]" />
-          </button>
-        </div>
-
-        {/* Body - Textarea */}
-        <div className="flex-1 flex flex-col min-h-0 p-6">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-[var(--color-text-muted)]">{def?.loadingText || 'Loading...'}</p>
+        <div ref={panelRef} className="w-[550px] h-full bg-[var(--color-bg-sidebar)] border-r border-[var(--color-border-subtle)] flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-[10px]">
+            <div className="flex items-center gap-3">
+              <h2 className="text-[16px] font-bold text-[var(--color-text-primary)] font-display">
+                {def?.panelTitle || 'Document'}
+              </h2>
+              <span className="text-[12px] text-[var(--color-text-muted)]">
+                {saving ? 'Saving...' : formatRelativeTime(lastSaved)}
+              </span>
             </div>
-          ) : (
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => updateContent(e.target.value)}
-              placeholder={def?.placeholder || 'Write here...'}
-              className="flex-1 w-full px-4 py-3 bg-[var(--color-bg-elevated)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none font-body"
-            />
-          )}
-        </div>
+            <button
+              onClick={handleSaveAndClose}
+              className="p-1.5 rounded hover:bg-[var(--color-bg-elevated)] transition-colors"
+            >
+              <X size={20} className="text-[var(--color-text-muted)]" />
+            </button>
+          </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end px-6 py-4 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)]">
-          <button
-            type="button"
-            onClick={handleSaveAndClose}
-            className="px-4 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
-          >
-            Save & Close
-          </button>
+          {/* Body - Textarea */}
+          <div className="flex-1 flex flex-col min-h-0 p-6">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-[var(--color-text-muted)]">{def?.loadingText || 'Loading...'}</p>
+              </div>
+            ) : (
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => updateContent(e.target.value)}
+                placeholder={def?.placeholder || 'Write here...'}
+                className="flex-1 w-full px-4 py-3 bg-[var(--color-bg-surface)] border border-transparent rounded-[6px] text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-border-emphasis)] focus:outline-none resize-none font-body"
+              />
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end px-6 py-[10px] border-t border-[var(--color-border-subtle)]">
+            <button
+              type="button"
+              onClick={handleSaveAndClose}
+              className="px-4 py-2 bg-transparent border border-[var(--color-border-subtle)] rounded-[6px] text-[13px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              Save & Close
+            </button>
+          </div>
         </div>
       </div>
-    </>
-  );
-}
+    );
+  }
+);

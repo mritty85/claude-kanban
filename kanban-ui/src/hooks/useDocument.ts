@@ -13,6 +13,8 @@ export function useDocument(slug: string, projectId: string | null, isOpen: bool
   const serverContentRef = useRef<string>('');
   const lastSaveTimeRef = useRef<number>(0);
   const isEditingRef = useRef<boolean>(false);
+  const contentRef = useRef<string>('');
+  const previousSlugRef = useRef<string>(slug);
 
   const def = getDocDef(slug);
 
@@ -21,6 +23,7 @@ export function useDocument(slug: string, projectId: string | null, isOpen: bool
     try {
       const data = await fetchDocument(slug);
       setContent(data);
+      contentRef.current = data;
       serverContentRef.current = data;
     } catch (err) {
       console.error(`Failed to load ${slug}:`, err);
@@ -45,6 +48,7 @@ export function useDocument(slug: string, projectId: string | null, isOpen: bool
 
   const updateContent = useCallback((newContent: string) => {
     setContent(newContent);
+    contentRef.current = newContent;
     setIsEditing(true);
     isEditingRef.current = true;
 
@@ -71,6 +75,32 @@ export function useDocument(slug: string, projectId: string | null, isOpen: bool
     setIsEditing(false);
     isEditingRef.current = false;
   }, [content, saveDocument]);
+
+  // Flush-save old document when slug changes (user switches docs)
+  useEffect(() => {
+    const prevSlug = previousSlugRef.current;
+    if (prevSlug !== slug) {
+      // Cancel any pending debounce for the old doc
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      // Fire-and-forget save dirty content to old slug
+      if (contentRef.current && contentRef.current !== serverContentRef.current) {
+        apiUpdateDocument(prevSlug, contentRef.current).catch(err =>
+          console.error(`Failed to flush-save ${prevSlug}:`, err)
+        );
+      }
+      // Reset state for new doc
+      setContent('');
+      contentRef.current = '';
+      serverContentRef.current = '';
+      setLastSaved(null);
+      setIsEditing(false);
+      isEditingRef.current = false;
+      previousSlugRef.current = slug;
+    }
+  }, [slug]);
 
   // SSE subscription — only when panel is open
   useEffect(() => {
