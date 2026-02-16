@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Copy, Check } from 'lucide-react';
 import type { Task } from '../types/task';
 import { Tag } from './Tag';
 import { getEpicColor } from '../utils/epicColors';
@@ -16,6 +18,7 @@ function formatCompletedDate(isoDate: string): string {
 }
 
 export function Card({ task, onClick, showPreview = true }: CardProps) {
+  const [copied, setCopied] = useState(false);
   const {
     attributes,
     listeners,
@@ -24,6 +27,13 @@ export function Card({ task, onClick, showPreview = true }: CardProps) {
     transition,
     isDragging
   } = useSortable({ id: task.id });
+
+  async function copyPath(e: React.MouseEvent) {
+    e.stopPropagation();
+    await navigator.clipboard.writeText(`tasks/${task.filename}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -40,6 +50,7 @@ export function Card({ task, onClick, showPreview = true }: CardProps) {
       {...listeners}
       onClick={onClick}
       className={`
+        relative group
         bg-[var(--color-bg-surface)]
         border border-[var(--color-border-subtle)]
         rounded-[6px] p-3 cursor-grab
@@ -49,7 +60,16 @@ export function Card({ task, onClick, showPreview = true }: CardProps) {
         ${isDragging ? 'shadow-lg shadow-black/30' : ''}
       `}
     >
-      <h3 className="text-[14px] font-bold text-[var(--color-text-primary)] mb-2 leading-tight font-display">
+      <button
+        type="button"
+        onClick={copyPath}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-text-muted)] hover:text-[var(--color-accent-primary)]"
+        title="Copy task path"
+      >
+        {copied ? <Check size={14} className="text-[var(--color-accent-teal)]" /> : <Copy size={14} />}
+      </button>
+      <h3 className="text-[14px] font-bold text-[var(--color-text-primary)] mb-2 leading-tight font-display pr-6">
         {task.title}
       </h3>
 
