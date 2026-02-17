@@ -4,7 +4,7 @@
 task_1765881100152
 
 ## Status
-ideation
+uat
 
 ## Tags
 - feature-enhancement
@@ -14,14 +14,14 @@ Add a copy icon to task cards allowing users to quickly copy the file path to cl
 **Key behavior:**
 - Small copy icon in top-right corner of card
 - Icon only visible on card hover (keeps cards clean)
-- Click copies `tasks/{status}/{filename}` to clipboard
+- Click copies `tasks/{filename}` to clipboard
 - Shows teal checkmark briefly on success (matches TaskPanel pattern)
 - Must NOT interfere with drag-and-drop or card click
 
 ## Acceptance Criteria
 - [ ] Add Copy icon (lucide-react) to top-right corner of Card component
 - [ ] Icon only visible on card hover (opacity transition)
-- [ ] Click handler copies task path to clipboard (`tasks/${task.status}/${task.filename}`)
+- [ ] Click handler copies task path to clipboard (`tasks/${task.filename}`)
 - [ ] Icon changes to teal Check icon for 2s after successful copy
 - [ ] `e.stopPropagation()` prevents card onClick from firing
 - [ ] `e.preventDefault()` on pointerdown prevents drag initiation

@@ -2,29 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import type { Project, LifecycleStage } from '../types/task';
 import { LIFECYCLE_STAGES, LIFECYCLE_LABELS } from '../types/task';
 
-// Icon color palette — assigned by hashing the project name
-const ICON_COLORS = [
-  { bg: 'linear-gradient(135deg, #7c5cff, #a78bfa)', label: 'violet' },
-  { bg: 'linear-gradient(135deg, #3b82f6, #60a5fa)', label: 'blue' },
-  { bg: 'linear-gradient(135deg, #10b981, #34d399)', label: 'emerald' },
-  { bg: 'linear-gradient(135deg, #f59e0b, #fbbf24)', label: 'amber' },
-  { bg: 'linear-gradient(135deg, #f43f5e, #fb7185)', label: 'rose' },
-  { bg: 'linear-gradient(135deg, #06b6d4, #22d3ee)', label: 'cyan' },
-];
-
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function getIconColor(name: string) {
-  return ICON_COLORS[hashString(name) % ICON_COLORS.length];
-}
-
 function truncatePath(p: string): string {
   const home = '~';
   if (p.startsWith('/Users/')) {
@@ -47,8 +24,6 @@ export function ProjectCard({ project, isActive, onOpen, onStageChange, onSummar
   const [summaryDraft, setSummaryDraft] = useState(project.summary || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const iconColor = getIconColor(project.name);
-  const initial = project.name.charAt(0).toUpperCase();
   const stage = project.lifecycleStage || 'prototype';
   const isArchived = stage === 'launched';
 
@@ -94,31 +69,23 @@ export function ProjectCard({ project, isActive, onOpen, onStageChange, onSummar
       onClick={handleCardClick}
       tabIndex={0}
     >
-      {/* Top row: icon + name + badge */}
-      <div className="flex items-start gap-2.5 mb-2.5">
-        <div
-          className="w-8 h-8 rounded-md flex items-center justify-center font-display font-bold text-[13px] text-white shrink-0"
-          style={{ background: iconColor.bg }}
-        >
-          {initial}
+      {/* Top row: name + badge */}
+      <div className="mb-2.5">
+        <div className="flex items-center gap-1.5 font-display text-sm font-bold text-[var(--color-text-primary)] leading-tight">
+          <span className="truncate">{project.name}</span>
+          {isActive && (
+            <span className="font-display text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] bg-[var(--color-accent-primary)] text-white shrink-0">
+              Current
+            </span>
+          )}
+          {isArchived && !isActive && (
+            <span className="font-display text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] bg-[rgba(82,91,112,0.25)] text-[var(--color-stage-launched)] shrink-0">
+              Archived
+            </span>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 font-display text-sm font-bold text-[var(--color-text-primary)] leading-tight">
-            <span className="truncate">{project.name}</span>
-            {isActive && (
-              <span className="font-display text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] bg-[var(--color-accent-primary)] text-white shrink-0">
-                Current
-              </span>
-            )}
-            {isArchived && !isActive && (
-              <span className="font-display text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] bg-[rgba(82,91,112,0.25)] text-[var(--color-stage-launched)] shrink-0">
-                Archived
-              </span>
-            )}
-          </div>
-          <div className="text-[10px] text-[var(--color-text-muted)] truncate mt-0.5">
-            {truncatePath(project.path)}
-          </div>
+        <div className="text-[10px] text-[var(--color-text-muted)] truncate mt-0.5">
+          {truncatePath(project.path)}
         </div>
       </div>
 

@@ -381,7 +381,7 @@ export function KanbanBoard({ onBackToWorkspace }: KanbanBoardProps) {
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex items-center justify-end px-5 py-[10px] border-b border-[var(--color-border-subtle)] flex-shrink-0">
+        <header className="flex items-center justify-end px-5 pt-[14px] pb-[10px] border-b border-[var(--color-border-subtle)] flex-shrink-0">
           <div className="flex items-center gap-2">
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
             <FilterDropdown

@@ -1,1 +1,1 @@
-Test
+Schema example

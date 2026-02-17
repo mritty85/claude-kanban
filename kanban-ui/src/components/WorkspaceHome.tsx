@@ -59,7 +59,7 @@ export function WorkspaceHome({ onOpenProject }: WorkspaceHomeProps) {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-[1400px] mx-auto px-8 py-10 pb-16">
+      <div className="max-w-[1800px] mx-auto px-8 py-10 pb-16">
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
