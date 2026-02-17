@@ -2,11 +2,7 @@ import type { Task, TaskFormData, TaskStatus, Project, ProjectFormData, PathVali
 
 const API_BASE = '/api';
 
-export interface ProjectConfig {
-  boardName: string;
-}
-
-export interface SSEEvent {
+interface SSEEvent {
   event: string;
   path?: string;
   projectId?: string;
@@ -16,10 +12,6 @@ export interface SSEEvent {
 
 // Track the current client ID assigned by the server
 let currentClientId: number | null = null;
-
-export function getCurrentClientId(): number | null {
-  return currentClientId;
-}
 
 export async function fetchTasks(): Promise<Task[]> {
   const res = await fetch(`${API_BASE}/tasks`);
@@ -140,22 +132,6 @@ export function subscribeToChanges(
     currentClientId = null;
     document.removeEventListener('visibilitychange', handleVisibilityChange);
   };
-}
-
-export async function fetchConfig(): Promise<ProjectConfig> {
-  const res = await fetch(`${API_BASE}/tasks/config`);
-  if (!res.ok) throw new Error('Failed to fetch config');
-  return res.json();
-}
-
-export async function updateConfig(data: Partial<ProjectConfig>): Promise<ProjectConfig> {
-  const res = await fetch(`${API_BASE}/tasks/config`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error('Failed to update config');
-  return res.json();
 }
 
 // Project management API functions

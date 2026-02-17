@@ -1,17 +1,16 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { getCurrentProjectPath } from './configService.js';
-
-const STATUSES = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
+import { STATUSES } from '../constants.js';
 const BOARD_FILE = '_board.json';
 
 // Generate a unique task ID (timestamp-based)
-export function generateTaskId() {
+function generateTaskId() {
   return `task_${Date.now()}`;
 }
 
 // Generate a slug from title with deduplication
-export function generateSlug(title, existingFiles) {
+function generateSlug(title, existingFiles) {
   const baseSlug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -36,7 +35,7 @@ export function generateSlug(title, existingFiles) {
 }
 
 // Read board file (column ordering)
-export async function readBoardFile(tasksDir) {
+async function readBoardFile(tasksDir) {
   const boardPath = path.join(tasksDir, BOARD_FILE);
   try {
     const content = await fs.readFile(boardPath, 'utf-8');
@@ -56,21 +55,21 @@ export async function readBoardFile(tasksDir) {
 }
 
 // Write board file (column ordering)
-export async function writeBoardFile(tasksDir, boardData) {
+async function writeBoardFile(tasksDir, boardData) {
   const boardPath = path.join(tasksDir, BOARD_FILE);
   await fs.writeFile(boardPath, JSON.stringify(boardData, null, 2), 'utf-8');
 }
 
-export async function getTasksDir() {
+async function getTasksDir() {
   const projectPath = await getCurrentProjectPath();
   return path.join(projectPath, 'tasks');
 }
 
-export async function getProjectDir() {
+async function getProjectDir() {
   return await getCurrentProjectPath();
 }
 
-export async function getDocumentationDir() {
+async function getDocumentationDir() {
   const projectDir = await getProjectDir();
   return path.join(projectDir, 'documentation');
 }
@@ -335,7 +334,7 @@ export async function getAllTasks() {
   return tasks;
 }
 
-export function parseTaskFile(content, filename) {
+function parseTaskFile(content, filename) {
   const lines = content.split('\n');
 
   // Known sections that we parse into structured fields
@@ -441,7 +440,7 @@ export function parseTaskFile(content, filename) {
   return task;
 }
 
-export function serializeTask(task) {
+function serializeTask(task) {
   let content = `# ${task.title}\n\n`;
   // Include Id section if task has a stable ID (not composite format)
   if (task.id && !task.id.includes('/')) {
@@ -695,7 +694,7 @@ async function migrateFile(oldPath, newPath, label) {
 
 // Launch config functions
 
-export function generateLaunchConfigId() {
+function generateLaunchConfigId() {
   return `lc_${Date.now()}`;
 }
 

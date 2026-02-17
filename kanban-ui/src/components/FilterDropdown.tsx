@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Filter, Calendar, ArrowUpDown } from 'lucide-react';
 import type { TaskTag, DateFilter, DoneSortOption } from '../types/task';
 import { TAGS, TAG_LABELS } from '../types/task';
+import { tagStyles } from '../utils/tagStyles';
 import { getEpicColor } from '../utils/epicColors';
 
 interface FilterDropdownProps {
@@ -15,14 +16,6 @@ interface FilterDropdownProps {
   doneSort: DoneSortOption;
   onDoneSortChange: (sort: DoneSortOption) => void;
 }
-
-const tagStyles: Record<TaskTag, string> = {
-  'new-functionality': 'bg-[var(--color-tag-new-bg)] text-[var(--color-tag-new-text)]',
-  'feature-enhancement': 'bg-[var(--color-tag-feature-bg)] text-[var(--color-tag-feature-text)]',
-  'bug': 'bg-[var(--color-tag-bug-bg)] text-[var(--color-tag-bug-text)]',
-  'refactor': 'bg-[var(--color-tag-refactor-bg)] text-[var(--color-tag-refactor-text)]',
-  'devops': 'bg-[var(--color-tag-devops-bg)] text-[var(--color-tag-devops-text)]'
-};
 
 const DATE_PRESETS = [
   { value: 'last7days', label: 'Last 7 days' },
@@ -155,7 +148,7 @@ export function FilterDropdown({
               <input
                 type="checkbox"
                 checked={selectedTags.includes(tag)}
-                onChange={() => {}}
+                readOnly
                 className="rounded"
               />
               <span className={`px-2 py-0.5 rounded ${tagStyles[tag]}`}>
@@ -189,7 +182,7 @@ export function FilterDropdown({
                     <input
                       type="checkbox"
                       checked={selectedEpics.includes(epic)}
-                      onChange={() => {}}
+                      readOnly
                       className="rounded"
                     />
                     <span
@@ -248,7 +241,7 @@ export function FilterDropdown({
               <input
                 type="radio"
                 checked={dateFilter.preset === preset.value}
-                onChange={() => {}}
+                readOnly
                 className="rounded-full"
               />
               <span className="text-[var(--color-text-primary)]">{preset.label}</span>

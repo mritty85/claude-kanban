@@ -55,7 +55,7 @@ export const TAG_LABELS: Record<TaskTag, string> = {
 };
 
 // Date filter types for Done column
-export type DateFilterPreset = 'last7days' | 'last30days' | 'thisMonth' | 'thisYear' | 'custom';
+type DateFilterPreset = 'last7days' | 'last30days' | 'thisMonth' | 'thisYear' | 'custom';
 
 export interface DateFilter {
   preset: DateFilterPreset | null;

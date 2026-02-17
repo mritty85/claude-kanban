@@ -6,6 +6,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from '@dnd-kit/utilities';
 import type { Task, TaskFormData, TaskStatus, TaskTag, AcceptanceCriterion } from '../types/task';
 import { STATUSES, STATUS_LABELS, TAGS, TAG_LABELS } from '../types/task';
+import { tagSelectStyles } from '../utils/tagStyles';
 import { EpicCombobox } from './EpicCombobox';
 
 function formatRelativeTime(date: Date | null): string {
@@ -32,14 +33,6 @@ interface TaskPanelProps {
   onClose: () => void;
   onDelete?: (task: Task) => Promise<void>;
 }
-
-const tagStyles: Record<TaskTag, { bg: string; text: string; selected: string }> = {
-  'new-functionality': { bg: 'bg-[var(--color-tag-new-bg)]/50', text: 'text-[var(--color-tag-new-text)]', selected: 'bg-[var(--color-tag-new-bg)] ring-2 ring-[var(--color-tag-new-text)]' },
-  'feature-enhancement': { bg: 'bg-[var(--color-tag-feature-bg)]/50', text: 'text-[var(--color-tag-feature-text)]', selected: 'bg-[var(--color-tag-feature-bg)] ring-2 ring-[var(--color-tag-feature-text)]' },
-  'bug': { bg: 'bg-[var(--color-tag-bug-bg)]/50', text: 'text-[var(--color-tag-bug-text)]', selected: 'bg-[var(--color-tag-bug-bg)] ring-2 ring-[var(--color-tag-bug-text)]' },
-  'refactor': { bg: 'bg-[var(--color-tag-refactor-bg)]/50', text: 'text-[var(--color-tag-refactor-text)]', selected: 'bg-[var(--color-tag-refactor-bg)] ring-2 ring-[var(--color-tag-refactor-text)]' },
-  'devops': { bg: 'bg-[var(--color-tag-devops-bg)]/50', text: 'text-[var(--color-tag-devops-text)]', selected: 'bg-[var(--color-tag-devops-bg)] ring-2 ring-[var(--color-tag-devops-text)]' }
-};
 
 interface SortableCriterionProps {
   id: string;
@@ -581,7 +574,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
               <div className="flex flex-wrap gap-2">
                 {TAGS.map(tag => {
                   const isSelected = tags.includes(tag);
-                  const styles = tagStyles[tag];
+                  const styles = tagSelectStyles[tag];
                   return (
                     <button
                       key={tag}

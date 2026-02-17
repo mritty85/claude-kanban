@@ -317,16 +317,13 @@ ideation | planning | backlog | implementing | uat | done
 ### Adding a new tag type
 1. Add to `TaskTag` type in `src/types/task.ts`
 2. Add label to `TAG_LABELS` in same file
-3. Add color styles to `src/components/Tag.tsx` (`tagStyles` object)
-4. Add color styles to `src/components/FilterDropdown.tsx` (`tagStyles` object)
-5. Add color styles to `src/components/TaskPanel.tsx` (`tagStyles` object)
+3. Add color styles to `src/utils/tagStyles.ts` (both `tagStyles` and `tagSelectStyles`)
 
 ### Adding a new status column
 1. Add to `TaskStatus` type in `src/types/task.ts`
 2. Add label to `STATUS_LABELS` in same file
 3. Add to `STATUSES` array in same file
-4. Update `STATUSES` array in `server/services/fileService.js`
-5. Update `STATUSES` array in `server/services/configService.js`
+4. Update `STATUSES` array in `server/constants.js`
 
 ### Modifying task form fields
 1. Update `TaskFormData` type in `src/types/task.ts`
@@ -352,7 +349,6 @@ ideation | planning | backlog | implementing | uat | done
 - `express` - API server
 - `cors` - Cross-origin requests
 - `chokidar` - File system watcher
-- `gray-matter` - Markdown parsing (available but not currently used)
 - `concurrently` - Run Vite + Express together
 
 ## Known Limitations

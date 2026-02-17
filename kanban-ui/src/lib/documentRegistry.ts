@@ -1,7 +1,7 @@
 import { FileText, ClipboardList, Map, Bot, Rocket, FolderTree, Database } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export interface DocumentDefinition {
+interface DocumentDefinition {
   slug: string;
   label: string;
   icon: LucideIcon;

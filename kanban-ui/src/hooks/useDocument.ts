@@ -156,7 +156,6 @@ export function useDocument(slug: string, projectId: string | null, isOpen: bool
     lastSaved,
     loadDocument,
     updateContent,
-    flushSave,
-    setContent
+    flushSave
   };
 }

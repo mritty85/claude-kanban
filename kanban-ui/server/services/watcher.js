@@ -112,44 +112,11 @@ export function addSSEClient(res, projectId) {
   return clientId;
 }
 
-// Update which project a client is watching
-export function updateClientProject(clientId, newProjectId) {
-  const client = clients.get(clientId);
-  if (client) {
-    client.projectId = newProjectId;
-    client.response.write(`data: ${JSON.stringify({
-      event: 'project-switched',
-      clientId,
-      projectId: newProjectId,
-      timestamp: Date.now()
-    })}\n\n`);
-    return true;
-  }
-  return false;
-}
-
-export function closeWatcher() {
-  if (watcher) {
-    watcher.close();
-    watcher = null;
-  }
-}
-
 // Broadcast a message to all SSE clients (used for global events)
-export function broadcastToClients(message) {
+function broadcastToClients(message) {
   const data = JSON.stringify(message);
   for (const [, client] of clients) {
     client.response.write(`data: ${data}\n\n`);
-  }
-}
-
-// Broadcast a message only to clients watching a specific project
-export function broadcastToProject(projectId, message) {
-  const data = JSON.stringify({ ...message, projectId });
-  for (const [, client] of clients) {
-    if (client.projectId === projectId) {
-      client.response.write(`data: ${data}\n\n`);
-    }
   }
 }
 
@@ -158,14 +125,8 @@ export async function refreshWatcher() {
   await initWatcher();
 }
 
-// Switch to a different project - for per-client switching
-export async function switchProject(projectId, clientId = null) {
-  if (clientId) {
-    // Per-client switch only - just update the client's project context
-    return updateClientProject(clientId, projectId);
-  }
-
-  // Global switch (CLI compatibility) - notify all clients
+// Switch to a different project - broadcast to all clients
+export async function switchProject(projectId) {
   broadcastToClients({
     event: 'project-switched',
     projectId,

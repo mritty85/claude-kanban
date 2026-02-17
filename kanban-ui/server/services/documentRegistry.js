@@ -65,13 +65,9 @@ export function getDocDef(slug) {
   return DOCUMENT_DEFINITIONS.find(d => d.slug === slug) || null;
 }
 
-export function getAllDocDefs() {
-  return DOCUMENT_DEFINITIONS;
-}
-
 // Resolve a document's file path for a given project directory
 // Returns { found: boolean, filePath: string | null, writePath: string }
-export async function resolveDocumentPath(slug, projectDir) {
+async function resolveDocumentPath(slug, projectDir) {
   const def = getDocDef(slug);
   if (!def) return { found: false, filePath: null, writePath: null };
 

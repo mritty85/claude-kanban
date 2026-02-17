@@ -141,7 +141,7 @@ export function EpicCombobox({ value, onChange, availableEpics, placeholder = 'S
         <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[6px] shadow-lg z-20 max-h-48 overflow-y-auto">
           {epicsToShow.length > 0 ? (
             epicsToShow.map(epic => {
-              const epicColors = getEpicColor(epic);
+              const epicColors = colors && epic === value ? colors : getEpicColor(epic);
               const isSelected = epic === value;
               return (
                 <button

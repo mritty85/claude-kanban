@@ -1,6 +1,6 @@
 // Epic color palette - 8 colors that work in both dark and light modes
 // Colors defined as CSS variable pairs for theming support
-export const EPIC_COLORS = [
+const EPIC_COLORS = [
   { name: 'rose', bg: 'var(--color-epic-rose-bg)', text: 'var(--color-epic-rose-text)' },
   { name: 'orange', bg: 'var(--color-epic-orange-bg)', text: 'var(--color-epic-orange-text)' },
   { name: 'amber', bg: 'var(--color-epic-amber-bg)', text: 'var(--color-epic-amber-text)' },

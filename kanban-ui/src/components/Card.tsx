@@ -93,17 +93,20 @@ export function Card({ task, onClick, showPreview = true }: CardProps) {
         </p>
       )}
 
-      {task.epic && (
-        <div
-          className="mt-3 -mx-3 -mb-3 px-3 py-1.5 text-xs font-medium rounded-b-[6px]"
-          style={{
-            backgroundColor: getEpicColor(task.epic).bg,
-            color: getEpicColor(task.epic).text,
-          }}
-        >
-          {task.epic}
-        </div>
-      )}
+      {task.epic && (() => {
+        const epicColor = getEpicColor(task.epic);
+        return (
+          <div
+            className="mt-3 -mx-3 -mb-3 px-3 py-1.5 text-xs font-medium rounded-b-[6px]"
+            style={{
+              backgroundColor: epicColor.bg,
+              color: epicColor.text,
+            }}
+          >
+            {task.epic}
+          </div>
+        );
+      })()}
     </div>
   );
 }

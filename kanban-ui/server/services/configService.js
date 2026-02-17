@@ -1,11 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { STATUSES } from '../constants.js';
 
 const CONFIG_DIR = path.join(os.homedir(), '.kanban-ui');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
-
-const STATUSES = ['ideation', 'planning', 'backlog', 'implementing', 'uat', 'done'];
 
 // Generate a simple ID from name
 function generateId(name) {
@@ -41,13 +40,13 @@ export async function ensureGlobalConfig() {
 }
 
 // Read the global config
-export async function getGlobalConfig() {
+async function getGlobalConfig() {
   const content = await fs.readFile(CONFIG_PATH, 'utf-8');
   return JSON.parse(content);
 }
 
 // Update the global config
-export async function updateGlobalConfig(updates) {
+async function updateGlobalConfig(updates) {
   const current = await getGlobalConfig();
   const updated = { ...current, ...updates };
   await fs.writeFile(CONFIG_PATH, JSON.stringify(updated, null, 2), 'utf-8');
