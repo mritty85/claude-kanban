@@ -7,102 +7,82 @@ import {
   deleteLaunchConfig
 } from '../services/fileService.js';
 import { getCurrentProjectPath } from '../services/configService.js';
+import { asyncHandler, HttpError } from '../middleware.js';
 
 const router = express.Router();
 
 // List all launch configs for current project
-router.get('/configs', async (req, res) => {
-  try {
-    const configs = await getLaunchConfigs();
-    res.json(configs);
-  } catch (err) {
-    console.error('Error listing launch configs:', err);
-    res.status(500).json({ error: 'Failed to list launch configs' });
-  }
-});
+router.get('/configs', asyncHandler(async (req, res) => {
+  const configs = await getLaunchConfigs();
+  res.json(configs);
+}));
 
 // Add a new launch config
-router.post('/configs', async (req, res) => {
-  try {
-    const { name, command, workingDir } = req.body;
+router.post('/configs', asyncHandler(async (req, res) => {
+  const { name, command, workingDir } = req.body;
 
-    if (!name || !command) {
-      return res.status(400).json({ error: 'Name and command are required' });
-    }
-
-    const config = await addLaunchConfig({ name, command, workingDir });
-    res.status(201).json(config);
-  } catch (err) {
-    console.error('Error adding launch config:', err);
-    res.status(400).json({ error: err.message });
+  if (!name || !command) {
+    throw new HttpError(400, 'Name and command are required');
   }
-});
+
+  const config = await addLaunchConfig({ name, command, workingDir });
+  res.status(201).json(config);
+}));
 
 // Update a launch config
-router.put('/configs/:id', async (req, res) => {
-  try {
-    const { name, command, workingDir } = req.body;
-    const updates = {};
-    if (name !== undefined) updates.name = name;
-    if (command !== undefined) updates.command = command;
-    if (workingDir !== undefined) updates.workingDir = workingDir;
+router.put('/configs/:id', asyncHandler(async (req, res) => {
+  const { name, command, workingDir } = req.body;
+  const updates = {};
+  if (name !== undefined) updates.name = name;
+  if (command !== undefined) updates.command = command;
+  if (workingDir !== undefined) updates.workingDir = workingDir;
 
-    const config = await updateLaunchConfig(req.params.id, updates);
-    res.json(config);
-  } catch (err) {
-    console.error('Error updating launch config:', err);
-    res.status(400).json({ error: err.message });
-  }
-});
+  const config = await updateLaunchConfig(req.params.id, updates);
+  res.json(config);
+}));
 
 // Delete a launch config
-router.delete('/configs/:id', async (req, res) => {
-  try {
-    await deleteLaunchConfig(req.params.id);
-    res.status(204).send();
-  } catch (err) {
-    console.error('Error deleting launch config:', err);
-    res.status(400).json({ error: err.message });
-  }
-});
+router.delete('/configs/:id', asyncHandler(async (req, res) => {
+  await deleteLaunchConfig(req.params.id);
+  res.status(204).send();
+}));
 
 // Launch a terminal with a config
-router.post('/:id', async (req, res) => {
-  try {
-    const configs = await getLaunchConfigs();
-    const config = configs.find(c => c.id === req.params.id);
+router.post('/:id', asyncHandler(async (req, res) => {
+  const configs = await getLaunchConfigs();
+  const config = configs.find(c => c.id === req.params.id);
 
-    if (!config) {
-      return res.status(404).json({ error: 'Launch config not found' });
+  if (!config) {
+    throw new HttpError(404, 'Launch config not found');
+  }
+
+  const projectPath = await getCurrentProjectPath();
+
+  // Determine working directory - use config's workingDir if set, otherwise project root
+  let workingDir = projectPath;
+  if (config.workingDir) {
+    // If workingDir is relative, resolve it against project path
+    if (config.workingDir.startsWith('/')) {
+      workingDir = config.workingDir;
+    } else {
+      workingDir = `${projectPath}/${config.workingDir}`;
     }
+  }
 
-    const projectPath = await getCurrentProjectPath();
+  // Use AppleScript to create a new tab in existing Ghostty window
+  // This ensures the tab is "native" and can be merged with other windows
+  // After command exits, prompt to close (avoids "running process" warning on tab close)
+  const userShell = process.env.SHELL || '/bin/zsh';
+  const shellCommand = `cd "${workingDir}" && ${config.command}; echo ""; echo "Press Enter to close..."; read`;
 
-    // Determine working directory - use config's workingDir if set, otherwise project root
-    let workingDir = projectPath;
-    if (config.workingDir) {
-      // If workingDir is relative, resolve it against project path
-      if (config.workingDir.startsWith('/')) {
-        workingDir = config.workingDir;
-      } else {
-        workingDir = `${projectPath}/${config.workingDir}`;
-      }
-    }
+  // Escape special characters for AppleScript string
+  const escapeForAppleScript = (str) => {
+    return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  };
 
-    // Use AppleScript to create a new tab in existing Ghostty window
-    // This ensures the tab is "native" and can be merged with other windows
-    // After command exits, prompt to close (avoids "running process" warning on tab close)
-    const userShell = process.env.SHELL || '/bin/zsh';
-    const shellCommand = `cd "${workingDir}" && ${config.command}; echo ""; echo "Press Enter to close..."; read`;
+  const escapedCommand = escapeForAppleScript(shellCommand);
 
-    // Escape special characters for AppleScript string
-    const escapeForAppleScript = (str) => {
-      return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    };
-
-    const escapedCommand = escapeForAppleScript(shellCommand);
-
-    const appleScript = `
+  const appleScript = `
 tell application "Ghostty" to activate
 delay 0.3
 tell application "System Events"
@@ -113,19 +93,15 @@ tell application "System Events"
 end tell
 `;
 
-    const child = spawn('osascript', ['-e', appleScript], {
-      detached: true,
-      stdio: 'ignore'
-    });
+  const child = spawn('osascript', ['-e', appleScript], {
+    detached: true,
+    stdio: 'ignore'
+  });
 
-    // Unref so the parent process doesn't wait for the child
-    child.unref();
+  // Unref so the parent process doesn't wait for the child
+  child.unref();
 
-    res.json({ success: true, name: config.name });
-  } catch (err) {
-    console.error('Error launching terminal:', err);
-    res.status(500).json({ error: 'Failed to launch terminal' });
-  }
-});
+  res.json({ success: true, name: config.name });
+}));
 
 export default router;

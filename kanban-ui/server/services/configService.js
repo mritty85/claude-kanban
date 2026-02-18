@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { STATUSES } from '../constants.js';
+import { HttpError } from '../middleware.js';
 
 const CONFIG_DIR = path.join(os.homedir(), '.kanban-ui');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
@@ -71,7 +72,7 @@ export async function setCurrentProject(projectId) {
   const project = config.projects.find(p => p.id === projectId);
 
   if (!project) {
-    throw new Error(`Project not found: ${projectId}`);
+    throw new HttpError(400, `Project not found: ${projectId}`);
   }
 
   // Update lastAccessed
@@ -102,18 +103,18 @@ export async function addProject(name, projectPath) {
   try {
     const stats = await fs.stat(projectPath);
     if (!stats.isDirectory()) {
-      throw new Error('Path is not a directory');
+      throw new HttpError(400, 'Path is not a directory');
     }
   } catch (err) {
     if (err.code === 'ENOENT') {
-      throw new Error('Path does not exist');
+      throw new HttpError(400, 'Path does not exist');
     }
     throw err;
   }
 
   // Check for duplicate path
   if (config.projects.some(p => p.path === projectPath)) {
-    throw new Error('A project with this path already exists');
+    throw new HttpError(400, 'A project with this path already exists');
   }
 
   // Generate unique ID
@@ -143,7 +144,7 @@ export async function removeProject(projectId) {
   const index = config.projects.findIndex(p => p.id === projectId);
 
   if (index === -1) {
-    throw new Error(`Project not found: ${projectId}`);
+    throw new HttpError(400, `Project not found: ${projectId}`);
   }
 
   const removed = config.projects.splice(index, 1)[0];
@@ -163,7 +164,7 @@ export async function updateProject(projectId, updates) {
   const project = config.projects.find(p => p.id === projectId);
 
   if (!project) {
-    throw new Error(`Project not found: ${projectId}`);
+    throw new HttpError(400, `Project not found: ${projectId}`);
   }
 
   // Only allow updating name, lifecycleStage, summary (path changes would break things)

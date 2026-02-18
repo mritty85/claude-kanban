@@ -7,6 +7,7 @@ import documentsRouter from './routes/documents.js';
 import { ensureDirectories, migrateProjectStructure } from './services/fileService.js';
 import { initWatcher } from './services/watcher.js';
 import { ensureGlobalConfig, getCurrentProjectPath } from './services/configService.js';
+import { errorHandler } from './middleware.js';
 
 const app = express();
 const PORT = process.env.PORT || 3050;
@@ -22,6 +23,8 @@ app.use('/api/documents', documentsRouter);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+app.use(errorHandler);
 
 async function start() {
   // Ensure global config exists (creates default if first run)

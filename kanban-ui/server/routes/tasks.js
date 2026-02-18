@@ -11,10 +11,11 @@ import {
 } from '../services/fileService.js';
 import { addSSEClient } from '../services/watcher.js';
 import { getCurrentProject } from '../services/configService.js';
+import { asyncHandler } from '../middleware.js';
 
 const router = express.Router();
 
-router.get('/events', async (req, res) => {
+router.get('/events', asyncHandler(async (req, res) => {
   let projectId = req.query.project;
 
   // If no project specified, use the current project from global config
@@ -28,92 +29,52 @@ router.get('/events', async (req, res) => {
   }
 
   addSSEClient(res, projectId);
-});
+}));
 
-router.get('/', async (req, res) => {
-  try {
-    const tasks = await getAllTasks();
-    res.json(tasks);
-  } catch (err) {
-    console.error('Error getting tasks:', err);
-    res.status(500).json({ error: 'Failed to get tasks' });
-  }
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const tasks = await getAllTasks();
+  res.json(tasks);
+}));
 
-router.post('/', async (req, res) => {
-  try {
-    const task = await createTask(req.body);
-    res.status(201).json(task);
-  } catch (err) {
-    console.error('Error creating task:', err);
-    res.status(500).json({ error: 'Failed to create task' });
-  }
-});
+router.post('/', asyncHandler(async (req, res) => {
+  const task = await createTask(req.body);
+  res.status(201).json(task);
+}));
 
 // Simplified move - no fromStatus needed
-router.post('/move', async (req, res) => {
-  try {
-    const { filename, toStatus, newPriority } = req.body;
-    const task = await moveTask(filename, toStatus, newPriority);
-    res.json(task);
-  } catch (err) {
-    console.error('Error moving task:', err);
-    res.status(500).json({ error: 'Failed to move task' });
-  }
-});
+router.post('/move', asyncHandler(async (req, res) => {
+  const { filename, toStatus, newPriority } = req.body;
+  const task = await moveTask(filename, toStatus, newPriority);
+  res.json(task);
+}));
 
-router.post('/reorder', async (req, res) => {
-  try {
-    const { status, orderedIds } = req.body;
-    const tasks = await reorderTasks(status, orderedIds);
-    res.json(tasks);
-  } catch (err) {
-    console.error('Error reordering tasks:', err);
-    res.status(500).json({ error: 'Failed to reorder tasks' });
-  }
-});
+router.post('/reorder', asyncHandler(async (req, res) => {
+  const { status, orderedIds } = req.body;
+  const tasks = await reorderTasks(status, orderedIds);
+  res.json(tasks);
+}));
 
-router.get('/config', async (req, res) => {
-  try {
-    const config = await getProjectConfig();
-    res.json(config);
-  } catch (err) {
-    console.error('Error getting config:', err);
-    res.status(500).json({ error: 'Failed to get config' });
-  }
-});
+router.get('/config', asyncHandler(async (req, res) => {
+  const config = await getProjectConfig();
+  res.json(config);
+}));
 
-router.put('/config', async (req, res) => {
-  try {
-    const config = await updateProjectConfig(req.body);
-    res.json(config);
-  } catch (err) {
-    console.error('Error updating config:', err);
-    res.status(500).json({ error: 'Failed to update config' });
-  }
-});
+router.put('/config', asyncHandler(async (req, res) => {
+  const config = await updateProjectConfig(req.body);
+  res.json(config);
+}));
 
 // Wildcard routes MUST come last (after specific routes like /config)
-router.put('/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const task = await updateTask(filename, req.body);
-    res.json(task);
-  } catch (err) {
-    console.error('Error updating task:', err);
-    res.status(500).json({ error: 'Failed to update task' });
-  }
-});
+router.put('/:filename', asyncHandler(async (req, res) => {
+  const { filename } = req.params;
+  const task = await updateTask(filename, req.body);
+  res.json(task);
+}));
 
-router.delete('/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    await deleteTask(filename);
-    res.status(204).send();
-  } catch (err) {
-    console.error('Error deleting task:', err);
-    res.status(500).json({ error: 'Failed to delete task' });
-  }
-});
+router.delete('/:filename', asyncHandler(async (req, res) => {
+  const { filename } = req.params;
+  await deleteTask(filename);
+  res.status(204).send();
+}));
 
 export default router;

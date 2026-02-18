@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { getCurrentProjectPath } from './configService.js';
 import { STATUSES } from '../constants.js';
+import { HttpError } from '../middleware.js';
 const BOARD_FILE = '_board.json';
 
 // Generate a unique task ID (timestamp-based)
@@ -725,7 +726,7 @@ export async function updateLaunchConfig(id, updates) {
   const launchConfigs = config.launchConfigs || [];
   const index = launchConfigs.findIndex(c => c.id === id);
   if (index === -1) {
-    throw new Error('Launch config not found');
+    throw new HttpError(400, 'Launch config not found');
   }
   // Handle workingDir specially - remove if empty, otherwise update
   const updatedConfig = { ...launchConfigs[index] };
@@ -748,7 +749,7 @@ export async function deleteLaunchConfig(id) {
   const launchConfigs = config.launchConfigs || [];
   const filtered = launchConfigs.filter(c => c.id !== id);
   if (filtered.length === launchConfigs.length) {
-    throw new Error('Launch config not found');
+    throw new HttpError(400, 'Launch config not found');
   }
   await updateProjectConfig({ launchConfigs: filtered });
 }

@@ -16,9 +16,9 @@
 
 ## Phase 2: Backend Middleware & Error Handling
 
-- [ ] Extract `asyncHandler` wrapper to eliminate 19 identical try/catch blocks
-- [ ] Add centralized Express error-handling middleware in index.js
-- [ ] Standardize error status codes (400 vs 500) based on error type
+- [x] Extract `asyncHandler` wrapper to eliminate 19 identical try/catch blocks
+- [x] Add centralized Express error-handling middleware in index.js
+- [x] Standardize error status codes (400 vs 500) based on error type
 
 ## Phase 3: Config & File I/O Caching
 
