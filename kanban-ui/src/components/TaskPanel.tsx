@@ -509,7 +509,7 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
               )}
             </div>
 
-            {/* Compact row: Status + Completed */}
+            {/* Compact row: Status + Epic + Completed */}
             <div className="flex flex-col sm:flex-row gap-4 mb-5">
               <div className="sm:w-48 shrink-0">
                 <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
@@ -524,6 +524,18 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
                     <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
+                  Epic
+                </label>
+                <EpicCombobox
+                  value={epic}
+                  onChange={setEpic}
+                  availableEpics={availableEpics}
+                  placeholder="Select or type epic..."
+                />
               </div>
 
               {/* Completed Date - only show for done status or if already set */}
@@ -551,19 +563,6 @@ export function TaskPanel({ isOpen, task, availableEpics, onSave, onClose, onDel
                   />
                 </div>
               )}
-            </div>
-
-            {/* Epic */}
-            <div className="mb-5">
-              <label className="block text-[12px] font-bold text-[var(--color-text-secondary)] mb-2 font-display">
-                Epic
-              </label>
-              <EpicCombobox
-                value={epic}
-                onChange={setEpic}
-                availableEpics={availableEpics}
-                placeholder="Select or type epic..."
-              />
             </div>
 
             {/* Tags */}
